@@ -479,13 +479,32 @@ function Landing({ onLogin }) {
             <div className="inline-block px-6 py-2.5 rounded-full border-2 tw-body text-base font-bold shadow-lg transform hover:scale-105 transition-transform cursor-default mb-8" style={{ borderColor: "rgba(184,134,59,0.5)", color: "white", background: "var(--brass)" }}>
               ✨ Get Your Property Watched just @ ₹1/sq.ft per month
             </div>
-            <h1 className="tw-display font-bold text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.1]">
-              Stay away.<br />Stay relaxed.
-            </h1>
-            <p className="tw-body mt-6 text-base sm:text-lg max-w-xl mx-auto lg:mx-0" style={{ color: "rgba(246,241,231,0.78)" }}>
-              Entrust your property to a team that cares for it as deeply as you do. We blend professional oversight with a personal touch, ensuring absolute peace of mind through
-              <span className="text-white font-semibold block mt-1">dedicated monitoring, regular visual updates, on-demand call support, and personalized video walkthroughs.</span>
-            </p>
+            <div className="grid">
+              <div className="col-start-1 row-start-1" style={{ animation: "bgFade1 12s infinite" }}>
+                <h1 className="tw-display font-bold text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.1]">
+                  Your Property,<br />Our Priority.
+                </h1>
+                <p className="tw-body mt-6 text-base sm:text-lg max-w-xl mx-auto lg:mx-0" style={{ color: "rgba(246,241,231,0.78)" }}>
+                  We act as your trusted proxy on the ground. Whether you are an NRI or simply out-of-town, we provide professional oversight with a personal touch for your vacant plots, flats, and houses.
+                </p>
+              </div>
+              <div className="col-start-1 row-start-1 pointer-events-none" style={{ opacity: 0, animation: "bgFade2 12s infinite" }}>
+                <h1 className="tw-display font-bold text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.1]">
+                  Stay away.<br />Stay relaxed.
+                </h1>
+                <p className="tw-body mt-6 text-base sm:text-lg max-w-xl mx-auto lg:mx-0" style={{ color: "rgba(246,241,231,0.78)" }}>
+                  Entrust your property to a team that cares for it as deeply as you do. We blend professional oversight with a personal touch, ensuring absolute peace of mind through dedicated monitoring, regular visual updates, on-demand call support, and personalized video walkthroughs.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-7 flex flex-col gap-3 max-w-xl mx-auto lg:mx-0 tw-body text-[17px] text-white">
+              <div className="flex items-center gap-3"><CheckCircle2 size={20} style={{ color: "var(--brass)" }} /> <span className="opacity-95">Monthly physical inspections & live video walkthroughs</span></div>
+              <div className="flex items-center gap-3"><CheckCircle2 size={20} style={{ color: "var(--brass)" }} /> <span className="opacity-95">Complete tenant management & rent collection</span></div>
+              <div className="flex items-center gap-3"><CheckCircle2 size={20} style={{ color: "var(--brass)" }} /> <span className="opacity-95">Fencing, cleaning & maintenance for plots</span></div>
+              <div className="flex items-center gap-3"><CheckCircle2 size={20} style={{ color: "var(--brass)" }} /> <span className="opacity-95">Khata, property tax & legal certificate assistance</span></div>
+            </div>
+
             <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
               <a href="https://wa.me/919448610107" target="_blank" rel="noopener noreferrer" className="tw-body flex items-center justify-center px-8 py-3.5 rounded-md font-bold text-[17px] shadow-lg transform hover:-translate-y-1 hover:shadow-2xl hover:scale-105 transition-all duration-300 active:scale-95" style={{ background: "var(--brass)", color: "var(--blueprint)", textDecoration: "none" }}>
                 Get your property watched

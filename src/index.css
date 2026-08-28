@@ -12,6 +12,12 @@
   .animate-marquee:hover {
     animation-play-state: paused;
   }
+  .animate-marquee-slow {
+    animation: marquee 120s linear infinite;
+  }
+  .animate-marquee-slow:hover {
+    animation-play-state: paused;
+  }
 }
 
 @keyframes fadeInUp {

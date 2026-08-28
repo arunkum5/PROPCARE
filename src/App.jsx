@@ -4,7 +4,7 @@ import {
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
   UserPlus, Search, ArrowLeft, Sprout, Fence, Eye, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp
+  KeyRound, AlertCircle, ArrowUp, MessageCircle
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -19,6 +19,23 @@ const MAP_LOCATIONS = [
   { name: "Dabaspet", type: "Industrial Land", coords: [13.2280, 77.2343] },
   { name: "KR Puram", type: "Flat in Apartment", coords: [13.0076, 77.6953] },
   { name: "Konanakunte Cross", type: "Flat in Apartment", coords: [12.8837, 77.5724] },
+  { name: "Banashankari", type: "Independent House", coords: [12.9249, 77.5662] },
+  { name: "Whitefield", type: "Villa", coords: [12.9698, 77.7499] },
+  { name: "Magadi Road", type: "Plot", coords: [12.9756, 77.5554] },
+  { name: "JP Nagar", type: "Independent House", coords: [12.9061, 77.5855] },
+  { name: "Vidyaranyapura", type: "Independent House", coords: [13.0831, 77.5534] },
+  { name: "Mahalakshmi Layout", type: "Independent House", coords: [13.0175, 77.5488] },
+  { name: "Panathur", type: "Flat in Apartment", coords: [12.9361, 77.7055] },
+  { name: "Gunjur", type: "Flat in Apartment", coords: [12.9266, 77.7335] },
+  { name: "Tumkur", type: "Plot", coords: [13.3414, 77.1022] },
+  { name: "Davanagere", type: "Plot", coords: [14.4663, 75.9238] },
+  { name: "Hassan", type: "Plot", coords: [13.0072, 76.0962] },
+  { name: "Mysore", type: "Plot", coords: [12.3086, 76.6531] },
+  { name: "Tiptur", type: "Plot", coords: [13.2600, 76.4800] },
+  { name: "Arsikere", type: "Independent House", coords: [13.3145, 76.2570] },
+  { name: "Arsikere (Plot)", type: "Plot", coords: [13.3245, 76.2670] },
+  { name: "Kunigal", type: "Agricultural Land", coords: [13.0232, 77.0252] },
+  { name: "Chikkaballapura", type: "Agricultural Land", coords: [13.4300, 77.7200] },
 ];
 
 function LocationsMap() {
@@ -28,7 +45,7 @@ function LocationsMap() {
       <p className="tw-body text-sm mb-8" style={{ opacity: 0.7 }}>A snapshot of properties we manage across Karnataka.</p>
       <div className="w-full h-[400px] sm:h-[500px] rounded-xl overflow-hidden shadow-sm relative z-0" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
         <MapContainer center={[13.05, 77.5]} zoom={10} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
-          <TileLayer attribution='&amp;copy; &lt;a href="https://www.openstreetmap.org/copyright"&gt;OpenStreetMap&lt;/a&gt;' url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+          <TileLayer attribution='&amp;copy; &lt;a href="https://www.openstreetmap.org/copyright"&gt;OpenStreetMap&lt;/a&gt; contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           {MAP_LOCATIONS.map((loc, i) => (
             <Marker key={i} position={loc.coords} icon={customIcon}>
               <Popup>
@@ -39,6 +56,18 @@ function LocationsMap() {
           ))}
         </MapContainer>
       </div>
+      <div className="w-full mt-10 overflow-hidden rounded-xl py-4 flex items-center shadow-inner" style={{ background: "rgba(184,134,59,0.08)", border: "1px solid rgba(184,134,59,0.15)" }}>
+        <div className="flex animate-marquee-slow gap-10 px-4 w-max">
+          {[...MAP_LOCATIONS, ...MAP_LOCATIONS, ...MAP_LOCATIONS].map((loc, i) => {
+            const colors = ["#4B5D45", "#8C4A2F", "#1E2A2F", "#B8863B", "#4A5568", "#2F855A", "#B7791F"];
+            return (
+              <div key={i} className="flex items-center gap-2 whitespace-nowrap tw-body font-bold text-[15px]" style={{ color: colors[i % colors.length] }}>
+                <MapPin size={16} /> {loc.name} <span style={{ opacity: 0.6, fontWeight: 500 }}>: {loc.type}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -48,6 +77,98 @@ const WhatsAppIcon = ({ size = 24 }) => (
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a5.22 5.22 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
   </svg>
 );
+
+function Chatbot() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { type: 'bot', text: 'Hi! I am the TrustWork Assistant. How can I help you today?' }
+  ]);
+  const [showOptions, setShowOptions] = useState(true);
+
+  const options = [
+    { label: 'What we do?', response: 'We act as a highly professional proxy for NRI or out-of-town property owners. We provide absolute peace of mind by acting as your trusted eyes and ears on the ground.' },
+    { label: 'Our Experience', response: 'We have 10+ Years of experience, with 28+ properties currently handling, and a dedicated team of 20+ field crew members.' },
+    { label: 'Plans & Pricing', response: 'Our comprehensive property care plans start from just ₹1 / Sq.ft / Month.' },
+    { label: 'How to register?', response: 'To register your property, simply Contact or WhatsApp us at +91 9448610107 and our team will get you onboarded instantly!' }
+  ];
+
+  const handleOptionClick = (option) => {
+    setMessages(prev => [...prev, { type: 'user', text: option.label }]);
+    setShowOptions(false);
+    
+    // Simulate typing delay
+    setTimeout(() => {
+      setMessages(prev => [...prev, { type: 'bot', text: option.response }]);
+      setTimeout(() => setShowOptions(true), 500);
+    }, 600);
+  };
+
+  return (
+    <>
+      {/* Floating Chat Button */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-transform hover:scale-110 overflow-hidden border-2"
+        style={{ background: "white", borderColor: "var(--blueprint)" }}
+      >
+        {isOpen ? <X size={28} style={{ color: "var(--blueprint)" }} /> : <img src="/chatbot-avatar.png" alt="Chatbot" className="w-full h-full object-cover bg-white" />}
+      </button>
+
+      {/* Chat Window */}
+      {isOpen && (
+        <div className="fixed bottom-[4.5rem] right-[5rem] z-[100] w-80 sm:w-96 rounded-2xl shadow-2xl flex flex-col overflow-hidden border animate-fade-in-up origin-bottom-right" style={{ background: "var(--paper)", borderColor: "rgba(30,42,47,0.1)", maxHeight: "calc(100vh - 120px)" }}>
+          {/* Header */}
+          <div className="px-5 py-4 flex items-center gap-3 text-white" style={{ background: "var(--blueprint)" }}>
+            <img src="/chatbot-avatar.png" alt="Chatbot" className="w-8 h-8 rounded-full border border-white/50 bg-white object-cover" />
+            <div>
+              <div className="tw-display font-bold text-lg leading-tight">TrustWork Assistant</div>
+              <div className="text-xs opacity-80 mt-0.5">Always here to help</div>
+            </div>
+            <button onClick={() => setIsOpen(false)} className="ml-auto opacity-70 hover:opacity-100">
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-4" style={{ maxHeight: "400px" }}>
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div 
+                  className={`px-4 py-2.5 rounded-2xl max-w-[85%] tw-body text-sm ${msg.type === 'user' ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}
+                  style={{
+                    background: msg.type === 'user' ? "var(--brass)" : "white",
+                    color: msg.type === 'user' ? "white" : "var(--ink)",
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+                    border: msg.type === 'user' ? "none" : "1px solid rgba(30,42,47,0.08)"
+                  }}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            
+            {/* Options Menu */}
+            {showOptions && (
+              <div className="flex flex-col gap-2 mt-2 animate-fade-in-up">
+                <div className="text-xs font-semibold mb-1" style={{ color: "var(--blueprint)", opacity: 0.7 }}>Suggested Questions:</div>
+                {options.map((opt, i) => (
+                  <button 
+                    key={i}
+                    onClick={() => handleOptionClick(opt)}
+                    className="text-left px-4 py-2 rounded-xl tw-body text-sm transition-all duration-300 border hover:bg-gray-50 hover:shadow-md hover:-translate-y-0.5 active:scale-95"
+                    style={{ borderColor: "rgba(30,42,47,0.1)", color: "var(--blueprint)" }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 function FloatingControls() {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -68,12 +189,16 @@ function FloatingControls() {
   return (
     <>
       <div className="fixed top-0 left-0 h-1.5 z-[100] transition-all duration-150" style={{ width: `${scrollProgress * 100}%`, background: "var(--brass)" }} />
-      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3">
+      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-4 items-center">
         {showTopBtn && (
-          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="p-3 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.15)] border hover:scale-105 transition-transform" style={{ borderColor: "rgba(30,42,47,0.1)", color: "var(--ink)" }}>
+          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hidden sm:block p-3 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.15)] border hover:scale-105 transition-transform" style={{ borderColor: "rgba(30,42,47,0.1)", color: "var(--ink)" }}>
             <ArrowUp size={20} />
           </button>
         )}
+        <Chatbot />
+        <a href="tel:+919448610107" className="p-3.5 rounded-full shadow-[0_4px_14px_rgba(0,102,255,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#0066FF" }}>
+          <Phone size={24} />
+        </a>
         <a href="https://wa.me/919448610107" target="_blank" rel="noreferrer" className="p-3.5 rounded-full shadow-[0_4px_14px_rgba(37,211,102,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#25D366" }}>
           <WhatsAppIcon size={26} />
         </a>
@@ -217,10 +342,10 @@ function StatItem({ end, label, suffix = "+" }) {
 
   return (
     <div ref={ref} onMouseEnter={runAnimation} className="text-center p-4 cursor-default">
-      <div className="tw-display font-bold text-4xl mb-1 text-white">
+      <div className="tw-display font-bold text-4xl mb-1">
         {count}{suffix}
       </div>
-      <div className="tw-mono text-[11px] uppercase tracking-wider" style={{ color: "rgba(246,241,231,0.6)" }}>
+      <div className="tw-mono text-[11px] uppercase tracking-wider font-semibold opacity-75">
         {label}
       </div>
     </div>
@@ -229,10 +354,10 @@ function StatItem({ end, label, suffix = "+" }) {
 
 function Stats() {
   return (
-    <div className="px-6 sm:px-10 py-10 animate-fade-in-up w-full" style={{ background: "var(--blueprint)", borderTop: "1px solid rgba(246,241,231,0.1)", animationDelay: "0.15s" }}>
-      <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-[rgba(246,241,231,0.1)]">
+    <div className="w-full flex justify-center py-12 px-6 sm:px-10 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+      <div className="max-w-2xl w-full rounded-2xl shadow-2xl py-6 px-4 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 divide-y sm:divide-y-0 sm:divide-x divide-white/20" style={{ background: "linear-gradient(135deg, #16323F, #B8863B)", color: "white", border: "1px solid rgba(255, 255, 255, 0.15)" }}>
         <StatItem end={10} label="Years of experience" />
-        <StatItem end={30} label="Projects currently handling" />
+        <StatItem end={28} label="Projects currently handling" />
         <StatItem end={20} label="Dedicated Field Crew" />
       </div>
     </div>
@@ -248,8 +373,10 @@ function Testimonials() {
       </div>
       <div className="relative w-full overflow-hidden flex">
         <div className="flex animate-marquee gap-6 px-6 w-max">
-          {[...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
-            <div key={i} className={`w-[300px] sm:w-[340px] shrink-0 p-6 rounded-xl bg-white shadow-sm hover:-translate-y-1 transition-transform cursor-default ${i % 2 === 0 ? "rotate-2" : "-rotate-2"}`} style={{ border: "1px solid rgba(30,42,47,0.08)" }}>
+          {[...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => {
+            const bgs = ["#F4F7FB", "#F4FBF7", "#FEF8F0", "#FBF4FB", "#FDF4F4"];
+            return (
+            <div key={i} className="w-[300px] sm:w-[340px] shrink-0 p-6 rounded-xl shadow-sm hover:-translate-y-2 hover:rotate-2 hover:shadow-md transition-all duration-300 cursor-default" style={{ background: bgs[i % bgs.length], border: "1px solid rgba(30,42,47,0.08)" }}>
               <div className="flex items-center gap-1 mb-3">
                 {[1,2,3,4,5].map(s => <span key={s} className="text-[14px]" style={{ color: "var(--brass)" }}>★</span>)}
               </div>
@@ -257,7 +384,7 @@ function Testimonials() {
               <div className="tw-body text-sm font-bold">{t.name}</div>
               <div className="tw-mono text-[10px] uppercase tracking-wide mt-1" style={{ opacity: 0.5 }}>{t.role}</div>
             </div>
-          ))}
+          )})}
         </div>
       </div>
     </div>
@@ -282,9 +409,9 @@ function Landing({ onLogin }) {
     },
   ];
   const steps = [
-    { title: "Register", desc: "Sign a care agreement and add your property with its map location." },
-    { title: "We watch", desc: "Our team visits on your chosen schedule and logs photos, video and notes." },
-    { title: "You track", desc: "Open your dashboard anytime to see visit history, updates and nearby developments." },
+    { title: "Register", desc: "Sign a care agreement and add your property with its map location.", img: "/step1.png" },
+    { title: "We watch", desc: "Our team visits on your chosen schedule and logs photos, video and notes.", img: "/step2.png" },
+    { title: "You track", desc: "Open your dashboard anytime to see visit history, updates and nearby developments.", img: "/step3.png" },
   ];
 
   return (
@@ -295,6 +422,8 @@ function Landing({ onLogin }) {
         .tw-display { font-family: 'Zilla Slab', serif; }
         .tw-body { font-family: 'Source Sans 3', sans-serif; }
         .tw-mono { font-family: 'IBM Plex Mono', monospace; }
+        @keyframes bgFade1 { 0%, 45%, 100% { opacity: 1; } 50%, 95% { opacity: 0; } }
+        @keyframes bgFade2 { 0%, 45%, 100% { opacity: 0; } 50%, 95% { opacity: 1; } }
       `}</style>
 
       {/* NAV */}
@@ -306,13 +435,31 @@ function Landing({ onLogin }) {
             <div className="text-[10px] tw-mono tracking-[0.18em] uppercase" style={{ opacity: 0.6 }}>Property Care</div>
           </div>
         </div>
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-5 sm:gap-8">
+          <div className="hidden lg:flex items-center gap-4 mr-2">
+            <a href="#" className="hover:scale-110 transition-transform" style={{ color: "#E1306C" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+            </a>
+            <a href="#" className="hover:scale-110 transition-transform" style={{ color: "#1877F2" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </a>
+            <a href="#" className="hover:scale-110 transition-transform" style={{ color: "#1DA1F2" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+            </a>
+            <a href="#" className="hover:scale-110 transition-transform" style={{ color: "#FF0000" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
+            </a>
+            <a href="#" className="hover:scale-110 transition-transform" style={{ color: "#0A66C2" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+            <a href="#" className="hover:scale-110 transition-transform" style={{ color: "#25D366" }}><MessageCircle size={18} /></a>
+          </div>
           <a href="tel:+919448610107" className="hidden sm:flex items-center gap-1.5 tw-body font-semibold text-sm hover:opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
             <Phone size={15} /> +91 9448610107
           </a>
           <button
             onClick={onLogin}
-            className="tw-body flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-white"
+            className="tw-body flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:opacity-90 active:scale-95"
             style={{ background: "var(--blueprint)" }}
           >
             <LogIn size={15} /> Login
@@ -321,44 +468,69 @@ function Landing({ onLogin }) {
       </div>
 
       {/* HERO */}
-      <div className="px-6 sm:px-10 py-16 sm:py-24 animate-fade-in-up" style={{ background: "var(--blueprint)", animationDelay: "0.1s" }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="flex flex-col items-center justify-center mb-6 gap-5">
-            <Seal size={64} label="EST. 2026" />
-            <div className="inline-block px-4 py-1.5 rounded-full border tw-body text-sm font-semibold shadow-sm" style={{ borderColor: "rgba(184,134,59,0.4)", color: "var(--brass)", background: "rgba(184,134,59,0.15)" }}>
+      <div className="relative px-6 sm:px-10 py-16 sm:py-24 animate-fade-in-up overflow-hidden" style={{ animationDelay: "0.1s" }}>
+        <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('/new1.jpg')", animation: "bgFade1 12s infinite" }} />
+        <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('/new2.jpg')", opacity: 0, animation: "bgFade2 12s infinite" }} />
+        <div className="absolute inset-0 z-0" style={{ background: "linear-gradient(rgba(22, 50, 63, 0.7), rgba(22, 50, 63, 0.95))" }} />
+        
+        <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          {/* Left Side: Text */}
+          <div className="flex-1 text-center lg:text-left">
+            <div className="inline-block px-6 py-2.5 rounded-full border-2 tw-body text-base font-bold shadow-lg transform hover:scale-105 transition-transform cursor-default mb-8" style={{ borderColor: "rgba(184,134,59,0.5)", color: "white", background: "var(--brass)" }}>
               ✨ Get Your Property Watched just @ ₹1/sq.ft per month
             </div>
+            <h1 className="tw-display font-bold text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.1]">
+              Stay away.<br />Stay relaxed.
+            </h1>
+            <p className="tw-body mt-6 text-base sm:text-lg max-w-xl mx-auto lg:mx-0" style={{ color: "rgba(246,241,231,0.78)" }}>
+              Entrust your property to a team that cares for it as deeply as you do. We blend professional oversight with a personal touch, ensuring absolute peace of mind through
+              <span className="text-white font-semibold block mt-1">dedicated monitoring, regular visual updates, on-demand call support, and personalized video walkthroughs.</span>
+            </p>
+            <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
+              <a href="https://wa.me/919448610107" target="_blank" rel="noopener noreferrer" className="tw-body flex items-center justify-center px-8 py-3.5 rounded-md font-bold text-[17px] shadow-lg transform hover:-translate-y-1 hover:shadow-2xl hover:scale-105 transition-all duration-300 active:scale-95" style={{ background: "var(--brass)", color: "var(--blueprint)", textDecoration: "none" }}>
+                Get your property watched
+              </a>
+            </div>
           </div>
-          <h1 className="tw-display font-bold text-white text-4xl sm:text-5xl md:text-6xl leading-[1.1]">
-            Stay away.<br />Stay relaxed.
-          </h1>
-          <p className="tw-body mt-6 text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "rgba(246,241,231,0.78)" }}>
-            We take care of your property like a family member. Enjoy absolute peace of mind with
-            <span className="text-white font-semibold block mt-1">regular updates, continuous property watch, on-demand call support, and video walkthroughs.</span>
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <button onClick={onLogin} className="tw-body px-6 py-3 rounded-md font-semibold" style={{ background: "var(--brass)", color: "var(--blueprint)" }}>
-              Get your property watched
-            </button>
-            <button onClick={onLogin} className="tw-body px-6 py-3 rounded-md font-semibold border" style={{ borderColor: "rgba(246,241,231,0.35)", color: "#F6F1E7" }}>
-              Client / Admin login
-            </button>
+          
+          {/* Right Side: Images */}
+          <div className="flex-1 w-full max-w-md lg:max-w-none relative aspect-[4/3] sm:aspect-video lg:aspect-square flex items-center justify-center">
+             <img src="/home-hand.png" className="absolute w-full h-full object-contain drop-shadow-2xl rounded-2xl" style={{ transform: "scale(1.3)", animation: "bgFade1 12s infinite" }} alt="Property Care" />
+             <img src="/home-hand-new.png" className="absolute w-full h-full object-contain drop-shadow-2xl rounded-2xl" style={{ opacity: 0, animation: "bgFade2 12s infinite" }} alt="Property Care" />
           </div>
         </div>
+        
+        {/* Barbed Wire Overlay */}
+        <div 
+          className="absolute bottom-0 left-0 w-full h-12 sm:h-16 z-20 pointer-events-none opacity-80" 
+          style={{ 
+            backgroundImage: "url('/barbed-wire.png')", 
+            backgroundRepeat: "repeat-x", 
+            backgroundSize: "contain",
+            backgroundPosition: "center",
+            mixBlendMode: "screen"
+          }} 
+        />
       </div>
 
       {/* STATS */}
       <Stats />
 
       {/* HOW IT WORKS */}
-      <div className="px-6 sm:px-10 py-16 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-        <h2 className="tw-display font-bold text-2xl mb-8">How it works</h2>
-        <div className="grid sm:grid-cols-3 gap-6">
+      <div className="px-6 sm:px-10 py-20 max-w-6xl mx-auto overflow-hidden">
+        <h2 className="tw-display font-bold text-4xl mb-12 text-center animate-fade-in-up" style={{ animationDelay: "0.1s" }}>3 simple steps to total peace of mind</h2>
+        <div className="grid sm:grid-cols-3 gap-8 relative">
+          <div className="hidden sm:block absolute top-1/2 left-0 w-full h-0.5 -translate-y-1/2 z-0" style={{ background: "rgba(184,134,59,0.2)" }} />
           {steps.map((s, i) => (
-            <div key={s.title} className="p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-              <div className="tw-mono text-xs mb-3" style={{ color: "var(--brass)" }}>STEP {pad(i + 1, 2)}</div>
-              <div className="tw-display font-bold text-lg mb-1.5">{s.title}</div>
-              <p className="tw-body text-sm" style={{ opacity: 0.72 }}>{s.desc}</p>
+            <div key={s.title} className="p-8 rounded-2xl shadow-xl relative z-10 animate-fade-in-up hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 overflow-hidden group bg-cover bg-center border border-transparent hover:border-white/20" style={{ backgroundImage: `url(${s.img})`, color: "white", animationDelay: `${0.3 + (i * 0.2)}s`, animationFillMode: "both" }}>
+              <div className="absolute inset-0 z-0 transition-all duration-300 bg-[#16323F] opacity-90 group-hover:opacity-60"></div>
+              <div className="relative z-20">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center tw-display font-bold text-xl mb-6 shadow-md" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
+                  {i + 1}
+                </div>
+                <div className="tw-display font-bold text-2xl mb-3">{s.title}</div>
+                <p className="tw-body text-base leading-relaxed" style={{ opacity: 0.9 }}>{s.desc}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -367,35 +539,89 @@ function Landing({ onLogin }) {
       {/* MAP */}
       <LocationsMap />
 
-      {/* SERVICES */}
-      <div className="px-6 sm:px-10 py-16 animate-fade-in-up" style={{ background: "rgba(30,42,47,0.03)", animationDelay: "0.3s" }}>
-        <div className="max-w-5xl mx-auto">
-          <h2 className="tw-display font-bold text-2xl mb-8">What we take off your plate</h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            {services.map((s) => (
-              <div key={s.title} className="p-6 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-md" style={{ background: "rgba(140,74,47,0.1)" }}>
-                    <s.icon size={20} style={{ color: "var(--clay)" }} />
-                  </div>
-                  <div className="tw-display font-bold text-lg">{s.title}</div>
-                </div>
-                <ul className="space-y-2">
-                  {s.items.map((it) => (
-                    <li key={it} className="tw-body text-sm flex gap-2" style={{ opacity: 0.78 }}>
-                      <CheckCircle2 size={15} className="mt-0.5 shrink-0" style={{ color: "var(--moss)" }} />
-                      {it}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+      {/* WHAT WE DO */}
+      <div className="relative px-6 sm:px-10 py-24 animate-fade-in-up bg-fixed bg-center bg-cover" style={{ backgroundImage: "url('/new3.jpg')", animationDelay: "0.2s" }}>
+        <div className="absolute inset-0 z-0" style={{ background: "rgba(246, 241, 231, 0.90)" }} />
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="tw-display font-bold text-4xl sm:text-5xl mb-6" style={{ color: "var(--blueprint)" }}>What we do</h2>
+            <p className="tw-body text-xl max-w-3xl mx-auto leading-relaxed" style={{ color: "var(--ink)", opacity: 0.85 }}>
+              TrustWork Property Care operates essentially as a highly professional proxy for NRI or out-of-town property owners. We provide absolute peace of mind by acting as your trusted eyes and ears on the ground.
+            </p>
           </div>
-          <div className="mt-6 p-5 rounded-lg bg-white flex items-start gap-3" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-            <Landmark size={20} className="mt-0.5 shrink-0" style={{ color: "var(--brass)" }} />
-            <p className="tw-body text-sm" style={{ opacity: 0.78 }}>
-              We also track local market rates, upcoming projects nearby and give you a
-              read on new investment opportunities in and around your area.
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+            {/* Card 1: Detailed Plots */}
+            <div className="rounded-3xl p-8 sm:p-12 shadow-xl relative z-10 transition-all hover:-translate-y-1 hover:shadow-2xl overflow-hidden group border" style={{ background: "linear-gradient(135deg, #16323F 0%, #2A3C42 60%, #5C4A2E 100%)", borderColor: "rgba(255,255,255,0.1)", color: "white" }}>
+              <div className="flex items-center gap-5 mb-10 pb-6 border-b" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
+                <div className="p-4 rounded-2xl shadow-sm" style={{ background: "rgba(255,255,255,0.15)", color: "var(--brass)" }}>
+                  <Trees size={36} strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="tw-display font-bold text-3xl sm:text-4xl" style={{ color: "white" }}>Vacant Plots & Land</h3>
+                  <p className="tw-body text-sm font-bold uppercase tracking-wider mt-2" style={{ color: "var(--brass)" }}>Comprehensive Care</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-6 tw-body flex-1">
+                <div>
+                  <span className="font-bold text-lg" style={{ color: "var(--brass)" }}>Monitoring & Security:</span>
+                  <p className="mt-1 text-[17px]" style={{ color: "white", opacity: 0.9 }}>Physical site inspections with geo/time-tagged media, live video walkthroughs, and keeping a strict watch against encroachments or unauthorized construction.</p>
+                </div>
+                <div>
+                  <span className="font-bold text-lg" style={{ color: "var(--brass)" }}>Maintenance:</span>
+                  <p className="mt-1 text-[17px]" style={{ color: "white", opacity: 0.9 }}>Fencing, building compound walls, and keeping the site clean.</p>
+                </div>
+                <div>
+                  <span className="font-bold text-lg" style={{ color: "var(--brass)" }}>Administration & Surveying:</span>
+                  <p className="mt-1 text-[17px]" style={{ color: "white", opacity: 0.9 }}>Professional measurement by government-approved surveyors, plus handling taxes, EC (Encumbrance Certificates), Katha, and other legal certificates.</p>
+                </div>
+                <div>
+                  <span className="font-bold text-lg" style={{ color: "var(--brass)" }}>Real Estate:</span>
+                  <p className="mt-1 text-[17px]" style={{ color: "white", opacity: 0.9 }}>Matching buyers and sellers when the owner is ready to trade.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Detailed Flats */}
+            <div className="rounded-3xl p-8 sm:p-12 shadow-xl relative z-10 transition-all hover:-translate-y-1 hover:shadow-2xl overflow-hidden group border" style={{ background: "linear-gradient(135deg, #16323F 0%, #2A3C42 60%, #5C4A2E 100%)", borderColor: "rgba(255,255,255,0.1)", color: "white" }}>
+              <div className="flex items-center gap-5 mb-10 pb-6 border-b" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
+                <div className="p-4 rounded-2xl shadow-sm" style={{ background: "rgba(255,255,255,0.15)", color: "white" }}>
+                  <Home size={36} strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="tw-display font-bold text-3xl sm:text-4xl" style={{ color: "white" }}>Flats, Villas & Houses</h3>
+                  <p className="tw-body text-sm font-bold uppercase tracking-wider mt-2" style={{ color: "var(--brass)" }}>Comprehensive Care</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-6 tw-body flex-1">
+                <div>
+                  <span className="font-bold text-lg" style={{ color: "var(--brass)" }}>Monitoring:</span>
+                  <p className="mt-1 text-[17px]" style={{ color: "white", opacity: 0.9 }}>Routine physical inspections with geo/time-tagged photos and videos.</p>
+                </div>
+                <div>
+                  <span className="font-bold text-lg" style={{ color: "var(--brass)" }}>Tenant Management:</span>
+                  <p className="mt-1 text-[17px]" style={{ color: "white", opacity: 0.9 }}>Handling tenant check-ins/check-outs, conducting periodic inspections, collecting rent, and drawing up rental agreements.</p>
+                </div>
+                <div>
+                  <span className="font-bold text-lg" style={{ color: "var(--brass)" }}>Vacancy Filling:</span>
+                  <p className="mt-1 text-[17px]" style={{ color: "white", opacity: 0.9 }}>To-let advertising and thorough tenant scrutiny/background checks.</p>
+                </div>
+                <div>
+                  <span className="font-bold text-lg" style={{ color: "var(--brass)" }}>Administration & Real Estate:</span>
+                  <p className="mt-1 text-[17px]" style={{ color: "white", opacity: 0.9 }}>Handling property taxes and certificates, as well as buyer/seller matching for trading.</p>
+                </div>
+              </div>
+            </div>
+
+
+          </div>
+          
+          <div className="mt-16 max-w-4xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-6 p-8 sm:p-10 rounded-3xl shadow-lg" style={{ background: "var(--blueprint)", color: "white" }}>
+            <Landmark size={48} className="shrink-0" style={{ color: "var(--brass)" }} />
+            <p className="tw-body text-lg sm:text-xl font-medium leading-relaxed" style={{ opacity: 0.95 }}>
+              We also track local market rates, upcoming projects nearby and give you a read on new investment opportunities in and around your area.
             </p>
           </div>
         </div>
@@ -409,12 +635,19 @@ function Landing({ onLogin }) {
         <p className="tw-body text-sm mb-8" style={{ opacity: 0.7 }}>Pick a visit rhythm — change it anytime from your dashboard.</p>
         <div className="grid sm:grid-cols-3 gap-6">
           {PLANS.map((p) => (
-            <div key={p.id} className="p-6 rounded-lg" style={{ background: "var(--blueprint)" }}>
-              <Badge tone="brass">{p.price}</Badge>
-              <div className="tw-display font-bold text-white text-xl mt-3">{p.name}</div>
-              <div className="tw-body text-sm mt-3 space-y-1.5" style={{ color: "rgba(246,241,231,0.78)" }}>
-                <div className="flex gap-2 items-center"><Eye size={14} /> {p.visits}</div>
-                <div className="flex gap-2 items-center"><Camera size={14} /> {p.media}</div>
+            <div key={p.id} className="p-8 rounded-2xl relative transition-all duration-300 border-2 hover:-translate-y-2 hover:shadow-xl flex flex-col overflow-hidden group" style={{ borderColor: p.id === 'premium' ? 'var(--brass)' : 'rgba(30,42,47,0.08)', boxShadow: p.id === 'premium' ? '0 10px 40px rgba(184,134,59,0.15)' : '0 8px 30px rgba(0,0,0,0.06)' }}>
+              <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-110" style={{ background: `url('/${p.id}.png') center/cover` }} />
+              <div className="absolute inset-0 z-0" style={{ background: "linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.97))" }} />
+              {p.id === 'premium' && <div className="absolute top-0 right-0 z-20 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white rounded-bl-2xl shadow-sm" style={{ background: "var(--brass)" }}>Most Popular</div>}
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="mb-5">
+                  <Badge tone={p.id === 'premium' ? "brass" : "ink"}>{p.price}</Badge>
+                </div>
+                <div className="tw-display font-bold text-3xl mb-6" style={{ color: "var(--ink)" }}>{p.name}</div>
+                <div className="tw-body text-[17px] space-y-4 font-semibold flex-1" style={{ color: "rgba(30,42,47,0.85)" }}>
+                  <div className="flex gap-3 items-center"><Eye size={20} style={{ color: p.id === 'premium' ? "var(--brass)" : "var(--clay)" }} /> {p.visits}</div>
+                  <div className="flex gap-3 items-center"><Camera size={20} style={{ color: p.id === 'premium' ? "var(--brass)" : "var(--clay)" }} /> {p.media}</div>
+                </div>
               </div>
             </div>
           ))}
@@ -435,7 +668,7 @@ function Landing({ onLogin }) {
             <MapPin size={11} /> Rajajinagar 2nd Stage, Bangalore - 560010
           </div>
         </div>
-        <button onClick={onLogin} className="tw-body text-sm font-semibold flex items-center gap-1 shrink-0" style={{ color: "var(--clay)" }}>
+        <button onClick={onLogin} className="tw-body text-sm font-semibold flex items-center gap-1 shrink-0 transition-all duration-300 hover:opacity-70 hover:translate-x-1" style={{ color: "var(--clay)" }}>
           Client / Admin login <ChevronRight size={15} />
         </button>
       </div>

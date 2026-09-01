@@ -784,7 +784,8 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
 }
 
 /* ================= SHARED SHELL ================= */
-function Shell({ title, subtitle, onLogout, children, tabs, activeTab, onTabChange }) {
+function Shell({ title, subtitle, onLogout, onSettings, children, tabs, activeTab, onTabChange }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="min-h-full flex flex-col" style={{ background: "var(--paper)", color: "var(--ink)" }}>
       <style>{`
@@ -801,9 +802,23 @@ function Shell({ title, subtitle, onLogout, children, tabs, activeTab, onTabChan
               <div className="tw-mono text-[10px] tracking-widest uppercase" style={{ color: "rgba(246,241,231,0.6)" }}>{subtitle}</div>
             </div>
           </div>
-          <button onClick={onLogout} className="tw-body flex items-center gap-1.5 text-sm font-semibold" style={{ color: "#F6F1E7" }}>
-            <LogOut size={15} /> <span className="hidden sm:inline">Log out</span>
-          </button>
+          <div className="relative">
+            <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80" style={{ color: "#F6F1E7" }}>
+              <User size={15} /> <span className="hidden sm:inline">Menu</span>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
+                {onSettings && (
+                  <button onClick={() => { setMenuOpen(false); onSettings(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                    <User size={14} /> Admin settings
+                  </button>
+                )}
+                <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                  <LogOut size={14} /> Log out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         {tabs && (
           <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-2 px-2">
@@ -1397,6 +1412,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
   return (
     <Shell 
       title="TrustWork" subtitle="Admin console" onLogout={onLogout}
+      onSettings={() => setEditCust(dbs.customers['admin'])}
       tabs={[
         { id: "customers", label: "Customers", icon: Users },
         { id: "properties", label: "Properties", icon: Landmark },
@@ -1448,14 +1464,9 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ opacity: 0.4 }} />
               <input className={inputCls} style={{ ...inputStyle, paddingLeft: 32 }} placeholder="Search customers…" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => setEditCust(dbs.customers['admin'])} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-md" style={{ background: "rgba(30,42,47,0.05)" }}>
-                <User size={15} /> Admin settings
-              </button>
-              <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-md text-white" style={{ background: "var(--blueprint)" }}>
-                <UserPlus size={15} /> New customer
-              </button>
-            </div>
+            <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-md text-white cursor-pointer hover:opacity-90" style={{ background: "var(--blueprint)" }}>
+              <UserPlus size={15} /> New customer
+            </button>
           </div>
           <div className="space-y-2.5">
             {filteredCustomers.map((c) => (

@@ -805,27 +805,27 @@ function Shell({ title, subtitle, onLogout, onSettings, onRefresh, children, tab
           <div className="flex items-center gap-4">
             {onRefresh && (
               <button onClick={onRefresh} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity" style={{ color: "#F6F1E7" }} title="Refresh Data">
-                <RefreshCw size={15} />
+                <RefreshCw size={15} /> <span className="hidden sm:inline">Refresh</span>
               </button>
             )}
             <div className="relative">
               <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80" style={{ color: "#F6F1E7" }}>
                 <User size={15} /> <span className="hidden sm:inline">Menu</span>
               </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
-                {onSettings && (
-                  <button onClick={() => { setMenuOpen(false); onSettings(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
-                    <User size={14} /> Admin settings
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
+                  {onSettings && (
+                    <button onClick={() => { setMenuOpen(false); onSettings(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                      <User size={14} /> Admin settings
+                    </button>
+                  )}
+                  <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                    <LogOut size={14} /> Log out
                   </button>
-                )}
-                <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
-                  <LogOut size={14} /> Log out
-                </button>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
         {tabs && (
           <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-2 px-2">
             {tabs.map((t) => (

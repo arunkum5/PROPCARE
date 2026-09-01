@@ -1,0 +1,12 @@
+name = "prop-care"
+compatibility_date = "2024-03-20"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "propcare-db"
+database_id = "fb563033-aefb-47ad-92af-0b867734f9e1"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "propcare-media"

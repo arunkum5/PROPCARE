@@ -3,8 +3,8 @@ import {
   Shield, MapPin, Camera, Video, Home, Trees, Building2, Landmark,
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
-  UserPlus, Search, ArrowLeft, Sprout, Fence, Eye, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp, MessageCircle
+  UserPlus, User, Search, ArrowLeft, Sprout, Fence, Eye, EyeOff, Phone, Mail,
+  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -217,15 +217,15 @@ const DB_KEYS = {
 
 async function loadDb(key, fallback) {
   try {
-    const res = await window.storage.get(key, true);
-    return res ? JSON.parse(res.value) : fallback;
+    const res = window.localStorage.getItem(key);
+    return res ? JSON.parse(res) : fallback;
   } catch {
     return fallback;
   }
 }
 async function saveDb(key, value) {
   try {
-    await window.storage.set(key, JSON.stringify(value), true);
+    window.localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
     console.error("storage save failed", e);
   }
@@ -515,7 +515,7 @@ function Landing({ onLogin }) {
           {/* Right Side: Images */}
           <div className="flex-1 w-full max-w-md lg:max-w-none relative aspect-[4/3] sm:aspect-video lg:aspect-square flex items-center justify-center">
              <img src="/home-hand.png" className="absolute w-full h-full object-cover drop-shadow-2xl rounded-2xl" style={{ animation: "bgFade1 12s infinite" }} alt="Property Care" />
-             <img src="/home-hand-new.png" className="absolute w-full h-full object-cover drop-shadow-2xl rounded-2xl" style={{ opacity: 0, animation: "bgFade2 12s infinite" }} alt="Property Care" />
+             <img src="/home-hand-new.png" className="absolute w-full h-full object-contain drop-shadow-2xl rounded-2xl" style={{ opacity: 0, animation: "bgFade2 12s infinite" }} alt="Property Care" />
           </div>
         </div>
         
@@ -696,13 +696,12 @@ function Landing({ onLogin }) {
 }
 
 /* ================= LOGIN ================= */
-function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, ensureAdminSeed, dbs }) {
+function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
   const [role, setRole] = useState("customer");
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
-  useEffect(() => { ensureAdminSeed(); }, []);
+  const [showPassword, setShowPassword] = useState(false);
 
   const submit = (e) => {
     e.preventDefault();
@@ -718,7 +717,7 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, ensureAdminSeed, d
       const cust = Object.values(dbs.customers || {}).find(
         (c) => c.id.toLowerCase() === id.trim().toLowerCase() && c.password === password
       );
-      if (cust) onCustomerLogin(cust.id);
+      if (cust) onCustomerLogin(cust);
       else setError("We couldn't match that customer ID and password.");
     }
   };
@@ -752,10 +751,15 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, ensureAdminSeed, d
         <form onSubmit={submit} className="p-6 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
           <Field label={role === "admin" ? "Admin username" : "Customer ID"}>
             <input className={inputCls} style={inputStyle} value={id} onChange={(e) => setId(e.target.value)}
-              placeholder={role === "admin" ? "admin" : "TW-2026-0001"} required />
+              placeholder={role === "admin" ? "admin" : "TW01"} required />
           </Field>
           <Field label="Password">
-            <input type="password" className={inputCls} style={inputStyle} value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <div className="relative flex items-center">
+              <input type={showPassword ? "text" : "password"} className={`${inputCls} pr-10`} style={inputStyle} value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </Field>
           {error ? (
             <div className="flex items-center gap-2 text-sm mb-4" style={{ color: "var(--clay)" }}>
@@ -779,43 +783,194 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, ensureAdminSeed, d
 }
 
 /* ================= SHARED SHELL ================= */
-function Shell({ title, subtitle, onLogout, children }) {
+function Shell({ title, subtitle, onLogout, children, tabs, activeTab, onTabChange }) {
   return (
-    <div className="min-h-full" style={{ background: "var(--paper)", color: "var(--ink)" }}>
+    <div className="min-h-full flex flex-col" style={{ background: "var(--paper)", color: "var(--ink)" }}>
       <style>{`
         .tw-display { font-family: 'Zilla Slab', serif; } .tw-body { font-family: 'Source Sans 3', sans-serif; } .tw-mono { font-family: 'IBM Plex Mono', monospace; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      <div className="px-6 sm:px-10 py-5 flex items-center justify-between" style={{ background: "var(--blueprint)" }}>
-        <div className="flex items-center gap-3">
-          <Seal size={36} />
-          <div className="leading-tight">
-            <div className="tw-display font-bold text-white text-[16px]">{title}</div>
-            <div className="tw-mono text-[10px] tracking-widest uppercase" style={{ color: "rgba(246,241,231,0.6)" }}>{subtitle}</div>
+      <div className="px-6 sm:px-10 pt-5 pb-3 shrink-0" style={{ background: "var(--blueprint)" }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Seal size={36} />
+            <div className="leading-tight">
+              <div className="tw-display font-bold text-white text-[16px]">{title}</div>
+              <div className="tw-mono text-[10px] tracking-widest uppercase" style={{ color: "rgba(246,241,231,0.6)" }}>{subtitle}</div>
+            </div>
           </div>
+          <button onClick={onLogout} className="tw-body flex items-center gap-1.5 text-sm font-semibold" style={{ color: "#F6F1E7" }}>
+            <LogOut size={15} /> <span className="hidden sm:inline">Log out</span>
+          </button>
         </div>
-        <button onClick={onLogout} className="tw-body flex items-center gap-1.5 text-sm font-semibold" style={{ color: "#F6F1E7" }}>
-          <LogOut size={15} /> Log out
-        </button>
+        {tabs && (
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-2 px-2">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => onTabChange(t.id)}
+                className="tw-body px-4 py-2 rounded-md text-sm font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap hover:bg-white/10 hover:text-white"
+                style={activeTab === t.id ? { background: "rgba(255,255,255,0.15)", color: "white" } : { color: "rgba(255,255,255,0.6)" }}
+              >
+                <t.icon size={14} /> {t.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-      <div className="px-6 sm:px-10 py-8 max-w-5xl mx-auto">{children}</div>
+      <div className="flex-1 px-6 sm:px-10 py-8 w-full max-w-5xl mx-auto">{children}</div>
     </div>
   );
 }
 
-function Tabs({ tabs, active, onChange }) {
+function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, onUpdate, onLogout }) {
+  const [agreed, setAgreed] = useState(p.agreed || false);
+  const [showEdit, setShowEdit] = useState(false);
+
+  const handleAgree = () => {
+    setAgreed(true);
+    if (onAgree) onAgree();
+  };
+
+  const groupedVisits = (p.visits || []).reduce((acc, v) => {
+    const d = new Date(v.date);
+    const m = d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    if (!acc[m]) acc[m] = [];
+    acc[m].push(v);
+    return acc;
+  }, {});
+  const months = Object.keys(groupedVisits).sort((a, b) => new Date(b) - new Date(a));
+  const [activeMonth, setActiveMonth] = useState(months[0] || "");
+
+  useEffect(() => {
+    if (months.length > 0 && !activeMonth) setActiveMonth(months[0]);
+  }, [months, activeMonth]);
+
   return (
-    <div className="flex gap-1 mb-7 p-1 rounded-md w-fit" style={{ background: "rgba(30,42,47,0.06)" }}>
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          onClick={() => onChange(t.id)}
-          className="tw-body px-4 py-2 rounded-md text-sm font-semibold flex items-center gap-1.5 transition-colors"
-          style={active === t.id ? { background: "var(--blueprint)", color: "white" } : { color: "var(--ink)", opacity: 0.6 }}
-        >
-          <t.icon size={14} /> {t.label}
+    <Shell 
+      title="TrustWork" subtitle={`${customer.name} · ${PLANS.find(pl => pl.id === p.plan)?.name || p.plan}`} onLogout={onLogout}>
+      <div className="flex items-center justify-between mb-5">
+        <button onClick={onBack} className="tw-body text-sm flex items-center gap-1" style={{ opacity: 0.6 }}>
+          <ArrowLeft size={14} /> All properties
         </button>
-      ))}
-    </div>
+        <button onClick={() => setShowEdit(true)} className="tw-body text-sm flex items-center gap-1.5 font-semibold transition-opacity hover:opacity-100" style={{ color: "var(--blueprint)", opacity: 0.8 }}>
+          <Pencil size={14} /> Edit property
+        </button>
+      </div>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+        <div>
+          <div className="tw-display font-bold text-2xl">{p.title}</div>
+          <div className="tw-body text-sm flex items-center gap-1.5 mt-1" style={{ opacity: 0.65 }}>
+            <MapPin size={14} /> {p.address}
+          </div>
+        </div>
+        <Badge tone={p.status === "active" ? "moss" : "brass"}>
+          {p.status === "active" ? "Active" : "Pending approval"}
+        </Badge>
+      </div>
+
+      {!agreed ? (
+        <div className="mb-8 p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          <div className="tw-display font-bold text-lg mb-4">Agreement & Payment</div>
+          
+          <div className="mb-5">
+            <div className="tw-body text-sm font-semibold mb-2" style={{ opacity: 0.8 }}>Choose or review your plan:</div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {PLANS.map((pl) => (
+                <button key={pl.id} onClick={() => onChangePlan(pl.id)}
+                  className="relative p-5 rounded-xl text-left transition-all overflow-hidden flex flex-col justify-between"
+                  style={p.plan === pl.id ? { background: "var(--blueprint)", color: "white", boxShadow: "0 10px 25px -5px rgba(22,50,63,0.3)" } : { background: "white", border: "1px solid rgba(30,42,47,0.15)", color: "var(--ink)" }}>
+                  {p.plan === pl.id && <div className="absolute top-0 right-0 w-16 h-16 bg-white opacity-5 rounded-bl-[100%]" />}
+                  <div>
+                    <div className="tw-body font-bold text-lg mb-1">{pl.name}</div>
+                    <div className="tw-mono text-[11px] uppercase tracking-wide mb-4" style={{ opacity: p.plan === pl.id ? 0.7 : 0.5, color: p.plan === pl.id ? "var(--brass)" : "inherit" }}>{pl.price}</div>
+                    <ul className="tw-body text-sm space-y-2 mb-6" style={{ opacity: p.plan === pl.id ? 0.9 : 0.75 }}>
+                      <li className="flex items-start gap-2"><CheckCircle2 size={15} className="mt-0.5 shrink-0" style={{ color: p.plan === pl.id ? "var(--brass)" : "var(--moss)" }} /> <span>{pl.visits}</span></li>
+                      <li className="flex items-start gap-2"><CheckCircle2 size={15} className="mt-0.5 shrink-0" style={{ color: p.plan === pl.id ? "var(--brass)" : "var(--moss)" }} /> <span>{pl.media}</span></li>
+                    </ul>
+                  </div>
+                  <div className="tw-body text-xs font-semibold py-2 rounded-lg text-center transition-colors" style={p.plan === pl.id ? { background: "var(--brass)", color: "var(--blueprint)" } : { background: "rgba(30,42,47,0.05)" }}>
+                    {p.plan === pl.id ? "Selected Plan" : "Select Plan"}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="flex gap-2 items-start tw-body text-sm cursor-pointer p-3 rounded-md border" style={{ background: "rgba(30,42,47,0.02)" }}>
+            <input type="checkbox" className="mt-1" onChange={handleAgree} />
+            <span>I agree to the TrustWork Property Care Terms and Conditions and authorize inspections.</span>
+          </label>
+          <div className="text-sm tw-body mt-4 pt-4 flex items-center gap-2" style={{ borderTop: "1px solid rgba(30,42,47,0.1)" }}>
+            <span style={{ opacity: 0.7 }}>Payment Status:</span> <Badge tone="brass">Pending verification</Badge>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-8 flex items-center justify-between p-4 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          <div className="flex items-center gap-3">
+            <CheckCircle2 size={18} style={{ color: "var(--moss)" }} />
+            <div className="tw-body text-sm font-semibold">Care Plan Active: {PLANS.find(pl => pl.id === p.plan)?.name || p.plan}</div>
+          </div>
+          <Badge tone="moss">Agreement signed & Paid</Badge>
+        </div>
+      )}
+
+      <div className="tw-display font-bold text-lg mb-4">Gallery & Visit Log</div>
+      {months.length === 0 ? (
+        <div className="p-6 rounded-lg text-center tw-body text-sm" style={{ background: "white", border: "1px dashed rgba(30,42,47,0.2)", opacity: 0.6 }}>
+          No visits logged yet.
+        </div>
+      ) : (
+        <div>
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+            {months.map(m => (
+              <button key={m} onClick={() => setActiveMonth(m)} className="tw-body text-sm font-semibold px-4 py-2 rounded-full whitespace-nowrap transition-colors" style={{ background: activeMonth === m ? "var(--blueprint)" : "white", color: activeMonth === m ? "white" : "var(--ink)", border: "1px solid rgba(30,42,47,0.1)" }}>
+                {m}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-6">
+            {(groupedVisits[activeMonth] || []).reverse().map((v, i) => (
+              <div key={i} className="p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <Seal size={32} />
+                  <div>
+                    <div className="tw-body font-semibold text-sm">{v.kind === "development" ? "Development update" : "Inspection visit"}</div>
+                    <div className="tw-mono text-[11px]" style={{ opacity: 0.55 }}>{fmtDate(v.date)}</div>
+                  </div>
+                </div>
+                <p className="tw-body text-sm mb-4" style={{ opacity: 0.78 }}>{v.notes}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {(v.photos || []).map((url, idx) => (
+                    <a key={idx} href={url} target="_blank" rel="noreferrer" className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border hover:opacity-80 relative group flex items-center justify-center">
+                      <img src={url} className="w-full h-full object-cover" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+                      <div className="hidden text-xs text-gray-500 tw-mono text-center p-2 break-all">{url}</div>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 text-white"><Camera size={24} /></div>
+                    </a>
+                  ))}
+                  {v.video && (
+                    <a href={v.video} target="_blank" rel="noreferrer" className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border flex items-center justify-center hover:opacity-80">
+                      <div className="text-center p-2"><Video size={24} className="mx-auto mb-1 text-gray-500" /><div className="text-xs text-gray-500 tw-body">Play Video</div></div>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {showEdit && (
+        <AddPropertyModal 
+          initialData={p} 
+          onClose={() => setShowEdit(false)} 
+          onSave={(updatedForm) => {
+             onUpdate(updatedForm);
+             setShowEdit(false);
+          }} 
+        />
+      )}
+    </Shell>
   );
 }
 
@@ -830,130 +985,110 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   const myCases = Object.values(dbs.cases || {}).filter((c) => c.customerId === customer.id)
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 
+  const latestPhoto = myProps.flatMap(p => p.visits || []).flatMap(v => v.photos || [])[0];
+
   const addProperty = async (form) => {
-    const props = { ...dbs.properties };
     const propId = `PLOT-${Date.now().toString().slice(-6)}`;
-    props[propId] = {
+    const newProp = {
       id: propId, customerId: customer.id, type: form.type, title: form.title,
       address: form.address, mapLink: form.mapLink, plan: form.plan,
       status: "pending", createdAt: todayISO(), visits: [],
     };
-    await saveDb(DB_KEYS.properties, props);
+    await fetch('/api/properties', { method: 'POST', body: JSON.stringify(newProp) });
     refresh();
     setShowAdd(false);
   };
 
   const changePlan = async (propId, planId) => {
-    const props = { ...dbs.properties };
-    props[propId] = { ...props[propId], plan: planId };
-    await saveDb(DB_KEYS.properties, props);
+    const p = dbs.properties[propId];
+    await fetch(`/api/properties/${propId}`, { method: 'PUT', body: JSON.stringify({ ...p, plan: planId }) });
+    refresh();
+  };
+
+  const handleAgree = async (propId) => {
+    const p = dbs.properties[propId];
+    await fetch(`/api/properties/${propId}`, { method: 'PUT', body: JSON.stringify({ ...p, agreed: true }) });
+    refresh();
+  };
+
+  const updateProperty = async (updatedProp) => {
+    const p = dbs.properties[updatedProp.id];
+    const isPlanChanged = p.plan !== updatedProp.plan;
+    await fetch(`/api/properties/${updatedProp.id}`, { method: 'PUT', body: JSON.stringify({ ...p, ...updatedProp, agreed: isPlanChanged ? false : p.agreed }) });
     refresh();
   };
 
   const submitCase = async (e) => {
     e.preventDefault();
     if (!caseForm.subject.trim() || !caseForm.message.trim()) return;
-    const cases = { ...dbs.cases };
     const caseId = `CASE-${Date.now().toString().slice(-6)}`;
-    cases[caseId] = {
+    const newCase = {
       id: caseId, customerId: customer.id, propertyId: caseForm.propertyId || null,
       subject: caseForm.subject, message: caseForm.message, status: "open",
       response: "", createdAt: todayISO(),
     };
-    await saveDb(DB_KEYS.cases, cases);
+    await fetch('/api/cases', { method: 'POST', body: JSON.stringify(newCase) });
     refresh();
     setCaseForm({ subject: "", message: "", propertyId: "" });
   };
 
   if (openProp) {
     const p = dbs.properties[openProp];
-    return (
-      <Shell title="TrustWork" subtitle={`Customer · ${customer.id}`} onLogout={onLogout}>
-        <button onClick={() => setOpenProp(null)} className="tw-body text-sm flex items-center gap-1 mb-5" style={{ opacity: 0.6 }}>
-          <ArrowLeft size={14} /> All properties
-        </button>
-        <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
-          <div>
-            <div className="tw-display font-bold text-2xl">{p.title}</div>
-            <div className="tw-body text-sm flex items-center gap-1.5 mt-1" style={{ opacity: 0.65 }}>
-              <MapPin size={14} /> {p.address}
-              {p.mapLink ? (
-                <a href={p.mapLink} target="_blank" rel="noreferrer" className="flex items-center gap-1 underline" style={{ color: "var(--clay)" }}>
-                  map <ExternalLink size={11} />
-                </a>
-              ) : null}
-            </div>
-          </div>
-          <Badge tone={p.status === "active" ? "moss" : "brass"}>
-            {p.status === "active" ? "Active" : "Pending approval"}
-          </Badge>
-        </div>
-
-        <div className="grid sm:grid-cols-3 gap-3 mb-8">
-          {PLANS.map((pl) => (
-            <button key={pl.id} onClick={() => changePlan(p.id, pl.id)}
-              className="p-4 rounded-lg text-left transition-colors"
-              style={p.plan === pl.id ? { background: "var(--blueprint)", color: "white" } : { background: "white", border: "1px solid rgba(30,42,47,0.1)" }}>
-              <div className="tw-body font-semibold text-sm">{pl.name}</div>
-              <div className="tw-mono text-[11px] mt-1" style={{ opacity: 0.7 }}>{pl.visits}</div>
-            </button>
-          ))}
-        </div>
-
-        <div className="tw-display font-bold text-lg mb-4">Visit &amp; update log</div>
-        {(!p.visits || p.visits.length === 0) ? (
-          <div className="p-6 rounded-lg text-center tw-body text-sm" style={{ background: "white", border: "1px dashed rgba(30,42,47,0.2)", opacity: 0.6 }}>
-            No visits logged yet — once TrustWork's caretaker visits, entries will appear here.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {[...p.visits].reverse().map((v, i) => (
-              <div key={i} className="p-5 rounded-lg bg-white flex gap-4" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-                <Seal size={40} />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="tw-body font-semibold text-sm">{v.kind === "development" ? "Development update" : "Inspection visit"}</span>
-                    <span className="tw-mono text-[11px]" style={{ opacity: 0.55 }}>{fmtDate(v.date)}</span>
-                  </div>
-                  <p className="tw-body text-sm mt-1.5" style={{ opacity: 0.78 }}>{v.notes}</p>
-                  <div className="flex flex-wrap gap-2 mt-2.5">
-                    {(v.photos || []).map((url, idx) => (
-                      <a key={idx} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-md tw-mono" style={{ background: "rgba(75,93,69,0.1)", color: "var(--moss)" }}>
-                        <Camera size={11} /> photo {idx + 1}
-                      </a>
-                    ))}
-                    {v.video ? (
-                      <a href={v.video} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-md tw-mono" style={{ background: "rgba(140,74,47,0.1)", color: "var(--clay)" }}>
-                        <Video size={11} /> video
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Shell>
-    );
+    return <CustomerPropertyDetail p={p} customer={customer} onBack={() => setOpenProp(null)} onChangePlan={(planId) => changePlan(p.id, planId)} onAgree={() => handleAgree(p.id)} onUpdate={updateProperty} onLogout={onLogout} />;
   }
 
   return (
-    <Shell title="TrustWork" subtitle={`Customer · ${customer.id}`} onLogout={onLogout}>
-      <div className="mb-6">
-        <div className="tw-display font-bold text-2xl">Hello, {customer.name.split(" ")[0]}</div>
-        <p className="tw-body text-sm mt-1" style={{ opacity: 0.65 }}>Here's what's happening with your property.</p>
-      </div>
+    <Shell 
+      title="TrustWork" subtitle={customer.name} onLogout={onLogout}
+      tabs={[
+        { id: "properties", label: "My properties", icon: Landmark },
+        { id: "cases", label: "My cases", icon: MessageSquare },
+        { id: "profile", label: "Profile", icon: User },
+      ]}
+      activeTab={tab} onTabChange={setTab}
+    >
 
-      <Tabs
-        tabs={[
-          { id: "properties", label: "My properties", icon: Landmark },
-          { id: "cases", label: "My cases", icon: MessageSquare },
-        ]}
-        active={tab} onChange={setTab}
-      />
+      {tab === "profile" && (
+        <div className="p-6 rounded-lg bg-white max-w-2xl" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          <div className="tw-display font-bold text-xl mb-6">Identity Details</div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Full name"><input className={inputCls} style={inputStyle} defaultValue={customer.name} required /></Field>
+            <Field label="Phone"><input className={inputCls} style={inputStyle} defaultValue={customer.phone} required /></Field>
+            <Field label="Email"><input className={inputCls} style={inputStyle} defaultValue={customer.email} /></Field>
+            <Field label="Relationship to property"><input className={inputCls} style={inputStyle} defaultValue="Owner" /></Field>
+            <Field label="Aadhaar"><input className={inputCls} style={inputStyle} placeholder="xxxx xxxx xxxx" /></Field>
+            <Field label="PAN"><input className={inputCls} style={inputStyle} placeholder="ABCDE1234F" /></Field>
+            <div className="sm:col-span-2">
+              <Field label="Current residential address"><textarea className={inputCls} style={inputStyle} rows={3} placeholder="Full address..." /></Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label="Emergency/alternate contact"><input className={inputCls} style={inputStyle} placeholder="Name & Phone" /></Field>
+            </div>
+          </div>
+          <button className="mt-4 py-2.5 px-6 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
+            Save Profile
+          </button>
+        </div>
+      )}
 
       {tab === "properties" && (
         <div>
+          <div className="relative mb-8 rounded-xl overflow-hidden shadow-sm" style={{ minHeight: "160px", background: "var(--blueprint)" }}>
+            {latestPhoto ? (
+              <img src={latestPhoto} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay" alt="Latest property visit" />
+            ) : (
+              <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[var(--moss)] via-transparent to-transparent" />
+            )}
+            <div className="relative p-6 sm:p-8 flex flex-col justify-center h-full">
+              <div className="tw-display font-bold text-2xl sm:text-3xl text-white mb-2">
+                Hello, {customer.name.split(" ")[0]}
+              </div>
+              <p className="tw-body text-sm sm:text-base max-w-2xl leading-relaxed" style={{ color: "rgba(246,241,231,0.85)" }}>
+                We are actively monitoring and taking care of your property. Relax and have peace of mind—we will instantly notify you if anything requires your attention.
+              </p>
+            </div>
+          </div>
+
           <div className="flex justify-between items-center mb-4">
             <div className="tw-mono text-xs" style={{ opacity: 0.55 }}>{myProps.length} PROPERT{myProps.length === 1 ? "Y" : "IES"}</div>
             <button onClick={() => setShowAdd(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-md text-white" style={{ background: "var(--blueprint)" }}>
@@ -968,7 +1103,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
           ) : (
             <div className="grid sm:grid-cols-2 gap-4">
               {myProps.map((p) => (
-                <button key={p.id} onClick={() => setOpenProp(p.id)} className="text-left p-5 rounded-lg bg-white hover:shadow-sm transition-shadow" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+                <button key={p.id} onClick={() => setOpenProp(p.id)} className="text-left p-5 rounded-lg bg-white transition-all duration-200 hover:shadow-xl hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
                   <div className="flex justify-between items-start gap-2">
                     <Badge tone="ink">{p.type}</Badge>
                     <Badge tone={p.status === "active" ? "moss" : "brass"}>{p.status === "active" ? "Active" : "Pending"}</Badge>
@@ -1036,17 +1171,18 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   );
 }
 
-function AddPropertyModal({ onClose, onSave }) {
-  const [form, setForm] = useState({ type: PROPERTY_TYPES[0], title: "", address: "", mapLink: "", plan: "essential" });
+function AddPropertyModal({ onClose, onSave, initialData }) {
+  const [form, setForm] = useState(initialData || { type: PROPERTY_TYPES[0], title: "", address: "", latlong: "", size: "", summary: "", plan: "essential" });
+  const [docFile, setDocFile] = useState(null);
   const submit = (e) => { e.preventDefault(); if (!form.title.trim() || !form.address.trim()) return; onSave(form); };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(22,50,63,0.5)" }}>
-      <div className="w-full max-w-md rounded-lg p-6" style={{ background: "var(--paper)" }}>
+      <div className="w-full max-w-xl rounded-lg p-6 max-h-[90vh] overflow-y-auto" style={{ background: "var(--paper)" }}>
         <div className="flex justify-between items-center mb-5">
-          <div className="tw-display font-bold text-lg">Register a property</div>
+          <div className="tw-display font-bold text-lg">{initialData ? "Edit Property" : "Register a property"}</div>
           <button onClick={onClose}><X size={18} /></button>
         </div>
-        <form onSubmit={submit}>
+        <form onSubmit={submit} className="grid sm:grid-cols-2 gap-x-4">
           <Field label="Property type">
             <select className={inputCls} style={inputStyle} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
               {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -1055,20 +1191,40 @@ function AddPropertyModal({ onClose, onSave }) {
           <Field label="Property name / nickname">
             <input className={inputCls} style={inputStyle} placeholder="e.g. Whitefield 30x40 site" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
           </Field>
-          <Field label="Address">
-            <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
+          <div className="sm:col-span-2">
+            <Field label="Address">
+              <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
+            </Field>
+          </div>
+          <Field label="Location (Lat/Long)">
+            <input className={inputCls} style={inputStyle} placeholder="e.g. 12.9716, 77.5946" value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
           </Field>
-          <Field label="Google Maps link (optional)">
-            <input className={inputCls} style={inputStyle} placeholder="https://maps.google.com/..." value={form.mapLink} onChange={(e) => setForm({ ...form, mapLink: e.target.value })} />
+          <Field label="Property Size">
+            <input className={inputCls} style={inputStyle} placeholder="e.g. 1200 sq ft" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
           </Field>
-          <Field label="Care plan">
-            <select className={inputCls} style={inputStyle} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
-              {PLANS.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.visits}</option>)}
-            </select>
-          </Field>
-          <button type="submit" className="w-full mt-2 py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
-            Submit for approval
-          </button>
+          <div className="sm:col-span-2">
+            <Field label="Ownership Proof Document">
+              <input type="file" className={inputCls} style={inputStyle} onChange={(e) => setDocFile(e.target.files[0])} />
+              {docFile && <div className="text-xs mt-1 text-green-700">Selected: {docFile.name}</div>}
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Property Summary">
+              <textarea className={inputCls} style={inputStyle} rows={2} placeholder="Brief details about the property..." value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Care plan">
+              <select className={inputCls} style={inputStyle} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
+                {PLANS.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.visits}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="sm:col-span-2 mt-2">
+            <button type="submit" className="w-full py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
+              {initialData ? "Save changes" : "Submit for approval"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -1083,6 +1239,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
   const [newCreds, setNewCreds] = useState(null);
   const [search, setSearch] = useState("");
 
+  const [editCust, setEditCust] = useState(null);
+
   const customers = Object.values(dbs.customers || {});
   const properties = Object.values(dbs.properties || {});
   const cases = Object.values(dbs.cases || {}).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
@@ -1092,36 +1250,40 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
   );
 
   const addCustomer = async (form) => {
-    const customersDb = { ...dbs.customers };
-    const n = Object.keys(customersDb).length + 1;
-    const custId = `TW-${new Date().getFullYear()}-${pad(n, 4)}`;
-    const tempPassword = Math.random().toString(36).slice(2, 8);
-    customersDb[custId] = { id: custId, name: form.name, phone: form.phone, email: form.email, password: tempPassword, createdAt: todayISO() };
-    await saveDb(DB_KEYS.customers, customersDb);
+    const tempPassword = form.password || Math.random().toString(36).slice(2, 8);
+    const newCust = { id: form.id, name: form.name, phone: form.phone, email: form.email, password: tempPassword, createdAt: todayISO() };
+    await fetch('/api/customers', { method: 'POST', body: JSON.stringify(newCust) });
     refresh();
     setShowAddCustomer(false);
-    setNewCreds({ id: custId, password: tempPassword, name: form.name });
+    setNewCreds({ id: form.id, password: tempPassword, name: form.name });
+  };
+
+  const updateCustomer = async (form) => {
+    const cust = dbs.customers[form.id];
+    if (cust) {
+      const updated = { ...cust, name: form.name, phone: form.phone, email: form.email };
+      if (form.password) updated.password = form.password;
+      await fetch(`/api/customers/${form.id}`, { method: 'PUT', body: JSON.stringify(updated) });
+      refresh();
+    }
+    setEditCust(null);
   };
 
   const approveProperty = async (propId) => {
-    const props = { ...dbs.properties };
-    props[propId] = { ...props[propId], status: "active" };
-    await saveDb(DB_KEYS.properties, props);
+    const p = dbs.properties[propId];
+    await fetch(`/api/properties/${propId}`, { method: 'PUT', body: JSON.stringify({ ...p, status: "active" }) });
     refresh();
   };
 
   const addVisit = async (propId, visit) => {
-    const props = { ...dbs.properties };
-    const p = props[propId];
-    props[propId] = { ...p, visits: [...(p.visits || []), visit] };
-    await saveDb(DB_KEYS.properties, props);
+    const v = { id: `VISIT-${Date.now()}`, propertyId: propId, ...visit };
+    await fetch('/api/visits', { method: 'POST', body: JSON.stringify(v) });
     refresh();
   };
 
   const respondCase = async (caseId, response, status) => {
-    const cs = { ...dbs.cases };
-    cs[caseId] = { ...cs[caseId], response, status };
-    await saveDb(DB_KEYS.cases, cs);
+    const cs = dbs.cases[caseId];
+    await fetch(`/api/cases/${caseId}`, { method: 'PUT', body: JSON.stringify({ ...cs, response, status }) });
     refresh();
   };
 
@@ -1173,15 +1335,27 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
     );
   }
 
+  const propCounts = properties.reduce((acc, p) => { acc[p.type] = (acc[p.type] || 0) + 1; return acc; }, {});
+  const totalProps = properties.length || 1;
+  const propColors = ["#B8863B", "#16323F", "#4B5D45", "#8C4A2F", "#5C4A2E", "#2A3C42"];
+
   return (
-    <Shell title="TrustWork" subtitle="Admin console" onLogout={onLogout}>
-      <div className="grid grid-cols-3 gap-4 mb-7">
+    <Shell 
+      title="TrustWork" subtitle="Admin console" onLogout={onLogout}
+      tabs={[
+        { id: "customers", label: "Customers", icon: Users },
+        { id: "properties", label: "Properties", icon: Landmark },
+        { id: "cases", label: "Cases", icon: MessageSquare },
+      ]}
+      activeTab={tab} onTabChange={setTab}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
         {[
           { label: "Customers", value: customers.length, icon: Users },
           { label: "Properties", value: properties.length, icon: Landmark },
           { label: "Open cases", value: cases.filter((c) => c.status !== "resolved").length, icon: MessageSquare },
         ].map((s) => (
-          <div key={s.label} className="p-4 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          <div key={s.label} className="p-4 rounded-lg bg-white transition-all hover:shadow-lg hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
             <s.icon size={16} style={{ color: "var(--brass)" }} />
             <div className="tw-display font-bold text-2xl mt-2">{s.value}</div>
             <div className="tw-mono text-[10px] uppercase tracking-wide" style={{ opacity: 0.55 }}>{s.label}</div>
@@ -1189,14 +1363,28 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         ))}
       </div>
 
-      <Tabs
-        tabs={[
-          { id: "customers", label: "Customers", icon: Users },
-          { id: "properties", label: "Properties", icon: Landmark },
-          { id: "cases", label: "Cases", icon: MessageSquare },
-        ]}
-        active={tab} onChange={setTab}
-      />
+      <div className="mb-7 p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+        <div className="tw-display font-bold text-lg mb-4 flex items-center gap-2"><Landmark size={18} style={{ color: "var(--brass)" }} /> Properties by type</div>
+        {properties.length === 0 ? (
+          <p className="tw-body text-sm" style={{ opacity: 0.55 }}>No properties registered yet.</p>
+        ) : (
+          <div>
+            <div className="w-full h-4 rounded-full flex overflow-hidden mb-3">
+              {Object.entries(propCounts).map(([type, count], i) => (
+                <div key={type} style={{ width: `${(count / totalProps) * 100}%`, background: propColors[i % propColors.length] }} title={`${type}: ${count}`} />
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-4 mt-2">
+              {Object.entries(propCounts).map(([type, count], i) => (
+                <div key={type} className="flex items-center gap-1.5 tw-body text-xs" style={{ opacity: 0.8 }}>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: propColors[i % propColors.length] }} />
+                  {type} ({count})
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {tab === "customers" && (
         <div>
@@ -1211,14 +1399,19 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           </div>
           <div className="space-y-2.5">
             {filteredCustomers.map((c) => (
-              <div key={c.id} className="p-4 rounded-lg bg-white flex flex-wrap justify-between items-center gap-2" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+              <div key={c.id} className="p-4 rounded-lg bg-white flex flex-wrap justify-between items-center gap-2 transition-all hover:shadow-md" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
                 <div>
                   <div className="tw-body font-semibold text-sm">{c.name}</div>
                   <div className="tw-mono text-[11px] mt-0.5" style={{ opacity: 0.55 }}>{c.id}</div>
                 </div>
-                <div className="tw-body text-xs flex gap-4" style={{ opacity: 0.6 }}>
-                  {c.phone && <span className="flex items-center gap-1"><Phone size={12} />{c.phone}</span>}
-                  {c.email && <span className="flex items-center gap-1"><Mail size={12} />{c.email}</span>}
+                <div className="flex items-center gap-4">
+                  <div className="tw-body text-xs flex gap-4 hidden sm:flex" style={{ opacity: 0.6 }}>
+                    {c.phone && <span className="flex items-center gap-1"><Phone size={12} />{c.phone}</span>}
+                    {c.email && <span className="flex items-center gap-1"><Mail size={12} />{c.email}</span>}
+                  </div>
+                  <button onClick={() => setEditCust(c)} className="tw-body text-xs font-semibold px-2 py-1.5 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1" style={{ color: "var(--blueprint)" }}>
+                     Edit
+                  </button>
                 </div>
               </div>
             ))}
@@ -1232,7 +1425,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           {properties.map((p) => {
             const owner = dbs.customers[p.customerId];
             return (
-              <button key={p.id} onClick={() => setOpenProp(p.id)} className="text-left p-5 rounded-lg bg-white hover:shadow-sm transition-shadow" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+              <button key={p.id} onClick={() => setOpenProp(p.id)} className="text-left p-5 rounded-lg bg-white transition-all duration-200 hover:shadow-xl hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
                 <div className="flex justify-between items-start gap-2">
                   <Badge tone="ink">{p.type}</Badge>
                   <Badge tone={p.status === "active" ? "moss" : "brass"}>{p.status === "active" ? "Active" : "Pending"}</Badge>
@@ -1253,24 +1446,50 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         </div>
       )}
 
-      {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} />}
+      {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} dbs={dbs} />}
+      {editCust && <EditCustomerModal customer={editCust} onClose={() => setEditCust(null)} onSave={updateCustomer} />}
       {newCreds && <CredsModal creds={newCreds} onClose={() => setNewCreds(null)} />}
     </Shell>
   );
 }
 
 function AddVisitForm({ onAdd }) {
-  const [form, setForm] = useState({ kind: "inspection", date: todayISO(), notes: "", photos: "", video: "" });
-  const submit = (e) => {
+  const [form, setForm] = useState({ kind: "inspection", date: todayISO(), notes: "" });
+  const [photos, setPhotos] = useState([]);
+  const [video, setVideo] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    return data.url;
+  };
+
+  const submit = async (e) => {
     e.preventDefault();
     if (!form.notes.trim()) return;
-    onAdd({
-      kind: form.kind, date: form.date, notes: form.notes,
-      photos: form.photos.split(",").map((s) => s.trim()).filter(Boolean),
-      video: form.video.trim() || null,
-    });
-    setForm({ kind: "inspection", date: todayISO(), notes: "", photos: "", video: "" });
+    setUploading(true);
+    try {
+      const photoUrls = [];
+      for (const p of photos) photoUrls.push(await uploadFile(p));
+      const videoUrl = video ? await uploadFile(video) : null;
+      
+      onAdd({
+        kind: form.kind, date: form.date, notes: form.notes,
+        photos: photoUrls, video: videoUrl,
+      });
+      setForm({ kind: "inspection", date: todayISO(), notes: "" });
+      setPhotos([]);
+      setVideo(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
   };
+
   return (
     <form onSubmit={submit} className="p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
       <div className="tw-display font-bold text-base mb-4">Log a visit or update</div>
@@ -1289,15 +1508,15 @@ function AddVisitForm({ onAdd }) {
         <textarea className={inputCls} style={inputStyle} rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} required />
       </Field>
       <div className="grid sm:grid-cols-2 gap-x-4">
-        <Field label="Photo links (comma separated)">
-          <input className={inputCls} style={inputStyle} value={form.photos} onChange={(e) => setForm({ ...form, photos: e.target.value })} placeholder="https://…, https://…" />
+        <Field label="Photos">
+          <input type="file" multiple accept="image/*" className={inputCls} style={inputStyle} onChange={(e) => setPhotos([...e.target.files])} />
         </Field>
-        <Field label="Video link">
-          <input className={inputCls} style={inputStyle} value={form.video} onChange={(e) => setForm({ ...form, video: e.target.value })} placeholder="https://…" />
+        <Field label="Video">
+          <input type="file" accept="video/*" className={inputCls} style={inputStyle} onChange={(e) => setVideo(e.target.files[0])} />
         </Field>
       </div>
-      <button type="submit" className="py-2.5 px-5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--brass)", color: "var(--blueprint)" }}>
-        Add to log
+      <button type="submit" disabled={uploading} className="py-2.5 px-5 rounded-md font-semibold text-white tw-body" style={{ background: uploading ? "gray" : "var(--brass)", color: uploading ? "white" : "var(--blueprint)" }}>
+        {uploading ? "Uploading..." : "Add to log"}
       </button>
     </form>
   );
@@ -1324,22 +1543,54 @@ function CaseRow({ c, customer, onRespond }) {
   );
 }
 
-function AddCustomerModal({ onClose, onSave }) {
-  const [form, setForm] = useState({ name: "", phone: "", email: "" });
+function AddCustomerModal({ onClose, onSave, dbs }) {
+  const n = Object.keys(dbs?.customers || {}).length + 1;
+  const defaultId = `TW${pad(n, 2)}`;
+  const [form, setForm] = useState({ id: defaultId, name: "", phone: "", email: "", password: "" });
+  const submit = (e) => { e.preventDefault(); if (!form.name.trim() || !form.id.trim()) return; onSave(form); };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(22,50,63,0.5)" }}>
+      <div className="w-full max-w-md rounded-lg p-6 max-h-screen overflow-y-auto" style={{ background: "var(--paper)" }}>
+        <div className="flex justify-between items-center mb-5">
+          <div className="tw-display font-bold text-lg">New customer</div>
+          <button onClick={onClose}><X size={18} /></button>
+        </div>
+        <form onSubmit={submit}>
+          <Field label="Customer ID"><input className={inputCls} style={inputStyle} value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} required /></Field>
+          <Field label="Full name"><input className={inputCls} style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></Field>
+          <Field label="Phone"><input className={inputCls} style={inputStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
+          <Field label="Email"><input className={inputCls} style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
+          <Field label="Password (leave blank for random)"><input className={inputCls} style={inputStyle} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Auto-generate" /></Field>
+          <button type="submit" className="w-full mt-2 py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
+            Create account
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EditCustomerModal({ customer, onClose, onSave }) {
+  const [form, setForm] = useState({ ...customer, password: "" });
   const submit = (e) => { e.preventDefault(); if (!form.name.trim()) return; onSave(form); };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(22,50,63,0.5)" }}>
-      <div className="w-full max-w-md rounded-lg p-6" style={{ background: "var(--paper)" }}>
+      <div className="w-full max-w-md rounded-lg p-6 max-h-screen overflow-y-auto" style={{ background: "var(--paper)" }}>
         <div className="flex justify-between items-center mb-5">
-          <div className="tw-display font-bold text-lg">New customer</div>
+          <div className="tw-display font-bold text-lg">Edit customer {customer.id}</div>
           <button onClick={onClose}><X size={18} /></button>
         </div>
         <form onSubmit={submit}>
           <Field label="Full name"><input className={inputCls} style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></Field>
           <Field label="Phone"><input className={inputCls} style={inputStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
           <Field label="Email"><input className={inputCls} style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
-          <button type="submit" className="w-full mt-2 py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
-            Create account &amp; generate ID
+          <div className="mt-6 pt-4 border-t" style={{ borderColor: "rgba(30,42,47,0.1)" }}>
+            <Field label="Reset Password (leave blank to keep current)">
+              <input type="text" className={inputCls} style={inputStyle} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="New password" />
+            </Field>
+          </div>
+          <button type="submit" className="w-full mt-4 py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
+            Save changes
           </button>
         </form>
       </div>
@@ -1372,24 +1623,23 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const [admin, customers, properties, cases] = await Promise.all([
-      loadDb(DB_KEYS.admin, null),
-      loadDb(DB_KEYS.customers, {}),
-      loadDb(DB_KEYS.properties, {}),
-      loadDb(DB_KEYS.cases, {}),
-    ]);
-    setDbs({ admin, customers, properties, cases });
+    try {
+      const res = await fetch('/api/data');
+      if (res.ok) {
+        const data = await res.json();
+        setDbs({ 
+          admin: { username: "admin", password: "admin123" }, 
+          customers: data.customers, 
+          properties: data.properties, 
+          cases: data.cases 
+        });
+      }
+    } catch (e) {
+      console.error("Error fetching data:", e);
+    }
   }, []);
 
   useEffect(() => { refresh().then(() => setLoading(false)); }, [refresh]);
-
-  const ensureAdminSeed = useCallback(async () => {
-    if (!dbs.admin) {
-      const seed = { username: "admin", password: "admin123" };
-      await saveDb(DB_KEYS.admin, seed);
-      refresh();
-    }
-  }, [dbs.admin, refresh]);
 
   if (loading) {
     return (
@@ -1410,10 +1660,9 @@ export default function App() {
       {view === "login" && (
         <LoginScreen
           onBack={() => setView("landing")}
-          ensureAdminSeed={ensureAdminSeed}
           dbs={dbs}
           onAdminLogin={() => { setSession({ role: "admin" }); setView("admin"); }}
-          onCustomerLogin={(customerId) => { setSession({ role: "customer", customerId }); setView("customer"); }}
+          onCustomerLogin={(cust) => { setSession({ role: "customer", customerId: cust.id }); setView("customer"); }}
         />
       )}
       {view === "customer" && session && dbs.customers[session.customerId] && (

@@ -1554,7 +1554,7 @@ function AddCustomerModal({ onClose, onSave, dbs }) {
       <div className="w-full max-w-md rounded-lg p-6 max-h-screen overflow-y-auto" style={{ background: "var(--paper)" }}>
         <div className="flex justify-between items-center mb-5">
           <div className="tw-display font-bold text-lg">New customer</div>
-          <button onClick={onClose}><X size={18} /></button>
+          <button onClick={onClose} className="cursor-pointer hover:opacity-70 transition-opacity"><X size={18} /></button>
         </div>
         <form onSubmit={submit}>
           <Field label="Customer ID" required><input className={inputCls} style={inputStyle} value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} required /></Field>
@@ -1562,7 +1562,7 @@ function AddCustomerModal({ onClose, onSave, dbs }) {
           <Field label="Phone" required><input className={inputCls} style={inputStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required /></Field>
           <Field label="Email"><input className={inputCls} style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
           <Field label="Password (leave blank for random)"><input className={inputCls} style={inputStyle} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Auto-generate" /></Field>
-          <button type="submit" className="w-full mt-2 py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
+          <button type="submit" className="w-full mt-2 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "var(--blueprint)" }}>
             Create account
           </button>
         </form>

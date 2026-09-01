@@ -1596,8 +1596,12 @@ function CaseRow({ c, customer, onRespond }) {
 }
 
 function AddCustomerModal({ onClose, onSave, dbs }) {
-  const n = Object.keys(dbs?.customers || {}).length + 1;
-  const defaultId = `TW${pad(n, 2)}`;
+  const twIds = Object.keys(dbs?.customers || {})
+    .filter(id => id.startsWith('TW'))
+    .map(id => parseInt(id.replace('TW', ''), 10))
+    .filter(n => !isNaN(n));
+  const maxN = twIds.length > 0 ? Math.max(...twIds) : 0;
+  const defaultId = `TW${pad(maxN + 1, 2)}`;
   const [form, setForm] = useState({ id: defaultId, name: "", phone: "", email: "", password: "" });
   const submit = (e) => { e.preventDefault(); if (!form.name.trim() || !form.id.trim()) return; onSave(form); };
   return (

@@ -1241,7 +1241,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
 
   const [editCust, setEditCust] = useState(null);
 
-  const customers = Object.values(dbs.customers || {});
+  const customers = Object.values(dbs.customers || {}).filter(c => c.id !== 'admin');
   const properties = Object.values(dbs.properties || {});
   const cases = Object.values(dbs.cases || {}).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 

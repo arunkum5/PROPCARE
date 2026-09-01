@@ -1252,8 +1252,8 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
               {showMap && <MapLocationPicker onLocationSelected={(url) => setForm({ ...form, latlong: url })} />}
             </Field>
           </div>
-          <Field label="Property Size">
-            <input className={inputCls} style={inputStyle} placeholder="e.g. 1200 sq ft" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
+          <Field label="Property Size (sq ft)">
+            <input className={inputCls} style={inputStyle} placeholder="e.g. 1200" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
           </Field>
           <div className="sm:col-span-2">
             <Field label="Ownership Proof Document">

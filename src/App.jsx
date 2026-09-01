@@ -1394,9 +1394,14 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ opacity: 0.4 }} />
               <input className={inputCls} style={{ ...inputStyle, paddingLeft: 32 }} placeholder="Search customers…" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-md text-white" style={{ background: "var(--blueprint)" }}>
-              <UserPlus size={15} /> New customer
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setEditCust(dbs.customers['admin'])} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-md" style={{ background: "rgba(30,42,47,0.05)" }}>
+                <User size={15} /> Admin settings
+              </button>
+              <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-md text-white" style={{ background: "var(--blueprint)" }}>
+                <UserPlus size={15} /> New customer
+              </button>
+            </div>
           </div>
           <div className="space-y-2.5">
             {filteredCustomers.map((c) => (

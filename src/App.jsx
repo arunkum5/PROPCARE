@@ -870,9 +870,26 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
         <button onClick={onBack} className="tw-body text-sm flex items-center gap-1" style={{ opacity: 0.6 }}>
           <ArrowLeft size={14} /> All properties
         </button>
-        <button onClick={() => setShowEdit(true)} className="tw-body text-sm flex items-center gap-1.5 font-semibold transition-opacity hover:opacity-100" style={{ color: "var(--blueprint)", opacity: 0.8 }}>
-          <Pencil size={14} /> Edit property
-        </button>
+        <div className="flex items-center gap-4">
+          <button onClick={() => setShowEdit(true)} className="tw-body text-sm flex items-center gap-1.5 font-semibold transition-opacity hover:opacity-100" style={{ color: "var(--blueprint)", opacity: 0.8 }}>
+            <Pencil size={14} /> Edit property
+          </button>
+          {p.status === "pending" && (
+            <button onClick={() => window.confirm("Delete this pending property?") && onUpdate({ ...p, _delete: true })} className="tw-body text-sm flex items-center gap-1.5 font-semibold text-red-500 transition-opacity hover:opacity-100 opacity-80">
+              <Trash2 size={14} /> Delete
+            </button>
+          )}
+          {p.status === "active" && (
+            <button onClick={() => window.confirm("Request deletion of this active property? Admin must approve.") && onUpdate({ ...p, status: "delete_pending" })} className="tw-body text-sm flex items-center gap-1.5 font-semibold text-red-500 transition-opacity hover:opacity-100 opacity-80">
+              <Trash2 size={14} /> Request Delete
+            </button>
+          )}
+          {p.status === "delete_pending" && (
+            <span className="tw-body text-sm flex items-center gap-1.5 font-semibold text-orange-500 opacity-80">
+               Deletion pending
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
@@ -1028,9 +1045,14 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   };
 
   const updateProperty = async (updatedProp) => {
-    const p = dbs.properties[updatedProp.id];
-    const isPlanChanged = p.plan !== updatedProp.plan;
-    await fetch(`/api/properties/${updatedProp.id}`, { method: 'PUT', body: JSON.stringify({ ...p, ...updatedProp, agreed: isPlanChanged ? false : p.agreed }) });
+    if (updatedProp._delete) {
+      await fetch(`/api/properties/${updatedProp.id}`, { method: 'DELETE' });
+      setOpenProp(null);
+    } else {
+      const p = dbs.properties[updatedProp.id];
+      const isPlanChanged = p.plan !== updatedProp.plan;
+      await fetch(`/api/properties/${updatedProp.id}`, { method: 'PUT', body: JSON.stringify({ ...p, ...updatedProp, agreed: isPlanChanged ? false : p.agreed }) });
+    }
     refresh();
   };
 
@@ -1344,14 +1366,24 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
             <div className="tw-body text-sm mt-1" style={{ opacity: 0.65 }}>{owner ? `${owner.name} · ${owner.id}` : p.customerId}</div>
           </div>
           <div className="flex gap-2 items-center">
-            <Badge tone={p.status === "active" ? "moss" : "brass"}>{p.status === "active" ? "Active" : "Pending approval"}</Badge>
-            {p.status !== "active" && (
+            <Badge tone={p.status === "active" ? "moss" : p.status === "delete_pending" ? "tomato" : "brass"}>
+              {p.status === "active" ? "Active" : p.status === "delete_pending" ? "Deletion Requested" : "Pending approval"}
+            </Badge>
+            {p.status !== "active" && p.status !== "delete_pending" && (
               <button onClick={() => approveProperty(p.id)} className="tw-body text-sm font-semibold px-3 py-1.5 rounded-md text-white cursor-pointer hover:opacity-90" style={{ background: "var(--moss)" }}>
                 Approve
               </button>
             )}
+            {p.status === "delete_pending" && (
+              <button onClick={async () => {
+                await fetch(`/api/properties/${p.id}`, { method: 'PUT', body: JSON.stringify({ ...p, status: "active" }) });
+                refresh();
+              }} className="tw-body text-sm font-semibold px-3 py-1.5 rounded-md text-gray-700 bg-gray-200 cursor-pointer hover:bg-gray-300">
+                Reject Deletion
+              </button>
+            )}
             <button onClick={() => deleteProperty(p.id)} className="tw-body text-sm font-semibold px-3 py-1.5 rounded-md text-white cursor-pointer hover:opacity-90" style={{ background: "#e53e3e" }}>
-              Delete Property
+              {p.status === "delete_pending" ? "Approve Deletion" : "Delete Property"}
             </button>
           </div>
         </div>
@@ -1480,7 +1512,9 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
               <button key={p.id} onClick={() => setOpenProp(p.id)} className="text-left p-5 rounded-lg bg-white transition-all duration-200 hover:shadow-xl hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
                 <div className="flex justify-between items-start gap-2">
                   <Badge tone="ink">{p.type}</Badge>
-                  <Badge tone={p.status === "active" ? "moss" : "brass"}>{p.status === "active" ? "Active" : "Pending"}</Badge>
+                  <Badge tone={p.status === "active" ? "moss" : p.status === "delete_pending" ? "tomato" : "brass"}>
+                    {p.status === "active" ? "Active" : p.status === "delete_pending" ? "Deletion Requested" : "Pending"}
+                  </Badge>
                 </div>
                 <div className="tw-display font-bold text-lg mt-3">{p.title}</div>
                 <div className="tw-body text-sm mt-1" style={{ opacity: 0.6 }}>{owner ? owner.name : p.customerId}</div>

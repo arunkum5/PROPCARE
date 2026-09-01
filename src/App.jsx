@@ -1208,7 +1208,7 @@ function MapLocationPicker({ onLocationSelected }) {
   return (
     <div className="h-64 w-full mt-2 rounded-md overflow-hidden" style={{ border: "1px solid rgba(30,42,47,0.2)" }}>
       <MapContainer center={[12.9716, 77.5946]} zoom={11} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
-        <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+        <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <LocationMarker />
       </MapContainer>
     </div>

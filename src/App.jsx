@@ -1480,9 +1480,14 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                     {c.phone && <span className="flex items-center gap-1"><Phone size={12} />{c.phone}</span>}
                     {c.email && <span className="flex items-center gap-1"><Mail size={12} />{c.email}</span>}
                   </div>
-                  <button onClick={() => setEditCust(c)} className="tw-body text-xs font-semibold px-2 py-1.5 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1" style={{ color: "var(--blueprint)" }}>
-                     Edit
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setEditCust(c)} className="tw-body text-xs font-semibold px-2 py-1.5 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1 cursor-pointer" style={{ color: "var(--blueprint)" }}>
+                       Edit
+                    </button>
+                    <button onClick={() => deleteCustomer(c.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors cursor-pointer" title="Delete customer">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1518,7 +1523,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
       )}
 
       {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} dbs={dbs} />}
-      {editCust && <EditCustomerModal customer={editCust} onClose={() => setEditCust(null)} onSave={updateCustomer} onDelete={() => deleteCustomer(editCust.id)} />}
+      {editCust && <EditCustomerModal customer={editCust} onClose={() => setEditCust(null)} onSave={updateCustomer} />}
       {newCreds && <CredsModal creds={newCreds} onClose={() => setNewCreds(null)} />}
     </Shell>
   );
@@ -1664,11 +1669,6 @@ function EditCustomerModal({ customer, onClose, onSave, onDelete }) {
             <button type="submit" className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "var(--blueprint)" }}>
               Save changes
             </button>
-            {onDelete && customer.id !== 'admin' && (
-              <button type="button" onClick={onDelete} className="py-2.5 px-4 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "#e53e3e" }}>
-                <Trash2 size={18} />
-              </button>
-            )}
           </div>
         </form>
       </div>

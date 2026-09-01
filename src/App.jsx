@@ -514,8 +514,8 @@ function Landing({ onLogin }) {
           
           {/* Right Side: Images */}
           <div className="flex-1 w-full max-w-md lg:max-w-none relative aspect-[4/3] sm:aspect-video lg:aspect-square flex items-center justify-center">
-             <img src="/home-hand.png" className="absolute w-full h-full object-contain drop-shadow-2xl rounded-2xl" style={{ transform: "scale(1.3)", animation: "bgFade1 12s infinite" }} alt="Property Care" />
-             <img src="/home-hand-new.png" className="absolute w-full h-full object-contain drop-shadow-2xl rounded-2xl" style={{ opacity: 0, animation: "bgFade2 12s infinite" }} alt="Property Care" />
+             <img src="/home-hand.png" className="absolute w-full h-full object-cover drop-shadow-2xl rounded-2xl" style={{ animation: "bgFade1 12s infinite" }} alt="Property Care" />
+             <img src="/home-hand-new.png" className="absolute w-full h-full object-cover drop-shadow-2xl rounded-2xl" style={{ opacity: 0, animation: "bgFade2 12s infinite" }} alt="Property Care" />
           </div>
         </div>
         

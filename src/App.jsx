@@ -1007,7 +1007,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
     const propId = `PLOT-${Date.now().toString().slice(-6)}`;
     const newProp = {
       id: propId, customerId: customer.id, type: form.type, title: form.title,
-      address: form.address, mapLink: form.mapLink, plan: form.plan,
+      address: form.address, latlong: form.latlong, size: form.size, summary: form.summary, plan: form.plan,
       status: "pending", createdAt: todayISO(), visits: [],
     };
     await fetch('/api/properties', { method: 'POST', body: JSON.stringify(newProp) });
@@ -1187,36 +1187,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   );
 }
 
-function MapLocationPicker({ onLocationSelected }) {
-  const [position, setPosition] = useState(null);
-
-  const LocationMarker = () => {
-    useMapEvents({
-      click(e) {
-        setPosition(e.latlng);
-        onLocationSelected(`https://maps.google.com/?q=${e.latlng.lat},${e.latlng.lng}`);
-      },
-    });
-
-    return position === null ? null : (
-      <Marker position={position}>
-        <Popup>Selected Location</Popup>
-      </Marker>
-    );
-  };
-
-  return (
-    <div className="h-64 w-full mt-2 rounded-md overflow-hidden" style={{ border: "1px solid rgba(30,42,47,0.2)" }}>
-      <MapContainer center={[12.9716, 77.5946]} zoom={11} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
-        <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <LocationMarker />
-      </MapContainer>
-    </div>
-  );
-}
-
 function AddPropertyModal({ onClose, onSave, initialData }) {
-  const [showMap, setShowMap] = useState(false);
   const [form, setForm] = useState(initialData || { type: PROPERTY_TYPES[0], title: "", address: "", latlong: "", size: "", summary: "", plan: "essential" });
   const [docFile, setDocFile] = useState(null);
   const submit = (e) => { e.preventDefault(); if (!form.title.trim() || !form.address.trim()) return; onSave(form); };
@@ -1243,13 +1214,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
           </div>
           <div className="sm:col-span-2">
             <Field label="Google map location link">
-              <div className="flex gap-2">
-                <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
-                <button type="button" onClick={() => setShowMap(!showMap)} className="px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap tw-body cursor-pointer hover:opacity-90" style={{ background: "rgba(30,42,47,0.05)", color: "var(--ink)" }}>
-                  {showMap ? "Hide Map" : "Choose on map"}
-                </button>
-              </div>
-              {showMap && <MapLocationPicker onLocationSelected={(url) => setForm({ ...form, latlong: url })} />}
+              <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
             </Field>
           </div>
           <Field label="Property Size (sq ft)">
@@ -1257,13 +1222,24 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
           </Field>
           <div className="sm:col-span-2">
             <Field label="Ownership Proof Document">
-              <input type="file" className={inputCls} style={inputStyle} onChange={(e) => setDocFile(e.target.files[0])} />
-              {docFile && <div className="text-xs mt-1 text-green-700">Selected: {docFile.name}</div>}
+              <input type="file" accept=".pdf,image/*" className={inputCls} style={inputStyle} onChange={(e) => {
+                const file = e.target.files[0];
+                if (file && file.size > 5 * 1024 * 1024) {
+                  alert("File size must be less than 5MB.");
+                  e.target.value = "";
+                  setDocFile(null);
+                } else {
+                  setDocFile(file);
+                }
+              }} />
+              <div className="text-xs mt-1" style={{ opacity: 0.6 }}>Max file size: 5MB (PDF or Image)</div>
+              {docFile && <div className="text-xs mt-1 text-green-700 font-medium flex items-center gap-1"><CheckCircle2 size={12} /> Selected: {docFile.name}</div>}
             </Field>
           </div>
           <div className="sm:col-span-2">
             <Field label="Property Summary">
-              <textarea className={inputCls} style={inputStyle} rows={2} placeholder="Brief details about the property..." value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
+              <textarea className={inputCls} style={inputStyle} rows={3} maxLength={500} placeholder="Brief details about the property (max 500 characters)..." value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
+              <div className="text-right mt-1 text-xs" style={{ opacity: 0.5 }}>{(form.summary || "").length} / 500</div>
             </Field>
           </div>
           <div className="sm:col-span-2">

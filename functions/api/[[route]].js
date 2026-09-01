@@ -57,6 +57,21 @@ app.put('/api/customers/:id', async (c) => {
   return c.json({ success: true })
 })
 
+// DELETE /api/customers/:id - Delete customer and all related data
+app.delete('/api/customers/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  // Cascade delete logic (SQLite foreign keys might not have ON DELETE CASCADE set, so we do it manually)
+  const { results: props } = await db.prepare('SELECT id FROM properties WHERE customerId = ?').bind(id).all()
+  for (const p of props) {
+    await db.prepare('DELETE FROM visits WHERE propertyId = ?').bind(p.id).run()
+  }
+  await db.prepare('DELETE FROM cases WHERE customerId = ?').bind(id).run()
+  await db.prepare('DELETE FROM properties WHERE customerId = ?').bind(id).run()
+  await db.prepare('DELETE FROM customers WHERE id = ?').bind(id).run()
+  return c.json({ success: true })
+})
+
 // POST /api/properties - Add property
 app.post('/api/properties', async (c) => {
   const db = c.env.DB
@@ -77,6 +92,16 @@ app.put('/api/properties/:id', async (c) => {
     .bind(body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, id)
     .run()
   
+  return c.json({ success: true })
+})
+
+// DELETE /api/properties/:id - Delete property and related data
+app.delete('/api/properties/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  await db.prepare('DELETE FROM visits WHERE propertyId = ?').bind(id).run()
+  await db.prepare('DELETE FROM cases WHERE propertyId = ?').bind(id).run()
+  await db.prepare('DELETE FROM properties WHERE id = ?').bind(id).run()
   return c.json({ success: true })
 })
 

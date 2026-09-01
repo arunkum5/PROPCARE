@@ -4,9 +4,9 @@ import {
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
   UserPlus, User, Search, ArrowLeft, Sprout, Fence, Eye, EyeOff, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil
+  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2
 } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 
 const mapIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--clay); fill: rgba(140,74,47,0.2);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
@@ -1172,7 +1172,36 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   );
 }
 
+function MapLocationPicker({ onLocationSelected }) {
+  const [position, setPosition] = useState(null);
+
+  const LocationMarker = () => {
+    useMapEvents({
+      click(e) {
+        setPosition(e.latlng);
+        onLocationSelected(`https://maps.google.com/?q=${e.latlng.lat},${e.latlng.lng}`);
+      },
+    });
+
+    return position === null ? null : (
+      <Marker position={position}>
+        <Popup>Selected Location</Popup>
+      </Marker>
+    );
+  };
+
+  return (
+    <div className="h-64 w-full mt-2 rounded-md overflow-hidden" style={{ border: "1px solid rgba(30,42,47,0.2)" }}>
+      <MapContainer center={[12.9716, 77.5946]} zoom={11} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
+        <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+        <LocationMarker />
+      </MapContainer>
+    </div>
+  );
+}
+
 function AddPropertyModal({ onClose, onSave, initialData }) {
+  const [showMap, setShowMap] = useState(false);
   const [form, setForm] = useState(initialData || { type: PROPERTY_TYPES[0], title: "", address: "", latlong: "", size: "", summary: "", plan: "essential" });
   const [docFile, setDocFile] = useState(null);
   const submit = (e) => { e.preventDefault(); if (!form.title.trim() || !form.address.trim()) return; onSave(form); };
@@ -1197,9 +1226,17 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
               <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
             </Field>
           </div>
-          <Field label="Location (Google Maps Link or Lat/Long)">
-            <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/... or 12.97, 77.59" value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
-          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Google map location link">
+              <div className="flex gap-2">
+                <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
+                <button type="button" onClick={() => setShowMap(!showMap)} className="px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap tw-body cursor-pointer hover:opacity-90" style={{ background: "rgba(30,42,47,0.05)", color: "var(--ink)" }}>
+                  {showMap ? "Hide Map" : "Choose on map"}
+                </button>
+              </div>
+              {showMap && <MapLocationPicker onLocationSelected={(url) => setForm({ ...form, latlong: url })} />}
+            </Field>
+          </div>
           <Field label="Property Size">
             <input className={inputCls} style={inputStyle} placeholder="e.g. 1200 sq ft" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
           </Field>
@@ -1288,6 +1325,20 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
     refresh();
   };
 
+  const deleteCustomer = async (custId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this customer and all their properties?")) return;
+    await fetch(`/api/customers/${custId}`, { method: 'DELETE' });
+    refresh();
+    setEditCust(null);
+  };
+
+  const deleteProperty = async (propId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this property?")) return;
+    await fetch(`/api/properties/${propId}`, { method: 'DELETE' });
+    refresh();
+    setOpenProp(null);
+  };
+
   if (openProp) {
     const p = dbs.properties[openProp];
     const owner = dbs.customers[p.customerId];
@@ -1304,10 +1355,13 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           <div className="flex gap-2 items-center">
             <Badge tone={p.status === "active" ? "moss" : "brass"}>{p.status === "active" ? "Active" : "Pending approval"}</Badge>
             {p.status !== "active" && (
-              <button onClick={() => approveProperty(p.id)} className="tw-body text-sm font-semibold px-3 py-1.5 rounded-md text-white" style={{ background: "var(--moss)" }}>
+              <button onClick={() => approveProperty(p.id)} className="tw-body text-sm font-semibold px-3 py-1.5 rounded-md text-white cursor-pointer hover:opacity-90" style={{ background: "var(--moss)" }}>
                 Approve
               </button>
             )}
+            <button onClick={() => deleteProperty(p.id)} className="tw-body text-sm font-semibold px-3 py-1.5 rounded-md text-white cursor-pointer hover:opacity-90" style={{ background: "#e53e3e" }}>
+              Delete Property
+            </button>
           </div>
         </div>
         <div className="tw-body text-sm flex items-center gap-1.5 mb-6" style={{ opacity: 0.6 }}>
@@ -1453,7 +1507,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
       )}
 
       {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} dbs={dbs} />}
-      {editCust && <EditCustomerModal customer={editCust} onClose={() => setEditCust(null)} onSave={updateCustomer} />}
+      {editCust && <EditCustomerModal customer={editCust} onClose={() => setEditCust(null)} onSave={updateCustomer} onDelete={() => deleteCustomer(editCust.id)} />}
       {newCreds && <CredsModal creds={newCreds} onClose={() => setNewCreds(null)} />}
     </Shell>
   );
@@ -1576,7 +1630,7 @@ function AddCustomerModal({ onClose, onSave, dbs }) {
   );
 }
 
-function EditCustomerModal({ customer, onClose, onSave }) {
+function EditCustomerModal({ customer, onClose, onSave, onDelete }) {
   const [form, setForm] = useState({ ...customer, password: "" });
   const submit = (e) => { e.preventDefault(); if (!form.name.trim()) return; onSave(form); };
   return (
@@ -1595,9 +1649,16 @@ function EditCustomerModal({ customer, onClose, onSave }) {
               <input type="text" className={inputCls} style={inputStyle} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="New password" />
             </Field>
           </div>
-          <button type="submit" className="w-full mt-4 py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
-            Save changes
-          </button>
+          <div className="flex gap-2 mt-4">
+            <button type="submit" className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "var(--blueprint)" }}>
+              Save changes
+            </button>
+            {onDelete && customer.id !== 'admin' && (
+              <button type="button" onClick={onDelete} className="py-2.5 px-4 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "#e53e3e" }}>
+                <Trash2 size={18} />
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

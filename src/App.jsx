@@ -237,10 +237,23 @@ const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 const PLANS = [
-  { id: "essential", name: "Essential Watch", visits: "1 visit / month", media: "Up to 6 photos", price: "Entry tier" },
-  { id: "standard", name: "Standard Watch", visits: "2 visits / month", media: "Unlimited photos + 1 video", price: "Mid tier" },
-  { id: "premium", name: "Premium Watch", visits: "4 visits / month", media: "Unlimited photos + video + live call", price: "Top tier" },
+  { id: "essential", name: "Essential Watch", visits: "1 visit / month", media: "Up to 6 photos", ratePerSqft: 1 },
+  { id: "standard", name: "Standard Watch", visits: "2 visits / month", media: "Unlimited photos + 1 video", ratePerSqft: 2 },
+  { id: "premium", name: "Premium Watch", visits: "4 visits / month", media: "Unlimited photos + video + live call", ratePerSqft: 3 },
 ];
+
+function calcMonthlyFee(plan, sqft) {
+  const p = PLANS.find(pl => pl.id === plan);
+  const s = parseFloat(sqft) || 0;
+  return p && s > 0 ? p.ratePerSqft * s : null;
+}
+
+function calcExpiry(paymentDate) {
+  if (!paymentDate) return null;
+  const d = new Date(paymentDate);
+  d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+}
 
 const PROPERTY_TYPES = ["Vacant Plot", "Agricultural Land", "Commercial Land", "Flat / Apartment", "Independent House", "Villa"];
 
@@ -784,7 +797,7 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
 }
 
 /* ================= SHARED SHELL ================= */
-function Shell({ title, subtitle, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange }) {
+function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="min-h-full flex flex-col" style={{ background: "var(--paper)", color: "var(--ink)" }}>
@@ -800,6 +813,12 @@ function Shell({ title, subtitle, onLogout, onSettings, onRefresh, children, tab
             <div className="leading-tight">
               <div className="tw-display font-bold text-white text-[16px]">{title}</div>
               <div className="tw-mono text-[10px] tracking-widest uppercase" style={{ color: "rgba(246,241,231,0.6)" }}>{subtitle}</div>
+              {planInfo && (
+                <div className="tw-mono text-[10px] mt-0.5 flex items-center gap-2 flex-wrap">
+                  <span className="px-1.5 py-0.5 rounded" style={{ background: "rgba(184,134,59,0.3)", color: "#F6D88A" }}>{planInfo.planName}</span>
+                  {planInfo.expiry && <span style={{ color: "rgba(246,241,231,0.55)" }}>Expires {new Date(planInfo.expiry).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}</span>}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -1081,9 +1100,17 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
     return <CustomerPropertyDetail p={p} customer={customer} onBack={() => setOpenProp(null)} onChangePlan={(planId) => changePlan(p.id, planId)} onAgree={() => handleAgree(p.id)} onUpdate={updateProperty} onLogout={onLogout} />;
   }
 
+  // Pick the first active property's plan info for the header
+  const activeProp = myProps.find(p => p.status === 'active' && p.paymentDate);
+  const headerPlanInfo = activeProp ? {
+    planName: PLANS.find(pl => pl.id === activeProp.plan)?.name || activeProp.plan,
+    expiry: activeProp.expiryDate || null,
+  } : null;
+
   return (
     <Shell 
       title="TrustWork" subtitle={customer.name} onLogout={onLogout} onRefresh={refresh}
+      planInfo={headerPlanInfo}
       tabs={[
         { id: "profile", label: "Profile", icon: User },
         { id: "properties", label: "My properties", icon: Landmark },
@@ -1216,73 +1243,218 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
 }
 
 function AddPropertyModal({ onClose, onSave, initialData }) {
+  const [step, setStep] = useState(1); // 1=details, 2=agreement, 3=payment
   const [form, setForm] = useState(initialData || { type: PROPERTY_TYPES[0], title: "", address: "", latlong: "", size: "", summary: "", plan: "essential" });
   const [docFile, setDocFile] = useState(null);
-  const submit = (e) => { e.preventDefault(); if (!form.title.trim() || !form.address.trim()) return; onSave(form); };
+  const [agreed, setAgreed] = useState(false);
+  const [paying, setPaying] = useState(false);
+
+  const selectedPlan = PLANS.find(p => p.id === form.plan);
+  const monthlyFee = calcMonthlyFee(form.plan, form.size);
+
+  const handleDetailsNext = (e) => {
+    e.preventDefault();
+    if (!form.title.trim() || !form.address.trim()) return;
+    if (initialData) { onSave(form); return; } // edit mode — just save
+    setStep(2);
+  };
+
+  const handlePayment = async () => {
+    if (!monthlyFee) return;
+    setPaying(true);
+    try {
+      // 1. Create order on backend
+      const orderRes = await fetch('/api/razorpay/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: monthlyFee * 100 }), // paise
+      });
+      const order = await orderRes.json();
+      if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
+
+      // 2. Load Razorpay script if not already loaded
+      if (!window.Razorpay) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      // 3. Open Razorpay checkout
+      const rzp = new window.Razorpay({
+        key: 'rzp_test_TWsO8obvIqrJKK',
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.orderId,
+        name: 'TrustWork Property Care',
+        description: `${selectedPlan?.name} — ${form.title}`,
+        theme: { color: '#16323F' },
+        handler: async (response) => {
+          // 4. Verify payment on backend
+          const verRes = await fetch('/api/razorpay/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+          const verData = await verRes.json();
+          if (verData.success) {
+            const paymentDate = new Date().toISOString();
+            const expiryDate = calcExpiry(paymentDate);
+            onSave({ ...form, agreementSigned: true, paymentDate, expiryDate, paymentStatus: 'paid', paymentId: response.razorpay_payment_id });
+          } else {
+            alert('Payment verification failed. Please contact support.');
+          }
+          setPaying(false);
+        },
+        modal: { ondismiss: () => setPaying(false) },
+      });
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert('Payment failed: ' + err.message);
+      setPaying(false);
+    }
+  };
+
+  const STEP_LABELS = ['Property Details', 'Agreement', 'Payment'];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(22,50,63,0.5)" }}>
       <div className="w-full max-w-xl rounded-lg p-6 max-h-[90vh] overflow-y-auto" style={{ background: "var(--paper)" }}>
-        <div className="flex justify-between items-center mb-5">
-          <div className="tw-display font-bold text-lg">{initialData ? "Edit Property" : "Register a property"}</div>
-          <button onClick={onClose}><X size={18} /></button>
+        {/* Step indicator */}
+        <div className="flex items-center gap-2 mb-5">
+          {STEP_LABELS.map((label, i) => (
+            <React.Fragment key={i}>
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: step > i + 1 ? 'var(--moss)' : step === i + 1 ? 'var(--blueprint)' : 'rgba(30,42,47,0.1)', color: step >= i + 1 ? 'white' : 'rgba(30,42,47,0.4)' }}>
+                  {step > i + 1 ? '✓' : i + 1}
+                </div>
+                <span className="tw-body text-xs font-semibold hidden sm:inline" style={{ color: step === i + 1 ? 'var(--blueprint)' : 'rgba(30,42,47,0.4)' }}>{label}</span>
+              </div>
+              {i < 2 && <div className="flex-1 h-px" style={{ background: step > i + 1 ? 'var(--moss)' : 'rgba(30,42,47,0.1)' }} />}
+            </React.Fragment>
+          ))}
+          <button onClick={onClose} className="ml-2"><X size={18} /></button>
         </div>
-        <form onSubmit={submit} className="grid sm:grid-cols-2 gap-x-4">
-          <Field label="Property type" required>
-            <select className={inputCls} style={inputStyle} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-              {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </Field>
-          <Field label="Property name / nickname" required>
-            <input className={inputCls} style={inputStyle} placeholder="e.g. Whitefield 30x40 site" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label="Address" required>
-              <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
-            </Field>
-          </div>
-          <div className="sm:col-span-2">
-            <Field label="Google map location link">
-              <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
-            </Field>
-          </div>
-          <Field label="Property Size (sq ft)">
-            <input className={inputCls} style={inputStyle} placeholder="e.g. 1200" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label="Ownership Proof Document (Max 5MB)">
-              <input type="file" accept=".pdf,image/*" className={inputCls} style={inputStyle} onChange={(e) => {
-                const file = e.target.files[0];
-                if (file && file.size > 5 * 1024 * 1024) {
-                  alert("File size must be less than 5MB.");
-                  e.target.value = "";
-                  setDocFile(null);
-                } else {
-                  setDocFile(file);
-                }
-              }} />
-              <div className="text-xs mt-1" style={{ opacity: 0.6 }}>Max file size: 5MB (PDF or Image)</div>
-              {docFile && <div className="text-xs mt-1 text-green-700 font-medium flex items-center gap-1"><CheckCircle2 size={12} /> Selected: {docFile.name}</div>}
-            </Field>
-          </div>
-          <div className="sm:col-span-2">
-            <Field label="Property Summary">
-              <textarea className={inputCls} style={inputStyle} rows={3} maxLength={500} placeholder="Brief details about the property (max 500 characters)..." value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
-              <div className="text-right mt-1 text-xs" style={{ opacity: 0.5 }}>{(form.summary || "").length} / 500</div>
-            </Field>
-          </div>
-          <div className="sm:col-span-2">
-            <Field label="Care plan" required>
-              <select className={inputCls} style={inputStyle} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
-                {PLANS.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.visits}</option>)}
+
+        {/* Step 1: Property Details */}
+        {step === 1 && (
+          <form onSubmit={handleDetailsNext} className="grid sm:grid-cols-2 gap-x-4">
+            <div className="sm:col-span-2 tw-display font-bold text-lg mb-2">{initialData ? 'Edit Property' : 'Register a property'}</div>
+            <Field label="Property type" required>
+              <select className={inputCls} style={inputStyle} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </Field>
+            <Field label="Property name / nickname" required>
+              <input className={inputCls} style={inputStyle} placeholder="e.g. Whitefield 30x40 site" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Address" required>
+                <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label="Google map location link">
+                <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
+              </Field>
+            </div>
+            <Field label="Property Size (sq ft)">
+              <input className={inputCls} style={inputStyle} placeholder="e.g. 1200" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Ownership Proof Document (Max 5MB)">
+                <input type="file" accept=".pdf,image/*" className={inputCls} style={inputStyle} onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file && file.size > 5 * 1024 * 1024) { alert("File size must be less than 5MB."); e.target.value = ""; setDocFile(null); } else { setDocFile(file); }
+                }} />
+                {docFile && <div className="text-xs mt-1 text-green-700 font-medium flex items-center gap-1"><CheckCircle2 size={12} /> {docFile.name}</div>}
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label="Property Summary">
+                <textarea className={inputCls} style={inputStyle} rows={3} maxLength={500} placeholder="Brief details about the property (max 500 characters)..." value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
+                <div className="text-right mt-1 text-xs" style={{ opacity: 0.5 }}>{(form.summary || "").length} / 500</div>
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label="Care plan" required>
+                <select className={inputCls} style={inputStyle} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
+                  {PLANS.map((p) => <option key={p.id} value={p.id}>{p.name} — ₹{p.ratePerSqft}/sqft/month — {p.visits}</option>)}
+                </select>
+              </Field>
+              {form.size && monthlyFee && (
+                <div className="mt-2 px-3 py-2 rounded-md text-sm tw-body" style={{ background: 'rgba(30,42,47,0.05)' }}>
+                  Estimated monthly fee: <strong>₹{monthlyFee.toLocaleString('en-IN')}</strong> ({form.size} sqft × ₹{selectedPlan?.ratePerSqft}/sqft)
+                </div>
+              )}
+            </div>
+            <div className="sm:col-span-2 mt-3">
+              <button type="submit" className="w-full py-2.5 rounded-md font-semibold text-white tw-body flex items-center justify-center gap-2 cursor-pointer hover:opacity-90" style={{ background: "var(--blueprint)" }}>
+                {initialData ? 'Save changes' : 'Next: Agreement & Payment →'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Step 2: Agreement */}
+        {step === 2 && (
+          <div>
+            <div className="tw-display font-bold text-lg mb-4">TrustWork Property Care Agreement</div>
+            <div className="rounded-md p-4 text-sm tw-body space-y-3 max-h-60 overflow-y-auto mb-4" style={{ background: 'rgba(30,42,47,0.04)', border: '1px solid rgba(30,42,47,0.1)', lineHeight: 1.7 }}>
+              <p><strong>This Agreement</strong> is entered between <strong>TrustWork Property Care Services</strong> ("Company") and the customer ("Client") for property monitoring services.</p>
+              <p><strong>1. Services:</strong> The Company agrees to provide property inspection visits, photographic documentation, and development updates as per the selected care plan.</p>
+              <p><strong>2. Plan:</strong> Client has selected the <strong>{selectedPlan?.name}</strong> plan at ₹{selectedPlan?.ratePerSqft}/sqft/month. {monthlyFee ? `Monthly fee: ₹${monthlyFee.toLocaleString('en-IN')}.` : ''}</p>
+              <p><strong>3. Payment:</strong> Monthly fees are due at the start of each service period. Services will be suspended upon non-payment.</p>
+              <p><strong>4. Access:</strong> Client authorizes Company representatives to access and inspect the registered property for monitoring purposes.</p>
+              <p><strong>5. Reports:</strong> Visit reports, photos, and videos will be made available through the TrustWork client portal at care.trustwork.co.in.</p>
+              <p><strong>6. Termination:</strong> Either party may terminate this agreement with 30 days written notice. Unused fees will be refunded on a pro-rata basis.</p>
+              <p><strong>7. Liability:</strong> The Company is not liable for any property damage or loss. Services are limited to monitoring and reporting.</p>
+            </div>
+            <label className="flex items-start gap-3 cursor-pointer mb-5">
+              <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="mt-1 cursor-pointer" style={{ width: 16, height: 16 }} />
+              <span className="tw-body text-sm">I have read and agree to the TrustWork Property Care Agreement terms and conditions.</span>
+            </label>
+            <div className="flex gap-3">
+              <button onClick={() => setStep(1)} className="flex-1 py-2.5 rounded-md font-semibold tw-body cursor-pointer hover:opacity-80" style={{ background: 'rgba(30,42,47,0.08)', color: 'var(--ink)' }}>← Back</button>
+              <button disabled={!agreed} onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed" style={{ background: "var(--blueprint)" }}>Proceed to Payment →</button>
+            </div>
           </div>
-          <div className="sm:col-span-2 mt-2">
-            <button type="submit" className="w-full py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
-              {initialData ? "Save changes" : "Submit for approval"}
-            </button>
+        )}
+
+        {/* Step 3: Payment */}
+        {step === 3 && (
+          <div>
+            <div className="tw-display font-bold text-lg mb-4">Payment</div>
+            <div className="rounded-lg p-5 mb-5" style={{ background: 'rgba(30,42,47,0.04)', border: '1px solid rgba(30,42,47,0.1)' }}>
+              <div className="tw-body text-sm font-semibold mb-3" style={{ opacity: 0.6 }}>ORDER SUMMARY</div>
+              <div className="flex justify-between tw-body text-sm mb-1"><span>{form.title}</span><span style={{ opacity: 0.6 }}>{form.address}</span></div>
+              <div className="flex justify-between tw-body text-sm mb-1"><span>Plan</span><span className="font-semibold">{selectedPlan?.name}</span></div>
+              <div className="flex justify-between tw-body text-sm mb-1"><span>Property size</span><span>{form.size} sq ft</span></div>
+              <div className="flex justify-between tw-body text-sm mb-1"><span>Rate</span><span>₹{selectedPlan?.ratePerSqft}/sqft/month</span></div>
+              <div className="border-t mt-3 pt-3 flex justify-between tw-body font-bold" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+                <span>Monthly Total</span>
+                <span style={{ color: 'var(--blueprint)' }}>₹{monthlyFee ? monthlyFee.toLocaleString('en-IN') : '—'}</span>
+              </div>
+            </div>
+            <div className="rounded-md p-3 mb-4 text-xs tw-body flex items-start gap-2" style={{ background: 'rgba(184,134,59,0.08)', border: '1px solid rgba(184,134,59,0.2)', color: 'var(--brass)' }}>
+              <span>ℹ️</span> Secure payment powered by Razorpay. Your card details are never stored by TrustWork.
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setStep(2)} className="py-2.5 px-4 rounded-md font-semibold tw-body cursor-pointer hover:opacity-80" style={{ background: 'rgba(30,42,47,0.08)', color: 'var(--ink)' }}>← Back</button>
+              <button disabled={paying || !monthlyFee} onClick={handlePayment} className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: paying ? 'gray' : '#2E7D32' }}>
+                {paying ? 'Processing...' : `Pay ₹${monthlyFee ? monthlyFee.toLocaleString('en-IN') : '—'} via Razorpay`}
+              </button>
+            </div>
+            {!monthlyFee && <p className="text-xs text-red-500 mt-2 tw-body">Please go back and enter the property size to calculate fee.</p>}
           </div>
-        </form>
+        )}
       </div>
     </div>
   );

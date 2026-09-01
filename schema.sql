@@ -18,7 +18,12 @@ CREATE TABLE IF NOT EXISTS properties (
   summary TEXT,
   plan TEXT,
   status TEXT,
-  agreed INTEGER, -- SQLite uses INTEGER (0/1) for BOOLEAN
+  agreed INTEGER,          -- SQLite uses INTEGER (0/1) for BOOLEAN
+  agreementSigned INTEGER, -- customer signed the agreement
+  paymentDate TEXT,        -- ISO timestamp of payment
+  expiryDate TEXT,         -- ISO timestamp of plan expiry (1 month after payment)
+  paymentStatus TEXT,      -- null | paid | failed
+  paymentId TEXT,          -- Razorpay payment ID
   FOREIGN KEY(customerId) REFERENCES customers(id)
 );
 

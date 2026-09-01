@@ -83,8 +83,8 @@ app.delete('/api/customers/:id', async (c) => {
 app.post('/api/properties', async (c) => {
   const db = c.env.DB
   const body = await c.req.json()
-  await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(body.id, body.customerId, body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0)
+  await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(body.id, body.customerId, body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null)
     .run()
   return c.json({ success: true })
 })
@@ -95,8 +95,8 @@ app.put('/api/properties/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json()
   
-  await db.prepare('UPDATE properties SET type = ?, title = ?, address = ?, latlong = ?, size = ?, summary = ?, plan = ?, status = ?, agreed = ? WHERE id = ?')
-    .bind(body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, id)
+  await db.prepare('UPDATE properties SET type = ?, title = ?, address = ?, latlong = ?, size = ?, summary = ?, plan = ?, status = ?, agreed = ?, agreementSigned = ?, paymentDate = ?, expiryDate = ?, paymentStatus = ?, paymentId = ? WHERE id = ?')
+    .bind(body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null, id)
     .run()
   
   return c.json({ success: true })
@@ -170,6 +170,52 @@ app.get('/api/media/:key', async (c) => {
   
   c.header('Content-Type', object.httpMetadata?.contentType || 'application/octet-stream')
   return c.body(object.body)
+})
+
+
+// POST /api/razorpay/order - Create Razorpay order
+app.post('/api/razorpay/order', async (c) => {
+  const body = await c.req.json()
+  const { amount } = body // amount in paise (rupees * 100)
+  const keyId = 'rzp_test_TWsO8obvIqrJKK'
+  const keySecret = c.env.RAZORPAY_KEY_SECRET
+
+  const credentials = btoa(`${keyId}:${keySecret}`)
+  const res = await fetch('https://api.razorpay.com/v1/orders', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${credentials}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount: amount, // in paise
+      currency: 'INR',
+      receipt: `rcpt_${Date.now()}`,
+    }),
+  })
+  const order = await res.json()
+  if (!res.ok) return c.json({ error: order.error?.description || 'Order creation failed' }, 400)
+  return c.json({ orderId: order.id, amount: order.amount, currency: order.currency })
+})
+
+// POST /api/razorpay/verify - Verify payment signature
+app.post('/api/razorpay/verify', async (c) => {
+  const body = await c.req.json()
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body
+  const keySecret = c.env.RAZORPAY_KEY_SECRET
+
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(keySecret)
+  const msgData = encoder.encode(`${razorpay_order_id}|${razorpay_payment_id}`)
+
+  const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, msgData)
+  const expectedSig = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('')
+
+  if (expectedSig !== razorpay_signature) {
+    return c.json({ success: false, error: 'Invalid payment signature' }, 400)
+  }
+  return c.json({ success: true, paymentId: razorpay_payment_id })
 })
 
 export const onRequest = handle(app)

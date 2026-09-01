@@ -1142,8 +1142,13 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       id: propId, customerId: customer.id, type: form.type, title: form.title,
       address: form.address, latlong: form.latlong, size: form.size, summary: form.summary, plan: form.plan,
       status: "pending", createdAt: todayISO(), visits: [],
+      agreementSigned: form.agreementSigned || false,
+      paymentDate: form.paymentDate || null,
+      expiryDate: form.expiryDate || null,
+      paymentStatus: form.paymentStatus || null,
+      paymentId: form.paymentId || null,
     };
-    await fetch('/api/properties', { method: 'POST', body: JSON.stringify(newProp) });
+    await fetch('/api/properties', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newProp) });
     refresh();
     setShowAdd(false);
   };

@@ -284,11 +284,12 @@ function Badge({ children, tone = "moss" }) {
   );
 }
 
-function Field({ label, children }) {
+function Field({ label, required, children }) {
   return (
     <label className="block mb-4">
       <span className="block text-xs font-mono uppercase tracking-wider mb-1.5" style={{ color: "var(--ink)", opacity: 0.6 }}>
         {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </span>
       {children}
     </label>
@@ -1183,16 +1184,16 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
           <button onClick={onClose}><X size={18} /></button>
         </div>
         <form onSubmit={submit} className="grid sm:grid-cols-2 gap-x-4">
-          <Field label="Property type">
+          <Field label="Property type" required>
             <select className={inputCls} style={inputStyle} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
               {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </Field>
-          <Field label="Property name / nickname">
+          <Field label="Property name / nickname" required>
             <input className={inputCls} style={inputStyle} placeholder="e.g. Whitefield 30x40 site" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
           </Field>
           <div className="sm:col-span-2">
-            <Field label="Address">
+            <Field label="Address" required>
               <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
             </Field>
           </div>
@@ -1214,7 +1215,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
             </Field>
           </div>
           <div className="sm:col-span-2">
-            <Field label="Care plan">
+            <Field label="Care plan" required>
               <select className={inputCls} style={inputStyle} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
                 {PLANS.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.visits}</option>)}
               </select>

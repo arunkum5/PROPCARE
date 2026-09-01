@@ -407,6 +407,7 @@ function Testimonials() {
 
 /* ================= LANDING ================= */
 function Landing({ onLogin }) {
+  const [policyModal, setPolicyModal] = useState(null);
   const services = [
     {
       icon: Trees, title: "Vacant Plot & Land",
@@ -688,22 +689,112 @@ function Landing({ onLogin }) {
       </div>
 
       {/* FOOTER */}
-      <div className="px-6 sm:px-10 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 animate-fade-in-up" style={{ borderTop: "1px solid rgba(30,42,47,0.1)", animationDelay: "0.5s" }}>
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <div className="tw-mono text-xs" style={{ opacity: 0.55 }}>TrustWork Property Care · Karnataka & across India</div>
-            <div className="hidden sm:block text-xs" style={{ opacity: 0.3 }}>|</div>
-            <div className="tw-mono text-xs flex items-center gap-1.5" style={{ opacity: 0.75 }}>
-               <Phone size={11} /> +91 9448610107
+      <div className="px-6 sm:px-10 py-8 flex flex-col gap-5 animate-fade-in-up" style={{ borderTop: "1px solid rgba(30,42,47,0.1)", animationDelay: "0.5s" }}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div className="tw-mono text-xs" style={{ opacity: 0.55 }}>TrustWork Property Care · Karnataka &amp; across India</div>
+              <div className="hidden sm:block text-xs" style={{ opacity: 0.3 }}>|</div>
+              <div className="tw-mono text-xs flex items-center gap-1.5" style={{ opacity: 0.75 }}>
+                 <Phone size={11} /> +91 9448610107
+              </div>
+            </div>
+            <div className="tw-mono text-xs flex items-center gap-1.5" style={{ opacity: 0.55 }}>
+              <MapPin size={11} /> Rajajinagar 2nd Stage, Bangalore - 560010
             </div>
           </div>
-          <div className="tw-mono text-xs flex items-center gap-1.5" style={{ opacity: 0.55 }}>
-            <MapPin size={11} /> Rajajinagar 2nd Stage, Bangalore - 560010
+          <button onClick={onLogin} className="tw-body text-sm font-semibold flex items-center gap-1 shrink-0 transition-all duration-300 hover:opacity-70 hover:translate-x-1" style={{ color: "var(--clay)" }}>
+            Client / Admin login <ChevronRight size={15} />
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+          {[
+            { key: "terms", label: "Terms & Conditions" },
+            { key: "privacy", label: "Privacy Policy" },
+            { key: "refund", label: "Refund Policy" },
+            { key: "cancellation", label: "Cancellation Policy" },
+          ].map(({ key, label }) => (
+            <button key={key} onClick={() => setPolicyModal(key)} className="tw-mono text-xs hover:underline cursor-pointer transition-opacity hover:opacity-100" style={{ opacity: 0.55, color: "var(--blueprint)" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="tw-mono text-[10px]" style={{ opacity: 0.35 }}>© {new Date().getFullYear()} TrustWork Property Care Services. All rights reserved. · care.trustwork.co.in</div>
+      </div>
+
+      {policyModal && <PolicyModal type={policyModal} onClose={() => setPolicyModal(null)} />}
+    </div>
+  );
+}
+
+const POLICY_CONTENT = {
+  terms: {
+    title: "Terms & Conditions",
+    sections: [
+      { heading: "1. Acceptance", body: "By registering on care.trustwork.co.in and subscribing to any property care plan, you agree to be bound by these Terms and Conditions. If you do not agree, please do not use our services." },
+      { heading: "2. Services", body: "TrustWork Property Care Services provides periodic property inspection visits, photographic and video documentation, and neighbourhood development updates as per the selected plan. The number of visits and media deliverables are defined under each plan tier." },
+      { heading: "3. Customer Obligations", body: "Customers must provide accurate property details including address and ownership proof. Customers must ensure our representatives can access the property for scheduled inspections. Providing false information may result in immediate termination of services." },
+      { heading: "4. Pricing", body: "Fees are calculated on a per-square-foot per-month basis: Essential Watch — ₹1/sqft/month, Standard Watch — ₹2/sqft/month, Premium Watch — ₹3/sqft/month. All fees are inclusive of applicable taxes unless stated otherwise." },
+      { heading: "5. Payments", body: "Payments are processed securely via Razorpay. By completing payment you authorize TrustWork to charge the stated monthly fee for the selected plan. All transactions are subject to Razorpay's payment processing terms." },
+      { heading: "6. Governing Law", body: "These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in Bangalore, Karnataka." },
+    ],
+  },
+  privacy: {
+    title: "Privacy Policy",
+    sections: [
+      { heading: "1. Information We Collect", body: "We collect your name, phone number, email address, property details (address, size, type), ownership proof documents, and payment transaction IDs. We do not store full card details — all payment data is handled by Razorpay." },
+      { heading: "2. How We Use Your Information", body: "Your information is used solely to provide property monitoring services, send visit reports and updates, process payments, and communicate with you regarding your account. We do not sell or share your personal data with third parties." },
+      { heading: "3. Data Security", body: "All data is stored on Cloudflare's secure infrastructure with encrypted connections (HTTPS). Media files are stored in private Cloudflare R2 buckets accessible only through authenticated links." },
+      { heading: "4. Data Retention", body: "Your data is retained for the duration of your subscription and for 12 months after termination for compliance and audit purposes, after which it is permanently deleted." },
+      { heading: "5. Contact", body: "For privacy concerns, please contact us at admin@trustwork.co.in or call +91 9448610107." },
+    ],
+  },
+  refund: {
+    title: "Refund Policy",
+    sections: [
+      { heading: "No Mid-Month Refunds", body: "All subscription fees are charged in advance for one full month of service. Once a payment is successfully processed and the service period has commenced, NO REFUND will be issued for that period under any circumstances, including early cancellation, non-use of services, or change of mind." },
+      { heading: "Advance Payment — Non-Refundable", body: "Payment is collected one full month in advance before the start of the service period. This advance payment is strictly non-refundable once the service period begins." },
+      { heading: "Failed Visits", body: "If TrustWork is unable to complete a scheduled visit due to access issues caused by the customer (e.g., locked gate, restricted entry), no refund will be provided for that visit. We will make one rescheduling attempt per month at no extra charge." },
+      { heading: "Service Failure by TrustWork", body: "In the rare event that TrustWork is unable to deliver any visits in a given month due to our own operational failure, a pro-rated credit may be applied to the next month's invoice at our sole discretion. No cash refunds will be issued." },
+      { heading: "How to Raise a Concern", body: "For any payment-related concerns, please write to admin@trustwork.co.in within 7 days of the transaction date. We will review and respond within 5 business days." },
+    ],
+  },
+  cancellation: {
+    title: "Cancellation Policy",
+    sections: [
+      { heading: "One Month Advance Notice Required", body: "To cancel your property care subscription, you must provide a minimum of ONE FULL CALENDAR MONTH advance written notice before your next billing date. Cancellations requested with less than one month's notice will not take effect until the end of the following billing cycle." },
+      { heading: "No Mid-Month Cancellations", body: "Subscriptions cannot be cancelled mid-month. Once the monthly fee is charged, the service will continue until the end of that paid month regardless of a cancellation request. No partial refunds will be issued for remaining days of the month." },
+      { heading: "How to Cancel", body: "To initiate cancellation, send a written request to admin@trustwork.co.in from your registered email address, stating your Customer ID, Property ID, and reason for cancellation. We will confirm receipt within 2 business days." },
+      { heading: "Post-Cancellation Access", body: "After cancellation takes effect, your portal access will remain active until the end of the last paid period. Property data, visit reports, and media will be retained for 30 days post-cancellation and then permanently deleted upon request." },
+      { heading: "Reactivation", body: "You may reactivate a cancelled subscription at any time by logging into the portal at care.trustwork.co.in and completing the registration and payment process again." },
+    ],
+  },
+};
+
+function PolicyModal({ type, onClose }) {
+  const content = POLICY_CONTENT[type];
+  if (!content) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(22,50,63,0.75)" }}>
+      <div className="w-full max-w-2xl rounded-xl shadow-2xl max-h-[88vh] overflow-hidden flex flex-col" style={{ background: "var(--paper)" }}>
+        <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderBottom: "1px solid rgba(30,42,47,0.1)", background: "var(--blueprint)" }}>
+          <div className="tw-display font-bold text-lg text-white">{content.title}</div>
+          <button onClick={onClose} className="cursor-pointer hover:opacity-70 transition-opacity text-white"><X size={20} /></button>
+        </div>
+        <div className="overflow-y-auto px-6 py-5 space-y-5">
+          {content.sections.map((s, i) => (
+            <div key={i}>
+              <div className="tw-body font-bold text-sm mb-1.5" style={{ color: "var(--blueprint)" }}>{s.heading}</div>
+              <p className="tw-body text-sm leading-relaxed" style={{ opacity: 0.8 }}>{s.body}</p>
+            </div>
+          ))}
+          <div className="pt-4 tw-mono text-xs" style={{ opacity: 0.45 }}>
+            Last updated: September 2026 · TrustWork Property Care Services · admin@trustwork.co.in
           </div>
         </div>
-        <button onClick={onLogin} className="tw-body text-sm font-semibold flex items-center gap-1 shrink-0 transition-all duration-300 hover:opacity-70 hover:translate-x-1" style={{ color: "var(--clay)" }}>
-          Client / Admin login <ChevronRight size={15} />
-        </button>
+        <div className="px-6 py-4 shrink-0" style={{ borderTop: "1px solid rgba(30,42,47,0.1)" }}>
+          <button onClick={onClose} className="w-full py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90" style={{ background: "var(--blueprint)" }}>Close</button>
+        </div>
       </div>
     </div>
   );

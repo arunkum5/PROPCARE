@@ -24,10 +24,17 @@ app.get('/api/data', async (c) => {
   // Attach visits to properties
   properties.forEach(prop => {
     prop.agreed = prop.agreed === 1; // Map back to boolean
-    prop.visits = visits.filter(v => v.propertyId === prop.id).map(v => ({
-      ...v,
-      photos: v.photos ? JSON.parse(v.photos) : []
-    }))
+    prop.visits = visits.filter(v => v.propertyId === prop.id).map(v => {
+      let parsedVideos = [];
+      if (v.video) {
+        try { parsedVideos = v.video.startsWith('[') ? JSON.parse(v.video) : [v.video]; } catch(e) { parsedVideos = [v.video]; }
+      }
+      return {
+        ...v,
+        photos: v.photos ? JSON.parse(v.photos) : [],
+        videos: parsedVideos
+      };
+    })
     dbs.properties[prop.id] = prop
   })
   
@@ -131,7 +138,7 @@ app.post('/api/visits', async (c) => {
   const db = c.env.DB
   const body = await c.req.json()
   await db.prepare('INSERT INTO visits (id, propertyId, kind, date, notes, photos, video) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .bind(body.id, body.propertyId, body.kind, body.date, body.notes, JSON.stringify(body.photos || []), body.video || null)
+    .bind(body.id, body.propertyId, body.kind, body.date, body.notes, JSON.stringify(body.photos || []), JSON.stringify(body.videos || []))
     .run()
   return c.json({ success: true })
 })

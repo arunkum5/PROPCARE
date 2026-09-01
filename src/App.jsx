@@ -4,7 +4,7 @@ import {
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
   UserPlus, User, Search, ArrowLeft, Sprout, Fence, Eye, EyeOff, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2
+  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -784,7 +784,7 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
 }
 
 /* ================= SHARED SHELL ================= */
-function Shell({ title, subtitle, onLogout, onSettings, children, tabs, activeTab, onTabChange }) {
+function Shell({ title, subtitle, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="min-h-full flex flex-col" style={{ background: "var(--paper)", color: "var(--ink)" }}>
@@ -802,10 +802,16 @@ function Shell({ title, subtitle, onLogout, onSettings, children, tabs, activeTa
               <div className="tw-mono text-[10px] tracking-widest uppercase" style={{ color: "rgba(246,241,231,0.6)" }}>{subtitle}</div>
             </div>
           </div>
-          <div className="relative">
-            <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80" style={{ color: "#F6F1E7" }}>
-              <User size={15} /> <span className="hidden sm:inline">Menu</span>
-            </button>
+          <div className="flex items-center gap-4">
+            {onRefresh && (
+              <button onClick={onRefresh} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity" style={{ color: "#F6F1E7" }} title="Refresh Data">
+                <RefreshCw size={15} />
+              </button>
+            )}
+            <div className="relative">
+              <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80" style={{ color: "#F6F1E7" }}>
+                <User size={15} /> <span className="hidden sm:inline">Menu</span>
+              </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
                 {onSettings && (
@@ -1077,7 +1083,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
 
   return (
     <Shell 
-      title="TrustWork" subtitle={customer.name} onLogout={onLogout}
+      title="TrustWork" subtitle={customer.name} onLogout={onLogout} onRefresh={refresh}
       tabs={[
         { id: "profile", label: "Profile", icon: User },
         { id: "properties", label: "My properties", icon: Landmark },
@@ -1356,7 +1362,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
     const p = dbs.properties[openProp];
     const owner = dbs.customers[p.customerId];
     return (
-      <Shell title="TrustWork" subtitle="Admin console" onLogout={onLogout}>
+      <Shell title="TrustWork" subtitle="Admin console" onLogout={onLogout} onRefresh={refresh}>
         <button onClick={() => setOpenProp(null)} className="tw-body text-sm flex items-center gap-1 mb-5" style={{ opacity: 0.6 }}>
           <ArrowLeft size={14} /> All properties
         </button>
@@ -1419,7 +1425,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
 
   return (
     <Shell 
-      title="TrustWork" subtitle="Admin console" onLogout={onLogout}
+      title="TrustWork" subtitle="Admin console" onLogout={onLogout} onRefresh={refresh}
       onSettings={() => setEditCust(dbs.customers['admin'])}
       tabs={[
         { id: "customers", label: "Customers", icon: Users },
@@ -1542,7 +1548,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
 function AddVisitForm({ onAdd }) {
   const [form, setForm] = useState({ kind: "inspection", date: todayISO(), notes: "" });
   const [photos, setPhotos] = useState([]);
-  const [video, setVideo] = useState(null);
+  const [videos, setVideos] = useState([]);
   const [uploading, setUploading] = useState(false);
 
   const uploadFile = async (file) => {
@@ -1560,15 +1566,16 @@ function AddVisitForm({ onAdd }) {
     try {
       const photoUrls = [];
       for (const p of photos) photoUrls.push(await uploadFile(p));
-      const videoUrl = video ? await uploadFile(video) : null;
+      const videoUrls = [];
+      for (const v of videos) videoUrls.push(await uploadFile(v));
       
       onAdd({
         kind: form.kind, date: form.date, notes: form.notes,
-        photos: photoUrls, video: videoUrl,
+        photos: photoUrls, videos: videoUrls,
       });
       setForm({ kind: "inspection", date: todayISO(), notes: "" });
       setPhotos([]);
-      setVideo(null);
+      setVideos([]);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1594,11 +1601,47 @@ function AddVisitForm({ onAdd }) {
         <textarea className={inputCls} style={inputStyle} rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} required />
       </Field>
       <div className="grid sm:grid-cols-2 gap-x-4">
-        <Field label="Photos">
-          <input type="file" multiple accept="image/*" className={inputCls} style={inputStyle} onChange={(e) => setPhotos([...e.target.files])} />
+        <Field label={`Photos (${photos.length} selected - Max 10MB each)`}>
+          <div className="flex flex-col gap-2">
+            <input type="file" multiple accept="image/*" className={inputCls} style={inputStyle} onChange={(e) => {
+              const files = Array.from(e.target.files);
+              const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
+              if (validFiles.length < files.length) alert("Some photos exceed the 10MB limit and were removed.");
+              setPhotos(prev => [...prev, ...validFiles]);
+              e.target.value = "";
+            }} />
+            {photos.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-1">
+                {photos.map((p, i) => (
+                  <div key={i} className="flex items-center gap-1 bg-gray-100 text-xs px-2 py-1 rounded">
+                    <span className="truncate max-w-[100px]">{p.name}</span>
+                    <button type="button" onClick={() => setPhotos(photos.filter((_, idx) => idx !== i))} className="text-red-500 hover:text-red-700"><X size={12}/></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </Field>
-        <Field label="Video">
-          <input type="file" accept="video/*" className={inputCls} style={inputStyle} onChange={(e) => setVideo(e.target.files[0])} />
+        <Field label={`Videos (${videos.length} selected - Max 50MB each)`}>
+          <div className="flex flex-col gap-2">
+            <input type="file" multiple accept="video/*" className={inputCls} style={inputStyle} onChange={(e) => {
+              const files = Array.from(e.target.files);
+              const validFiles = files.filter(f => f.size <= 50 * 1024 * 1024);
+              if (validFiles.length < files.length) alert("Some videos exceed the 50MB limit (approx 5 mins) and were removed.");
+              setVideos(prev => [...prev, ...validFiles]);
+              e.target.value = "";
+            }} />
+            {videos.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-1">
+                {videos.map((v, i) => (
+                  <div key={i} className="flex items-center gap-1 bg-gray-100 text-xs px-2 py-1 rounded">
+                    <span className="truncate max-w-[100px]">{v.name}</span>
+                    <button type="button" onClick={() => setVideos(videos.filter((_, idx) => idx !== i))} className="text-red-500 hover:text-red-700"><X size={12}/></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </Field>
       </div>
       <button type="submit" disabled={uploading} className="py-2.5 px-5 rounded-md font-semibold text-white tw-body" style={{ background: uploading ? "gray" : "var(--brass)", color: uploading ? "white" : "var(--blueprint)" }}>

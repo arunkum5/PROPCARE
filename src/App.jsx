@@ -1041,9 +1041,9 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
     <Shell 
       title="TrustWork" subtitle={customer.name} onLogout={onLogout}
       tabs={[
+        { id: "profile", label: "Profile", icon: User },
         { id: "properties", label: "My properties", icon: Landmark },
         { id: "cases", label: "My cases", icon: MessageSquare },
-        { id: "profile", label: "Profile", icon: User },
       ]}
       activeTab={tab} onTabChange={setTab}
     >
@@ -1196,8 +1196,8 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
               <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
             </Field>
           </div>
-          <Field label="Location (Lat/Long)">
-            <input className={inputCls} style={inputStyle} placeholder="e.g. 12.9716, 77.5946" value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
+          <Field label="Location (Google Maps Link or Lat/Long)">
+            <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/... or 12.97, 77.59" value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
           </Field>
           <Field label="Property Size">
             <input className={inputCls} style={inputStyle} placeholder="e.g. 1200 sq ft" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />

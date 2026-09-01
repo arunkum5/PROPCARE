@@ -1221,7 +1221,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
             <input className={inputCls} style={inputStyle} placeholder="e.g. 1200" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
           </Field>
           <div className="sm:col-span-2">
-            <Field label="Ownership Proof Document">
+            <Field label="Ownership Proof Document (Max 5MB)">
               <input type="file" accept=".pdf,image/*" className={inputCls} style={inputStyle} onChange={(e) => {
                 const file = e.target.files[0];
                 if (file && file.size > 5 * 1024 * 1024) {

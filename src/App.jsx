@@ -899,11 +899,11 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
         <div className="flex items-center gap-3">
 
           {/* Logo */}
-          <div className="flex items-center gap-3 shrink-0">
-            <Seal size={32} />
-            <div className="leading-tight">
-              <div className="tw-display font-bold text-white text-[15px]">{title}</div>
-              <div className="tw-mono text-[9px] tracking-widest uppercase" style={{ color: "rgba(246,241,231,0.6)" }}>{subtitle}</div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <img src="/newlogo_light.png" alt="TrustWork" className="h-10 w-auto object-contain" />
+            <div className="leading-tight mt-0.5">
+              <div className="tw-display font-bold text-white text-[19px]">TrustWork</div>
+              <div className="text-[9px] tw-body tracking-wider uppercase font-bold" style={{ color: "var(--brass)", opacity: 0.95 }}>Property Care & Management</div>
               {planInfo && (
                 <div className="tw-mono text-[10px] mt-0.5 flex items-center gap-2 flex-wrap">
                   <span className="px-1.5 py-0.5 rounded" style={{ background: "rgba(184,134,59,0.3)", color: "#F6D88A" }}>{planInfo.planName}</span>

@@ -888,7 +888,7 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
 }
 
 /* ================= SHARED SHELL ================= */
-function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange }) {
+function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange, headerAction }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="min-h-full flex flex-col" style={{ background: "var(--paper)", color: "var(--ink)" }}>
@@ -913,6 +913,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {headerAction && headerAction}
             {onRefresh && (
               <button onClick={onRefresh} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity" style={{ color: "#F6F1E7" }} title="Refresh Data">
                 <RefreshCw size={15} /> <span className="hidden sm:inline">Refresh</span>
@@ -1137,7 +1138,13 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   const latestPhoto = myProps.flatMap(p => p.visits || []).flatMap(v => v.photos || [])[0];
 
   const addProperty = async (form) => {
-    const propId = `PLOT-${Date.now().toString().slice(-6)}`;
+    const existingCustProps = Object.values(dbs.properties || {}).filter(p => p.customerId === customer.id);
+    const maxSeq = existingCustProps.reduce((max, p) => {
+      const seq = parseInt(p.id.slice(customer.id.length), 10);
+      return isNaN(seq) ? max : Math.max(max, seq);
+    }, 0);
+    const propId = `${customer.id}${String(maxSeq + 1).padStart(2, '0')}`;
+
     const newProp = {
       id: propId, customerId: customer.id, type: form.type, title: form.title,
       address: form.address, latlong: form.latlong, size: form.size, summary: form.summary, plan: form.plan,
@@ -1560,6 +1567,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
 function AdminDashboard({ dbs, refresh, onLogout }) {
   const [tab, setTab] = useState("customers");
   const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [openProp, setOpenProp] = useState(null);
   const [newCreds, setNewCreds] = useState(null);
   const [search, setSearch] = useState("");
@@ -1701,6 +1709,11 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         { id: "cases", label: "Cases", icon: MessageSquare },
       ]}
       activeTab={tab} onTabChange={setTab}
+      headerAction={tab === "customers" ? (
+        <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-1.5 rounded-md cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "rgba(255,255,255,0.15)", color: "#F6F1E7", border: "1px solid rgba(255,255,255,0.25)" }}>
+          <UserPlus size={14} /> <span className="hidden sm:inline">New customer</span>
+        </button>
+      ) : null}
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
         {[
@@ -1711,11 +1724,12 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           <div key={s.label} className="p-4 rounded-lg bg-white transition-all hover:shadow-lg hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
             <s.icon size={16} style={{ color: "var(--brass)" }} />
             <div className="tw-display font-bold text-2xl mt-2">{s.value}</div>
-            <div className="tw-mono text-[10px] uppercase tracking-wide" style={{ opacity: 0.55 }}>{s.label}</div>
+            <div className="tw-body text-sm font-bold uppercase tracking-wide mt-0.5" style={{ color: "var(--ink)" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
+      {/* Properties by type chart — temporarily hidden
       <div className="mb-7 p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
         <div className="tw-display font-bold text-lg mb-4 flex items-center gap-2"><Landmark size={18} style={{ color: "var(--brass)" }} /> Properties by type</div>
         {properties.length === 0 ? (
@@ -1738,43 +1752,94 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           </div>
         )}
       </div>
+      */)}
 
       {tab === "customers" && (
         <div>
-          <div className="flex justify-between items-center gap-3 mb-4 flex-wrap">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ opacity: 0.4 }} />
-              <input className={inputCls} style={{ ...inputStyle, paddingLeft: 32 }} placeholder="Search customers…" value={search} onChange={(e) => setSearch(e.target.value)} />
-            </div>
-            <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-md text-white cursor-pointer hover:opacity-90" style={{ background: "var(--blueprint)" }}>
-              <UserPlus size={15} /> New customer
-            </button>
-          </div>
-          <div className="space-y-2.5">
-            {filteredCustomers.map((c) => (
-              <div key={c.id} className="p-4 rounded-lg bg-white flex flex-wrap justify-between items-center gap-2 transition-all hover:shadow-md" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          {selectedCustomer ? (
+            /* ── Customer Properties Drill-down ── */
+            <div>
+              <button onClick={() => setSelectedCustomer(null)} className="tw-body text-sm flex items-center gap-1 mb-5" style={{ opacity: 0.6 }}>
+                <ArrowLeft size={14} /> All customers
+              </button>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
                 <div>
-                  <div className="tw-body font-semibold text-sm">{c.name}</div>
-                  <div className="tw-mono text-[11px] mt-0.5" style={{ opacity: 0.55 }}>{c.id}</div>
+                  <div className="tw-display font-bold text-xl">{selectedCustomer.name}</div>
+                  <div className="tw-mono text-[11px] mt-0.5 flex items-center gap-3" style={{ opacity: 0.55 }}>
+                    <span>{selectedCustomer.id}</span>
+                    {selectedCustomer.phone && <span className="flex items-center gap-1"><Phone size={11} />{selectedCustomer.phone}</span>}
+                    {selectedCustomer.email && <span className="flex items-center gap-1"><Mail size={11} />{selectedCustomer.email}</span>}
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="tw-body text-xs flex gap-4 hidden sm:flex" style={{ opacity: 0.6 }}>
-                    {c.phone && <span className="flex items-center gap-1"><Phone size={12} />{c.phone}</span>}
-                    {c.email && <span className="flex items-center gap-1"><Mail size={12} />{c.email}</span>}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setEditCust(c)} className="tw-body text-xs font-semibold px-2 py-1.5 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1 cursor-pointer" style={{ color: "var(--blueprint)" }}>
-                       Edit
-                    </button>
-                    <button onClick={() => deleteCustomer(c.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors cursor-pointer" title="Delete customer">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setEditCust(selectedCustomer)} className="tw-body text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1 cursor-pointer" style={{ color: "var(--blueprint)", border: "1px solid rgba(22,50,63,0.2)" }}>
+                    Edit customer
+                  </button>
                 </div>
               </div>
-            ))}
-            {filteredCustomers.length === 0 && <p className="tw-body text-sm" style={{ opacity: 0.55 }}>No customers yet — add the first one.</p>}
-          </div>
+              {(() => {
+                const custProps = properties.filter(p => p.customerId === selectedCustomer.id);
+                if (custProps.length === 0) return <p className="tw-body text-sm" style={{ opacity: 0.55 }}>No properties registered for this customer yet.</p>;
+                return (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {custProps.map((p) => (
+                      <button key={p.id} onClick={() => setOpenProp(p.id)} className="text-left p-5 rounded-lg bg-white transition-all duration-200 hover:shadow-xl hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+                        <div className="flex justify-between items-start gap-2">
+                          <Badge tone="ink">{p.type}</Badge>
+                          <Badge tone={p.status === "active" ? "moss" : p.status === "delete_pending" ? "tomato" : "brass"}>
+                            {p.status === "active" ? "Active" : p.status === "delete_pending" ? "Deletion Requested" : "Pending"}
+                          </Badge>
+                        </div>
+                        <div className="tw-display font-bold text-lg mt-3">{p.title}</div>
+                        <div className="tw-body text-sm mt-1 flex items-center gap-1" style={{ opacity: 0.6 }}><MapPin size={12} />{p.address}</div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          ) : (
+            /* ── Customer List ── */
+            <div>
+              <div className="mb-4">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ opacity: 0.4 }} />
+                  <input className={inputCls} style={{ ...inputStyle, paddingLeft: 32 }} placeholder="Search customers…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {filteredCustomers.map((c) => {
+                  const custPropCount = properties.filter(p => p.customerId === c.id).length;
+                  return (
+                    <div key={c.id} className="p-4 rounded-lg bg-white flex flex-wrap justify-between items-center gap-2 transition-all hover:shadow-md" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+                      <button className="flex-1 text-left cursor-pointer" onClick={() => setSelectedCustomer(c)}>
+                        <div className="tw-body font-semibold text-sm hover:underline" style={{ color: "var(--blueprint)" }}>{c.name}</div>
+                        <div className="tw-mono text-[11px] mt-0.5 flex items-center gap-3" style={{ opacity: 0.55 }}>
+                          <span>{c.id}</span>
+                          <span className="flex items-center gap-1"><Landmark size={10} /> {custPropCount} {custPropCount === 1 ? 'property' : 'properties'}</span>
+                        </div>
+                      </button>
+                      <div className="flex items-center gap-4">
+                        <div className="tw-body text-xs gap-4 hidden sm:flex" style={{ opacity: 0.6 }}>
+                          {c.phone && <span className="flex items-center gap-1"><Phone size={12} />{c.phone}</span>}
+                          {c.email && <span className="flex items-center gap-1"><Mail size={12} />{c.email}</span>}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setEditCust(c)} className="tw-body text-xs font-semibold px-2 py-1.5 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1 cursor-pointer" style={{ color: "var(--blueprint)" }}>
+                            Edit
+                          </button>
+                          <button onClick={() => deleteCustomer(c.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors cursor-pointer" title="Delete customer">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {filteredCustomers.length === 0 && <p className="tw-body text-sm" style={{ opacity: 0.55 }}>No customers yet — add the first one.</p>}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1815,9 +1880,13 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
 
 function AddVisitForm({ onAdd }) {
   const [form, setForm] = useState({ kind: "inspection", date: todayISO(), notes: "" });
-  const [photos, setPhotos] = useState([]);
-  const [videos, setVideos] = useState([]);
+  // Each slot is either null (empty) or a File object
+  const [photoSlots, setPhotoSlots] = useState([null]);
+  const [videoSlots, setVideoSlots] = useState([null]);
   const [uploading, setUploading] = useState(false);
+
+  const photos = photoSlots.filter(Boolean);
+  const videos = videoSlots.filter(Boolean);
 
   const uploadFile = async (file) => {
     const formData = new FormData();
@@ -1842,8 +1911,8 @@ function AddVisitForm({ onAdd }) {
         photos: photoUrls, videos: videoUrls,
       });
       setForm({ kind: "inspection", date: todayISO(), notes: "" });
-      setPhotos([]);
-      setVideos([]);
+      setPhotoSlots([null]);
+      setVideoSlots([null]);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1868,50 +1937,97 @@ function AddVisitForm({ onAdd }) {
       <Field label="Notes">
         <textarea className={inputCls} style={inputStyle} rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} required />
       </Field>
+
       <div className="grid sm:grid-cols-2 gap-x-4">
-        <Field label={`Photos (${photos.length} selected - Max 10MB each)`}>
-          <div className="flex flex-col gap-2">
-            <input type="file" multiple accept="image/*" className={inputCls} style={inputStyle} onChange={(e) => {
-              const files = Array.from(e.target.files);
-              const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
-              if (validFiles.length < files.length) alert("Some photos exceed the 10MB limit and were removed.");
-              setPhotos(prev => [...prev, ...validFiles]);
-              e.target.value = "";
-            }} />
-            {photos.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-1">
-                {photos.map((p, i) => (
-                  <div key={i} className="flex items-center gap-1 bg-gray-100 text-xs px-2 py-1 rounded">
-                    <span className="truncate max-w-[100px]">{p.name}</span>
-                    <button type="button" onClick={() => setPhotos(photos.filter((_, idx) => idx !== i))} className="text-red-500 hover:text-red-700"><X size={12}/></button>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* ── PHOTOS ── */}
+        <div className="mb-4">
+          <div className="tw-body text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ opacity: 0.65 }}>
+            <ImageIcon size={12} /> Photos <span style={{ opacity: 0.5 }}>(max 10 MB each)</span>
+            {photos.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full text-white text-[10px] font-bold" style={{ background: "var(--blueprint)" }}>{photos.length}</span>}
           </div>
-        </Field>
-        <Field label={`Videos (${videos.length} selected - Max 50MB each)`}>
-          <div className="flex flex-col gap-2">
-            <input type="file" multiple accept="video/*" className={inputCls} style={inputStyle} onChange={(e) => {
-              const files = Array.from(e.target.files);
-              const validFiles = files.filter(f => f.size <= 50 * 1024 * 1024);
-              if (validFiles.length < files.length) alert("Some videos exceed the 50MB limit (approx 5 mins) and were removed.");
-              setVideos(prev => [...prev, ...validFiles]);
-              e.target.value = "";
-            }} />
-            {videos.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-1">
-                {videos.map((v, i) => (
-                  <div key={i} className="flex items-center gap-1 bg-gray-100 text-xs px-2 py-1 rounded">
-                    <span className="truncate max-w-[100px]">{v.name}</span>
-                    <button type="button" onClick={() => setVideos(videos.filter((_, idx) => idx !== i))} className="text-red-500 hover:text-red-700"><X size={12}/></button>
-                  </div>
-                ))}
+          <div className="space-y-2">
+            {photoSlots.map((file, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <label className="flex-1 flex items-center gap-2 rounded-md px-3 py-2 cursor-pointer transition-all" style={{ border: "1.5px dashed rgba(30,42,47,0.2)", background: file ? "rgba(75,93,69,0.06)" : "rgba(30,42,47,0.02)" }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files[0];
+                      if (!f) return;
+                      if (f.size > 10 * 1024 * 1024) { alert("Photo exceeds 10MB limit."); return; }
+                      setPhotoSlots(prev => prev.map((s, idx) => idx === i ? f : s));
+                      e.target.value = "";
+                    }}
+                  />
+                  {file ? (
+                    <span className="tw-body text-xs font-medium truncate flex-1" style={{ color: "var(--moss)" }}>✓ {file.name}</span>
+                  ) : (
+                    <span className="tw-body text-xs" style={{ opacity: 0.45 }}>Choose photo…</span>
+                  )}
+                </label>
+                {(file || photoSlots.length > 1) && (
+                  <button type="button" onClick={() => {
+                    if (photoSlots.length === 1) { setPhotoSlots([null]); }
+                    else { setPhotoSlots(prev => prev.filter((_, idx) => idx !== i)); }
+                  }} className="p-1.5 rounded-md hover:bg-red-50 text-red-400 transition-colors flex-shrink-0">
+                    <X size={13} />
+                  </button>
+                )}
               </div>
-            )}
+            ))}
           </div>
-        </Field>
+          <button type="button" onClick={() => setPhotoSlots(prev => [...prev, null])} className="mt-2 flex items-center gap-1 tw-body text-xs font-semibold px-2.5 py-1.5 rounded-md transition-colors cursor-pointer hover:opacity-80" style={{ color: "var(--blueprint)", background: "rgba(22,50,63,0.07)" }}>
+            <Plus size={13} /> Add photo
+          </button>
+        </div>
+
+        {/* ── VIDEOS ── */}
+        <div className="mb-4">
+          <div className="tw-body text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ opacity: 0.65 }}>
+            <Video size={12} /> Videos <span style={{ opacity: 0.5 }}>(max 50 MB each)</span>
+            {videos.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full text-white text-[10px] font-bold" style={{ background: "var(--blueprint)" }}>{videos.length}</span>}
+          </div>
+          <div className="space-y-2">
+            {videoSlots.map((file, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <label className="flex-1 flex items-center gap-2 rounded-md px-3 py-2 cursor-pointer transition-all" style={{ border: "1.5px dashed rgba(30,42,47,0.2)", background: file ? "rgba(75,93,69,0.06)" : "rgba(30,42,47,0.02)" }}>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files[0];
+                      if (!f) return;
+                      if (f.size > 50 * 1024 * 1024) { alert("Video exceeds 50MB limit."); return; }
+                      setVideoSlots(prev => prev.map((s, idx) => idx === i ? f : s));
+                      e.target.value = "";
+                    }}
+                  />
+                  {file ? (
+                    <span className="tw-body text-xs font-medium truncate flex-1" style={{ color: "var(--moss)" }}>✓ {file.name}</span>
+                  ) : (
+                    <span className="tw-body text-xs" style={{ opacity: 0.45 }}>Choose video…</span>
+                  )}
+                </label>
+                {(file || videoSlots.length > 1) && (
+                  <button type="button" onClick={() => {
+                    if (videoSlots.length === 1) { setVideoSlots([null]); }
+                    else { setVideoSlots(prev => prev.filter((_, idx) => idx !== i)); }
+                  }} className="p-1.5 rounded-md hover:bg-red-50 text-red-400 transition-colors flex-shrink-0">
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={() => setVideoSlots(prev => [...prev, null])} className="mt-2 flex items-center gap-1 tw-body text-xs font-semibold px-2.5 py-1.5 rounded-md transition-colors cursor-pointer hover:opacity-80" style={{ color: "var(--blueprint)", background: "rgba(22,50,63,0.07)" }}>
+            <Plus size={13} /> Add video
+          </button>
+        </div>
       </div>
+
       <button type="submit" disabled={uploading} className="py-2.5 px-5 rounded-md font-semibold text-white tw-body" style={{ background: uploading ? "gray" : "var(--brass)", color: uploading ? "white" : "var(--blueprint)" }}>
         {uploading ? "Uploading..." : "Add to log"}
       </button>

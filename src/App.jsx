@@ -1427,7 +1427,18 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
                   <div className="tw-body text-sm flex items-center gap-1.5 mt-1" style={{ opacity: 0.6 }}>
                     <MapPin size={13} /> {p.address}
                   </div>
-                  <div className="tw-mono text-[11px] mt-3" style={{ opacity: 0.5 }}>{(p.visits || []).length} visit(s) logged</div>
+                  <div className="flex justify-between items-end mt-3">
+                    <div className="tw-mono text-[11px]" style={{ opacity: 0.5 }}>
+                      {(p.visits || []).length} visit(s) logged
+                    </div>
+                    {p.expiryDate && (
+                      <div className="text-right">
+                        <div className="tw-mono text-[9px] uppercase font-bold" style={{ opacity: 0.5, color: "var(--ink)" }}>Next Renewal</div>
+                        <div className="tw-body font-bold text-[11px]" style={{ color: "var(--brass)" }}>{fmtDate(p.expiryDate)}</div>
+                        <div className="tw-body text-[9px] mt-0.5 font-bold" style={{ opacity: 0.5 }}>Last paid: {p.paymentDate ? fmtDate(p.paymentDate) : '—'}</div>
+                      </div>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>

@@ -1729,30 +1729,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         ))}
       </div>
 
-      {/* Properties by type chart — temporarily hidden
-      <div className="mb-7 p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-        <div className="tw-display font-bold text-lg mb-4 flex items-center gap-2"><Landmark size={18} style={{ color: "var(--brass)" }} /> Properties by type</div>
-        {properties.length === 0 ? (
-          <p className="tw-body text-sm" style={{ opacity: 0.55 }}>No properties registered yet.</p>
-        ) : (
-          <div>
-            <div className="w-full h-4 rounded-full flex overflow-hidden mb-3">
-              {Object.entries(propCounts).map(([type, count], i) => (
-                <div key={type} style={{ width: `${(count / totalProps) * 100}%`, background: propColors[i % propColors.length] }} title={`${type}: ${count}`} />
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-4 mt-2">
-              {Object.entries(propCounts).map(([type, count], i) => (
-                <div key={type} className="flex items-center gap-1.5 tw-body text-xs" style={{ opacity: 0.8 }}>
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: propColors[i % propColors.length] }} />
-                  {type} ({count})
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-      */)}
+
 
       {tab === "customers" && (
         <div>

@@ -4,7 +4,7 @@ import {
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
   UserPlus, User, Search, ArrowLeft, Sprout, Fence, Eye, EyeOff, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw
+  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -897,13 +897,15 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      <div className="px-6 sm:px-10 pt-5 pb-3 shrink-0" style={{ background: "var(--blueprint)" }}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Seal size={36} />
+      <div className="px-4 sm:px-8 py-3 shrink-0" style={{ background: "var(--blueprint)" }}>
+        <div className="flex items-center gap-3">
+
+          {/* Logo */}
+          <div className="flex items-center gap-3 shrink-0">
+            <Seal size={32} />
             <div className="leading-tight">
-              <div className="tw-display font-bold text-white text-[16px]">{title}</div>
-              <div className="tw-mono text-[10px] tracking-widest uppercase" style={{ color: "rgba(246,241,231,0.6)" }}>{subtitle}</div>
+              <div className="tw-display font-bold text-white text-[15px]">{title}</div>
+              <div className="tw-mono text-[9px] tracking-widest uppercase" style={{ color: "rgba(246,241,231,0.6)" }}>{subtitle}</div>
               {planInfo && (
                 <div className="tw-mono text-[10px] mt-0.5 flex items-center gap-2 flex-wrap">
                   <span className="px-1.5 py-0.5 rounded" style={{ background: "rgba(184,134,59,0.3)", color: "#F6D88A" }}>{planInfo.planName}</span>
@@ -912,16 +914,38 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               )}
             </div>
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* Desktop: tabs + actions — all inline */}
+          <div className="hidden sm:flex items-center gap-1 flex-1 flex-wrap">
+            {/* Tabs */}
+            {tabs && tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => onTabChange(t.id)}
+                className="tw-body px-3 py-2 rounded-md text-sm font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap hover:bg-white/10 hover:text-white"
+                style={activeTab === t.id ? { background: "rgba(255,255,255,0.15)", color: "white" } : { color: "rgba(255,255,255,0.6)" }}
+              >
+                <t.icon size={14} /> {t.label}
+              </button>
+            ))}
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* New Customer (or other headerAction) */}
             {headerAction && headerAction}
+
+            {/* Refresh */}
             {onRefresh && (
-              <button onClick={onRefresh} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity" style={{ color: "#F6F1E7" }} title="Refresh Data">
-                <RefreshCw size={15} /> <span className="hidden sm:inline">Refresh</span>
+              <button onClick={onRefresh} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "#F6F1E7" }} title="Refresh">
+                <RefreshCw size={14} /> Refresh
               </button>
             )}
+
+            {/* Menu (settings + logout) */}
             <div className="relative">
-              <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80" style={{ color: "#F6F1E7" }}>
-                <User size={15} /> <span className="hidden sm:inline">Menu</span>
+              <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "#F6F1E7" }}>
+                <User size={14} /> Menu
               </button>
               {menuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
@@ -937,26 +961,55 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               )}
             </div>
           </div>
-        </div>
-        {tabs && (
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-2 px-2">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => onTabChange(t.id)}
-                className="tw-body px-4 py-2 rounded-md text-sm font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap hover:bg-white/10 hover:text-white"
-                style={activeTab === t.id ? { background: "rgba(255,255,255,0.15)", color: "white" } : { color: "rgba(255,255,255,0.6)" }}
-              >
-                <t.icon size={14} /> {t.label}
-              </button>
-            ))}
+
+          {/* Mobile: only hamburger menu — everything inside */}
+          <div className="sm:hidden flex items-center gap-2 ml-auto relative">
+            <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "#F6F1E7" }}>
+              <Menu size={18} />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
+                {/* Tabs in menu on mobile */}
+                {tabs && tabs.map((t) => (
+                  <button key={t.id} onClick={() => { onTabChange(t.id); setMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm font-semibold flex items-center gap-2 cursor-pointer transition-colors" style={{ color: activeTab === t.id ? "var(--blueprint)" : "var(--ink)", background: activeTab === t.id ? "rgba(22,50,63,0.05)" : "transparent" }}>
+                    <t.icon size={14} /> {t.label}
+                  </button>
+                ))}
+                {/* headerAction (New Customer) in mobile menu */}
+                {headerAction && (
+                  <div className="px-3 py-2 border-t border-gray-100">
+                    {headerAction}
+                  </div>
+                )}
+                {/* Divider */}
+                {(tabs || headerAction) && <div className="border-t border-gray-100 my-1" />}
+                {/* Refresh */}
+                {onRefresh && (
+                  <button onClick={() => { onRefresh(); setMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                    <RefreshCw size={14} /> Refresh
+                  </button>
+                )}
+                {/* Settings */}
+                {onSettings && (
+                  <button onClick={() => { setMenuOpen(false); onSettings(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                    <User size={14} /> Admin settings
+                  </button>
+                )}
+                {/* Logout */}
+                <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                  <LogOut size={14} /> Log out
+                </button>
+              </div>
+            )}
           </div>
-        )}
+
+        </div>
       </div>
       <div className="flex-1 px-6 sm:px-10 py-8 w-full max-w-5xl mx-auto">{children}</div>
     </div>
   );
 }
+
 
 function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, onUpdate, onLogout }) {
   const [agreed, setAgreed] = useState(p.agreed || false);

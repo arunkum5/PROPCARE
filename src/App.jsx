@@ -1456,7 +1456,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
 
       // 3. Open Razorpay checkout
       const rzp = new window.Razorpay({
-        key: 'rzp_test_TWsO8obvIqrJKK',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         order_id: order.orderId,

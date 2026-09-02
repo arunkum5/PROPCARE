@@ -469,12 +469,14 @@ function Landing({ onLogin, dbs }) {
   const [calcType, setCalcType] = useState('Flat / Apartment');
   const [checkoutModal, setCheckoutModal] = useState(false);
   const [leadForm, setLeadForm] = useState({ name: '', phone: '', email: '' });
+  const [leadMsg, setLeadMsg] = useState(null);
 
   const activeCalcPlan = calcPlan || plansList[0]?.id || '';
 
   const handleLeadSubmit = async (action) => {
+    setLeadMsg(null);
     if (!leadForm.name || !leadForm.phone) {
-      alert("Please provide your name and phone number so we can contact you.");
+      setLeadMsg({ type: 'error', text: "Please provide your name and phone number." });
       return;
     }
     const leadId = `ld_${Date.now()}`;
@@ -498,8 +500,11 @@ function Landing({ onLogin, dbs }) {
     });
 
     if (action === 'callback') {
-      alert("Thank you! Our team has received your request and will contact you shortly.");
-      setCheckoutModal(false);
+      setLeadMsg({ type: 'success', text: "Thank you! Our team has received your request and will contact you shortly." });
+      setTimeout(() => {
+        setCheckoutModal(false);
+        setLeadMsg(null);
+      }, 3500);
     } else {
       await processCheckout({
         amount: amount,
@@ -510,12 +515,18 @@ function Landing({ onLogin, dbs }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'paid', paymentId })
           });
-          alert("Payment Successful! We will contact you to begin onboarding.");
-          setCheckoutModal(false);
+          setLeadMsg({ type: 'success', text: "Payment Successful! We will contact you to begin onboarding." });
+          setTimeout(() => {
+            setCheckoutModal(false);
+            setLeadMsg(null);
+          }, 4000);
         },
         onError: () => {
-          alert("Payment failed or was cancelled. Your details are saved, and we will contact you.");
-          setCheckoutModal(false);
+          setLeadMsg({ type: 'error', text: "Payment failed or was cancelled. Your details are saved, and we will contact you." });
+          setTimeout(() => {
+            setCheckoutModal(false);
+            setLeadMsg(null);
+          }, 4000);
         }
       });
     }
@@ -912,33 +923,43 @@ function Landing({ onLogin, dbs }) {
             <div className="tw-display font-bold text-xl mb-1 text-[var(--ink)]">Secure Your Property</div>
             <p className="tw-body text-sm mb-6 text-gray-500">Provide your details to lock in your {dbs.plans[activeCalcPlan]?.name} plan for {calcSize} sqft.</p>
             
-            <div className="flex flex-col gap-4 mb-8">
-              <div className="flex flex-col gap-1.5">
-                <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Full Name</label>
-                <input type="text" placeholder="John Doe" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.name} onChange={e => setLeadForm({...leadForm, name: e.target.value})} />
+            {leadMsg && (
+              <div className={`p-4 mb-6 rounded-lg text-sm font-semibold flex items-center justify-center text-center ${leadMsg.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {leadMsg.text}
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Phone Number</label>
-                <input type="tel" placeholder="+91 90000 00000" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.phone} onChange={e => setLeadForm({...leadForm, phone: e.target.value})} />
-              </div>
-            </div>
+            )}
 
-            <div className="flex flex-col gap-3">
-              <button 
-                onClick={() => handleLeadSubmit('payment')}
-                className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
-                style={{ background: "var(--blueprint)", color: "white" }}
-              >
-                Proceed to Payment (₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')})
-              </button>
-              <button 
-                onClick={() => handleLeadSubmit('callback')}
-                className="w-full py-3.5 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors border-2 border-gray-200" 
-                style={{ color: "var(--ink)" }}
-              >
-                Request a Callback
-              </button>
-            </div>
+            {!leadMsg?.type || leadMsg.type === 'error' ? (
+              <>
+                <div className="flex flex-col gap-4 mb-8">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Full Name</label>
+                    <input type="text" placeholder="John Doe" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.name} onChange={e => setLeadForm({...leadForm, name: e.target.value})} />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Phone Number</label>
+                    <input type="tel" placeholder="+91 90000 00000" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.phone} onChange={e => setLeadForm({...leadForm, phone: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <button 
+                    onClick={() => handleLeadSubmit('payment')}
+                    className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
+                    style={{ background: "var(--blueprint)", color: "white" }}
+                  >
+                    Proceed to Payment (₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')})
+                  </button>
+                  <button 
+                    onClick={() => handleLeadSubmit('callback')}
+                    className="w-full py-3.5 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors border-2 border-gray-200" 
+                    style={{ color: "var(--ink)" }}
+                  >
+                    Request a Callback
+                  </button>
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       )}

@@ -89,7 +89,10 @@ function Chatbot() {
     { label: 'What we do?', response: 'We act as a highly professional proxy for NRI or out-of-town property owners. We provide absolute peace of mind by acting as your trusted eyes and ears on the ground.' },
     { label: 'Our Experience', response: 'We have 10+ Years of experience, with 28+ properties currently handling, and a dedicated team of 20+ field crew members.' },
     { label: 'Plans & Pricing', response: 'Our comprehensive property care plans start from just ₹1 / Sq.ft / Month.' },
-    { label: 'How to register?', response: 'To register your property, simply Contact or WhatsApp us at +91 9448610107 and our team will get you onboarded instantly!' }
+    { label: 'How to register?', response: 'To register your property, simply Contact or WhatsApp us at +91 9448610107 and our team will get you onboarded instantly!' },
+    { label: 'Is my property secure?', response: 'Yes! We log all visits and provide time-stamped photos and videos of your property, which you can view anytime in your secure customer dashboard.' },
+    { label: 'Can I request an extra visit?', response: 'Absolutely. You can request an on-demand visit directly from your dashboard at any time at a discounted rate.' },
+    { label: 'How do payments work?', response: 'We support secure online payments via Razorpay. You can track your monthly or annual billing cycles and view past payments in your dashboard.' }
   ];
 
   const handleOptionClick = (option) => {
@@ -744,25 +747,21 @@ function Landing({ onLogin, dbs }) {
       </div>
 
       {/* FOOTER */}
-      <div className="px-6 sm:px-10 py-8 flex flex-col gap-5 animate-fade-in-up" style={{ borderTop: "1px solid rgba(30,42,47,0.1)", animationDelay: "0.5s" }}>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <div className="tw-mono text-xs" style={{ opacity: 0.55 }}>TrustWork Property Care · Karnataka &amp; across India</div>
-              <div className="hidden sm:block text-xs" style={{ opacity: 0.3 }}>|</div>
-              <div className="tw-mono text-xs flex items-center gap-1.5" style={{ opacity: 0.75 }}>
-                 <Phone size={11} /> +91 9448610107
-              </div>
-            </div>
-            <div className="tw-mono text-xs flex items-center gap-1.5" style={{ opacity: 0.55 }}>
-              <MapPin size={11} /> Rajajinagar 2nd Stage, Bangalore - 560010
+      <div className="px-6 sm:px-10 py-10 flex flex-col items-center justify-center gap-6 animate-fade-in-up text-center" style={{ borderTop: "1px solid rgba(30,42,47,0.1)", animationDelay: "0.5s" }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+            <div className="tw-mono text-xs" style={{ opacity: 0.55 }}>TrustWork Property Care · Karnataka &amp; across India</div>
+            <div className="hidden sm:block text-xs" style={{ opacity: 0.3 }}>|</div>
+            <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.75 }}>
+               <Phone size={11} /> +91 9448610107
             </div>
           </div>
-          <button onClick={onLogin} className="tw-body text-sm font-semibold flex items-center gap-1 shrink-0 transition-all duration-300 hover:opacity-70 hover:translate-x-1" style={{ color: "var(--clay)" }}>
-            Client / Admin login <ChevronRight size={15} />
-          </button>
+          <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.55 }}>
+            <MapPin size={11} /> Rajajinagar 2nd Stage, Bangalore - 560010
+          </div>
         </div>
-        <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+        
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           {[
             { key: "terms", label: "Terms & Conditions" },
             { key: "privacy", label: "Privacy Policy" },
@@ -774,6 +773,7 @@ function Landing({ onLogin, dbs }) {
             </button>
           ))}
         </div>
+        
         <div className="tw-mono text-[10px]" style={{ opacity: 0.35 }}>© {new Date().getFullYear()} TrustWork Property Care Services. All rights reserved. · care.trustwork.co.in</div>
       </div>
 

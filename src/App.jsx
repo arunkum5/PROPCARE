@@ -4,7 +4,7 @@ import {
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
   UserPlus, User, Search, ArrowLeft, Sprout, Fence, Eye, EyeOff, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon, CreditCard, ChevronDown
+  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon, CreditCard, ChevronDown, Calculator
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -462,7 +462,11 @@ function Testimonials() {
 /* ================= LANDING ================= */
 function Landing({ onLogin, dbs }) {
   const plansList = Object.values(dbs?.plans || {});
-    const [policyModal, setPolicyModal] = useState(null);
+  const [policyModal, setPolicyModal] = useState(null);
+  const [calcSize, setCalcSize] = useState('');
+  const [calcPlan, setCalcPlan] = useState('basic');
+  const [calcCycle, setCalcCycle] = useState('1_month');
+  const [calcType, setCalcType] = useState('Apartment');
   const services = [
     {
       icon: Trees, title: "Vacant Plot & Land",
@@ -749,6 +753,67 @@ function Landing({ onLogin, dbs }) {
         </div>
       </div>
 
+      {/* PRICE CALCULATOR */}
+      <div className="px-6 sm:px-10 py-12 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+        <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-lg border border-gray-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-5"><Calculator size={120} /></div>
+          <h2 className="tw-display font-bold text-2xl mb-2 relative z-10">Estimate Your Cost</h2>
+          <p className="tw-body text-sm mb-8 relative z-10" style={{ opacity: 0.7 }}>Get an instant fee estimate based on your property size and selected care plan.</p>
+          
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 relative z-10 mb-8">
+            <div className="flex flex-col gap-2">
+              <label className="tw-body text-xs font-bold uppercase tracking-wider" style={{ opacity: 0.6 }}>Property Type</label>
+              <select className="px-4 py-3 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={calcType} onChange={e => setCalcType(e.target.value)}>
+                <option value="Empty Site">Empty Site</option>
+                <option value="Independent House">Independent House</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Villa">Villa</option>
+                <option value="Commercial">Commercial</option>
+              </select>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <label className="tw-body text-xs font-bold uppercase tracking-wider" style={{ opacity: 0.6 }}>Size (SqFt)</label>
+              <input type="number" placeholder="e.g. 1200" className="px-4 py-3 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={calcSize} onChange={e => setCalcSize(e.target.value)} />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="tw-body text-xs font-bold uppercase tracking-wider" style={{ opacity: 0.6 }}>Select Plan</label>
+              <select className="px-4 py-3 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={calcPlan} onChange={e => setCalcPlan(e.target.value)}>
+                {plansList.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="tw-body text-xs font-bold uppercase tracking-wider" style={{ opacity: 0.6 }}>Billing Cycle</label>
+              <select className="px-4 py-3 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={calcCycle} onChange={e => setCalcCycle(e.target.value)}>
+                <option value="1_month">Monthly</option>
+                <option value="6_months">Bi-Annually (4% off)</option>
+                <option value="12_months">Annually (10% off)</option>
+              </select>
+            </div>
+          </div>
+
+          {calcSize > 0 && dbs?.plans?.[calcPlan] ? (
+            <div className="flex items-center gap-4 bg-[var(--blueprint)] p-6 rounded-2xl text-white relative z-10 shadow-lg">
+              <div className="flex-1">
+                <div className="tw-body text-sm" style={{ opacity: 0.8 }}>Estimated {calcCycle === '1_month' ? 'Monthly' : calcCycle === '6_months' ? 'Bi-Annual' : 'Annual'} Cost</div>
+                <div className="tw-display font-black text-4xl mt-1" style={{ color: "var(--brass)" }}>
+                  ₹{Math.round(calcFee(calcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')}
+                </div>
+              </div>
+              <div className="hidden sm:block text-right">
+                <div className="tw-body text-xs" style={{ opacity: 0.6 }}>Plan Rate</div>
+                <div className="tw-mono text-sm">₹{dbs.plans[calcPlan].ratePerSqft} / sqft</div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 p-6 rounded-2xl tw-body text-sm text-center relative z-10" style={{ color: "var(--ink)", opacity: 0.6 }}>
+              Enter your property size to see your estimated cost
+            </div>
+          )}
+        </div>
+      </div>
       {/* FOOTER */}
       <div className="px-6 sm:px-10 py-10 flex flex-col items-center justify-center gap-6 animate-fade-in-up text-center" style={{ borderTop: "1px solid rgba(30,42,47,0.1)", animationDelay: "0.5s" }}>
         <div className="flex flex-col items-center gap-3">

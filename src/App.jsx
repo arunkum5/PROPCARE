@@ -236,14 +236,8 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
-const PLANS = [
-  { id: "essential", name: "Essential Watch", visits: "1 visit / month", media: "Up to 6 photos", ratePerSqft: 1 },
-  { id: "standard", name: "Standard Watch", visits: "2 visits / month", media: "Unlimited photos + 1 video", ratePerSqft: 2 },
-  { id: "premium", name: "Premium Watch", visits: "4 visits / month", media: "Unlimited photos + video + live call", ratePerSqft: 3 },
-];
-
-function calcFee(plan, sqft, cycle = '1_month') {
-  const p = PLANS.find(pl => pl.id === plan);
+function calcFee(plan, sqft, cycle = '1_month', plansMap = {}) {
+  const p = plansMap[plan];
   const s = parseFloat(sqft) || 0;
   if (!p || s <= 0) return null;
   const monthly = p.ratePerSqft * s;
@@ -725,19 +719,19 @@ function Landing({ onLogin }) {
         <h2 className="tw-display font-bold text-2xl mb-2">Care plans</h2>
         <p className="tw-body text-sm mb-8" style={{ opacity: 0.7 }}>Pick a visit rhythm — change it anytime from your dashboard.</p>
         <div className="grid sm:grid-cols-3 gap-6">
-          {PLANS.map((p) => (
-            <div key={p.id} className="p-8 rounded-2xl relative transition-all duration-300 border-2 hover:-translate-y-2 hover:shadow-xl flex flex-col overflow-hidden group" style={{ borderColor: p.id === 'premium' ? 'var(--brass)' : 'rgba(30,42,47,0.08)', boxShadow: p.id === 'premium' ? '0 10px 40px rgba(184,134,59,0.15)' : '0 8px 30px rgba(0,0,0,0.06)' }}>
+          {plansList.map((p) => (
+            <div key={p.id} className="p-8 rounded-2xl relative transition-all duration-300 border-2 hover:-translate-y-2 hover:shadow-xl flex flex-col overflow-hidden group" style={{ borderColor: p.isPopular ? 'var(--brass)' : 'rgba(30,42,47,0.08)', boxShadow: p.isPopular ? '0 10px 40px rgba(184,134,59,0.15)' : '0 8px 30px rgba(0,0,0,0.06)' }}>
               <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-110" style={{ background: `url('/${p.id}.png') center/cover` }} />
               <div className="absolute inset-0 z-0" style={{ background: "linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.97))" }} />
-              {p.id === 'premium' && <div className="absolute top-0 right-0 z-20 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white rounded-bl-2xl shadow-sm" style={{ background: "var(--brass)" }}>Most Popular</div>}
+              {p.isPopular && <div className="absolute top-0 right-0 z-20 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white rounded-bl-2xl shadow-sm" style={{ background: "var(--brass)" }}>Most Popular</div>}
               <div className="relative z-10 flex flex-col h-full">
                 <div className="mb-5">
-                  <Badge tone={p.id === 'premium' ? "brass" : "ink"}>{p.price}</Badge>
+                  <Badge tone={p.isPopular ? "brass" : "ink"}>{p.price}</Badge>
                 </div>
                 <div className="tw-display font-bold text-3xl mb-6" style={{ color: "var(--ink)" }}>{p.name}</div>
                 <div className="tw-body text-[17px] space-y-4 font-semibold flex-1" style={{ color: "rgba(30,42,47,0.85)" }}>
-                  <div className="flex gap-3 items-center"><Eye size={20} style={{ color: p.id === 'premium' ? "var(--brass)" : "var(--clay)" }} /> {p.visits}</div>
-                  <div className="flex gap-3 items-center"><Camera size={20} style={{ color: p.id === 'premium' ? "var(--brass)" : "var(--clay)" }} /> {p.media}</div>
+                  <div className="flex gap-3 items-center"><Eye size={20} style={{ color: p.isPopular ? "var(--brass)" : "var(--clay)" }} /> {p.visits}</div>
+                  <div className="flex gap-3 items-center"><Camera size={20} style={{ color: p.isPopular ? "var(--brass)" : "var(--clay)" }} /> {p.media}</div>
                 </div>
               </div>
             </div>
@@ -780,79 +774,6 @@ function Landing({ onLogin }) {
       </div>
 
       {policyModal && <PolicyModal type={policyModal} onClose={() => setPolicyModal(null)} />}
-    </div>
-  );
-}
-
-const POLICY_CONTENT = {
-  terms: {
-    title: "Terms & Conditions",
-    sections: [
-      { heading: "1. Acceptance", body: "By registering on care.trustwork.co.in and subscribing to any property care plan, you agree to be bound by these Terms and Conditions. If you do not agree, please do not use our services." },
-      { heading: "2. Services", body: "TrustWork Property Care Services provides periodic property inspection visits, photographic and video documentation, and neighbourhood development updates as per the selected plan. The number of visits and media deliverables are defined under each plan tier." },
-      { heading: "3. Customer Obligations", body: "Customers must provide accurate property details including address and ownership proof. Customers must ensure our representatives can access the property for scheduled inspections. Providing false information may result in immediate termination of services." },
-      { heading: "4. Pricing", body: "Fees are calculated on a per-square-foot per-month basis: Essential Watch — ₹1/sqft/month, Standard Watch — ₹2/sqft/month, Premium Watch — ₹3/sqft/month. All fees are inclusive of applicable taxes unless stated otherwise." },
-      { heading: "5. Payments", body: "Payments are processed securely via Razorpay. By completing payment you authorize TrustWork to charge the stated monthly fee for the selected plan. All transactions are subject to Razorpay's payment processing terms." },
-      { heading: "6. Governing Law", body: "These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in Bangalore, Karnataka." },
-    ],
-  },
-  privacy: {
-    title: "Privacy Policy",
-    sections: [
-      { heading: "1. Information We Collect", body: "We collect your name, phone number, email address, property details (address, size, type), ownership proof documents, and payment transaction IDs. We do not store full card details — all payment data is handled by Razorpay." },
-      { heading: "2. How We Use Your Information", body: "Your information is used solely to provide property monitoring services, send visit reports and updates, process payments, and communicate with you regarding your account. We do not sell or share your personal data with third parties." },
-      { heading: "3. Data Security", body: "All data is stored on Cloudflare's secure infrastructure with encrypted connections (HTTPS). Media files are stored in private Cloudflare R2 buckets accessible only through authenticated links." },
-      { heading: "4. Data Retention", body: "Your data is retained for the duration of your subscription and for 12 months after termination for compliance and audit purposes, after which it is permanently deleted." },
-      { heading: "5. Contact", body: "For privacy concerns, please contact us at admin@trustwork.co.in or call +91 9448610107." },
-    ],
-  },
-  refund: {
-    title: "Refund Policy",
-    sections: [
-      { heading: "No Mid-Month Refunds", body: "All subscription fees are charged in advance for one full month of service. Once a payment is successfully processed and the service period has commenced, NO REFUND will be issued for that period under any circumstances, including early cancellation, non-use of services, or change of mind." },
-      { heading: "Advance Payment — Non-Refundable", body: "Payment is collected one full month in advance before the start of the service period. This advance payment is strictly non-refundable once the service period begins." },
-      { heading: "Failed Visits", body: "If TrustWork is unable to complete a scheduled visit due to access issues caused by the customer (e.g., locked gate, restricted entry), no refund will be provided for that visit. We will make one rescheduling attempt per month at no extra charge." },
-      { heading: "Service Failure by TrustWork", body: "In the rare event that TrustWork is unable to deliver any visits in a given month due to our own operational failure, a pro-rated credit may be applied to the next month's invoice at our sole discretion. No cash refunds will be issued." },
-      { heading: "How to Raise a Concern", body: "For any payment-related concerns, please write to admin@trustwork.co.in within 7 days of the transaction date. We will review and respond within 5 business days." },
-    ],
-  },
-  cancellation: {
-    title: "Cancellation Policy",
-    sections: [
-      { heading: "One Month Advance Notice Required", body: "To cancel your property care subscription, you must provide a minimum of ONE FULL CALENDAR MONTH advance written notice before your next billing date. Cancellations requested with less than one month's notice will not take effect until the end of the following billing cycle." },
-      { heading: "No Mid-Month Cancellations", body: "Subscriptions cannot be cancelled mid-month. Once the monthly fee is charged, the service will continue until the end of that paid month regardless of a cancellation request. No partial refunds will be issued for remaining days of the month." },
-      { heading: "How to Cancel", body: "To initiate cancellation, send a written request to admin@trustwork.co.in from your registered email address, stating your Customer ID, Property ID, and reason for cancellation. We will confirm receipt within 2 business days." },
-      { heading: "Post-Cancellation Access", body: "After cancellation takes effect, your portal access will remain active until the end of the last paid period. Property data, visit reports, and media will be retained for 30 days post-cancellation and then permanently deleted upon request." },
-      { heading: "Reactivation", body: "You may reactivate a cancelled subscription at any time by logging into the portal at care.trustwork.co.in and completing the registration and payment process again." },
-    ],
-  },
-};
-
-function PolicyModal({ type, onClose }) {
-  const content = POLICY_CONTENT[type];
-  if (!content) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(22,50,63,0.75)" }}>
-      <div className="w-full max-w-2xl rounded-xl shadow-2xl max-h-[88vh] overflow-hidden flex flex-col" style={{ background: "var(--paper)" }}>
-        <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderBottom: "1px solid rgba(30,42,47,0.1)", background: "var(--blueprint)" }}>
-          <div className="tw-display font-bold text-lg text-white">{content.title}</div>
-          <button onClick={onClose} className="cursor-pointer hover:opacity-70 transition-opacity text-white"><X size={20} /></button>
-        </div>
-        <div className="overflow-y-auto px-6 py-5 space-y-5">
-          {content.sections.map((s, i) => (
-            <div key={i}>
-              <div className="tw-body font-bold text-sm mb-1.5" style={{ color: "var(--blueprint)" }}>{s.heading}</div>
-              <p className="tw-body text-sm leading-relaxed" style={{ opacity: 0.8 }}>{s.body}</p>
-            </div>
-          ))}
-          <div className="pt-4 tw-mono text-xs" style={{ opacity: 0.45 }}>
-            Last updated: September 2026 · TrustWork Property Care Services · admin@trustwork.co.in
-          </div>
-        </div>
-        <div className="px-6 py-4 shrink-0" style={{ borderTop: "1px solid rgba(30,42,47,0.1)" }}>
-          <button onClick={onClose} className="w-full py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90" style={{ background: "var(--blueprint)" }}>Close</button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -1083,10 +1004,19 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
 }
 
 
-function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, onUpdate, onLogout }) {
+function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, onUpdate, onLogout, dbs }) {
   const [agreed, setAgreed] = useState(p.agreed || false);
   const [showEdit, setShowEdit] = useState(false);
   const [paying, setPaying] = useState(false);
+
+  const calcFee = (planId, size, cycle) => {
+    const plan = dbs.plans[planId];
+    if (!plan) return 0;
+    const rate = plan.sqftRate || 0;
+    const base = rate * size;
+    const multiplier = cycle === '12_months' ? 12 : cycle === '6_months' ? 6 : 1;
+    return base * multiplier;
+  };
 
   const handleAgree = () => {
     setAgreed(true);
@@ -1099,7 +1029,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
     setPaying(true);
     processCheckout({
       amount: fee,
-      description: `Renewal: ${PLANS.find(pl => pl.id === p.plan)?.name}`,
+      description: `Renewal: ${dbs.plans[p.plan]?.name}`,
       onSuccess: async (paymentId) => {
         const paymentDate = new Date().toISOString();
         const expiryDate = calcExpiry(paymentDate, p.billingCycle);
@@ -1153,7 +1083,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
 
   return (
     <Shell 
-      title="TrustWork" subtitle={`${customer.name} · ${PLANS.find(pl => pl.id === p.plan)?.name || p.plan}`} onLogout={onLogout}>
+      title="TrustWork" subtitle={`${customer.name} · ${dbs.plans[p.plan]?.name || p.plan}`} onLogout={onLogout}>
       <div className="flex items-center justify-between mb-5">
         <button onClick={onBack} className="tw-body text-sm flex items-center gap-1" style={{ opacity: 0.6 }}>
           <ArrowLeft size={14} /> All properties
@@ -1199,7 +1129,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
           <div className="mb-5">
             <div className="tw-body text-sm font-semibold mb-2" style={{ opacity: 0.8 }}>Choose or review your plan:</div>
             <div className="grid md:grid-cols-3 gap-4">
-              {PLANS.map((pl) => (
+              {Object.values(dbs.plans).map((pl) => (
                 <button key={pl.id} onClick={() => onChangePlan(pl.id)}
                   className="relative p-5 rounded-xl text-left transition-all overflow-hidden flex flex-col justify-between"
                   style={p.plan === pl.id ? { background: "var(--blueprint)", color: "white", boxShadow: "0 10px 25px -5px rgba(22,50,63,0.3)" } : { background: "white", border: "1px solid rgba(30,42,47,0.15)", color: "var(--ink)" }}>
@@ -1241,8 +1171,14 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
           <div className="grid sm:grid-cols-2 gap-4 mb-5">
             <div className="p-4 rounded-md" style={{ background: "rgba(30,42,47,0.02)", border: "1px solid rgba(30,42,47,0.05)" }}>
               <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>CURRENT PLAN</div>
-              <div className="tw-body font-bold text-base">{PLANS.find(pl => pl.id === p.plan)?.name || p.plan}</div>
+              <div className="tw-body font-bold text-base">{dbs.plans[p.plan]?.name || p.plan} — ₹{dbs.plans[p.plan]?.ratePerSqft || 0}/sqft/mo</div>
               <div className="tw-body text-sm mt-1" style={{ opacity: 0.8 }}>Cycle: {p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Every 6 Months' : 'Monthly'}</div>
+              <div className="tw-body text-[11px] mt-2 font-medium" style={{ opacity: 0.65 }}>
+                {dbs.plans[p.plan]?.numVisits || 0} visits · {dbs.plans[p.plan]?.numPhotos === 999 ? 'Unlimited' : dbs.plans[p.plan]?.numPhotos || 0} photos · {dbs.plans[p.plan]?.numVideos === 999 ? 'Unlimited' : dbs.plans[p.plan]?.numVideos || 0} video(s)
+              </div>
+              <div className="tw-body text-[11px] mt-0.5 font-medium text-green-700">
+                Extra Visit Cost: ₹{Math.round((dbs.plans[p.plan]?.ratePerSqft || 0) * p.size * 0.90).toLocaleString('en-IN')}
+              </div>
             </div>
             
             <div className="p-4 rounded-md flex justify-between items-center" style={{ background: "rgba(30,42,47,0.02)", border: "1px solid rgba(30,42,47,0.05)" }}>
@@ -1411,7 +1347,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   // Pick the first active property's plan info for the header
   const activeProp = myProps.find(p => p.status === 'active' && p.paymentDate);
   const headerPlanInfo = activeProp ? {
-    planName: PLANS.find(pl => pl.id === activeProp.plan)?.name || activeProp.plan,
+    planName: dbs.plans[activeProp.plan]?.name || activeProp.plan,
     expiry: activeProp.expiryDate || null,
   } : null;
 
@@ -1558,7 +1494,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
   const [agreed, setAgreed] = useState(false);
   const [paying, setPaying] = useState(false);
 
-  const selectedPlan = PLANS.find(p => p.id === form.plan);
+  const selectedPlan = dbs.plans[form.plan];
   const monthlyFee = calcFee(form.plan, form.size, '1_month');
   const feeAmount = calcFee(form.plan, form.size, form.billingCycle);
 
@@ -1696,7 +1632,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
             <div className="sm:col-span-2">
               <Field label="Care plan" required>
                 <select className={inputCls} style={inputStyle} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
-                  {PLANS.map((p) => <option key={p.id} value={p.id}>{p.name} — ₹{p.ratePerSqft}/sqft/month — {p.visits}</option>)}
+                  {Object.values(dbs.plans || {}).map((p) => <option key={p.id} value={p.id}>{p.name} — ₹{p.ratePerSqft}/sqft/month — {p.numVisits} visit(s)</option>)}
                 </select>
               </Field>
               {form.size && monthlyFee && (
@@ -1933,6 +1869,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         { id: "customers", label: "Customers", icon: Users },
         { id: "properties", label: "Properties", icon: Landmark },
         { id: "cases", label: "Cases", icon: MessageSquare },
+        { id: "plans", label: "Plans", icon: ClipboardList },
         { id: "billing", label: "Billing & Visits", icon: CreditCard },
       ]}
       activeTab={tab} onTabChange={setTab}
@@ -2078,6 +2015,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
       )}
 
       {tab === "billing" && <AdminBillingTab dbs={dbs} refresh={refresh} />}
+      {tab === "plans" && <AdminPlansTab dbs={dbs} refresh={refresh} />}
 
 
       {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} dbs={dbs} />}
@@ -2410,8 +2348,14 @@ function AdminBillingTab({ dbs, refresh }) {
                       <div className="tw-mono text-[10px] text-gray-400 mt-0.5">{p.id}</div>
                     </td>
                     <td className="p-4">
-                      <div className="tw-body text-sm font-medium">{PLANS.find(pl => pl.id === p.plan)?.name || p.plan}</div>
-                      <div className="tw-body text-xs text-gray-500 mt-1">{p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Semi-Annually' : 'Monthly'}</div>
+                      <div className="tw-body text-sm font-medium">{dbs.plans[p.plan]?.name || p.plan} (₹{dbs.plans[p.plan]?.ratePerSqft || 0}/sqft)</div>
+                      <div className="tw-body text-[11px] text-gray-500 mt-1">{p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Semi-Annually' : 'Monthly'}</div>
+                      <div className="tw-body text-[10px] text-gray-400 mt-1.5">
+                        {dbs.plans[p.plan]?.numVisits || 0} visits · {dbs.plans[p.plan]?.numPhotos === 999 ? 'Unl.' : dbs.plans[p.plan]?.numPhotos || 0} imgs · {dbs.plans[p.plan]?.numVideos === 999 ? 'Unl.' : dbs.plans[p.plan]?.numVideos || 0} vids
+                      </div>
+                      <div className="tw-body text-[10px] text-green-600 mt-0.5">
+                        Extra Visit: ₹{Math.round((dbs.plans[p.plan]?.ratePerSqft || 0) * p.size * 0.90).toLocaleString('en-IN')}
+                      </div>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2 mb-1">
@@ -2461,7 +2405,8 @@ export default function App() {
           admin: { username: "admin", password: "admin123" }, 
           customers: data.customers, 
           properties: data.properties, 
-          cases: data.cases 
+          cases: data.cases,
+          plans: data.plans
         });
       }
     } catch (e) {
@@ -2486,7 +2431,7 @@ export default function App() {
 
   return (
     <div style={{ ...cssVars, minHeight: "100vh" }}>
-      {view === "landing" && <Landing onLogin={() => setView("login")} />}
+      {view === "landing" && <Landing onLogin={() => setView("login")} dbs={dbs} />}
       {view === "login" && (
         <LoginScreen
           onBack={() => setView("landing")}
@@ -2506,6 +2451,92 @@ export default function App() {
       {view === "admin" && session && (
         <AdminDashboard dbs={dbs} refresh={refresh} onLogout={() => { setSession(null); setView("landing"); }} />
       )}
+    </div>
+  );
+}
+
+function AdminPlansTab({ dbs, refresh }) {
+  const plans = Object.values(dbs.plans || {});
+  const [editing, setEditing] = useState(null); // null, or { ...planData }
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    const isNew = !dbs.plans[editing.id];
+    const method = isNew ? 'POST' : 'PUT';
+    const url = isNew ? '/api/plans' : `/api/plans/${editing.id}`;
+    
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...editing, ratePerSqft: parseInt(editing.ratePerSqft, 10), numVisits: parseInt(editing.numVisits, 10), numPhotos: parseInt(editing.numPhotos, 10), numVideos: parseInt(editing.numVideos, 10) }) });
+    refresh();
+    setEditing(null);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this plan?")) return;
+    await fetch(`/api/plans/${id}`, { method: 'DELETE' });
+    refresh();
+  };
+
+  if (editing) {
+    const inputCls = "w-full border p-2.5 rounded-md tw-body text-sm bg-white";
+    return (
+      <div className="bg-white p-6 rounded-xl border max-w-2xl" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+        <h3 className="tw-display font-bold text-xl mb-6">{dbs.plans[editing.id] ? "Edit Plan" : "Create New Plan"}</h3>
+        <form onSubmit={handleSave} className="space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Plan ID (e.g. 'premium')"><input required readOnly={!!dbs.plans[editing.id]} className={`${inputCls} ${dbs.plans[editing.id] ? 'opacity-50 bg-gray-50' : ''}`} value={editing.id || ''} onChange={e => setEditing({...editing, id: e.target.value})} /></Field>
+            <Field label="Plan Name"><input required className={inputCls} value={editing.name || ''} onChange={e => setEditing({...editing, name: e.target.value})} /></Field>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Rate (₹ per sqft/month)"><input type="number" min="0" required className={inputCls} value={editing.ratePerSqft ?? ''} onChange={e => setEditing({...editing, ratePerSqft: e.target.value})} /></Field>
+            <Field label="Number of Visits/month"><input type="number" min="0" required className={inputCls} value={editing.numVisits ?? ''} onChange={e => setEditing({...editing, numVisits: e.target.value})} /></Field>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Number of Photos (999 for Unl.)"><input type="number" required className={inputCls} value={editing.numPhotos ?? ''} onChange={e => setEditing({...editing, numPhotos: e.target.value})} /></Field>
+            <Field label="Number of Videos (999 for Unl.)"><input type="number" required className={inputCls} value={editing.numVideos ?? ''} onChange={e => setEditing({...editing, numVideos: e.target.value})} /></Field>
+          </div>
+          <label className="flex items-center gap-2 tw-body text-sm cursor-pointer mt-4">
+            <input type="checkbox" checked={editing.hasLiveCall} onChange={e => setEditing({...editing, hasLiveCall: e.target.checked})} className="w-4 h-4" />
+            Includes Live Video Call?
+          </label>
+          <div className="pt-4 flex gap-3">
+            <button type="submit" className="px-6 py-2 rounded text-white font-semibold tw-body transition-opacity hover:opacity-90" style={{ background: "var(--blueprint)" }}>Save Plan</button>
+            <button type="button" onClick={() => setEditing(null)} className="px-6 py-2 rounded font-semibold tw-body border hover:bg-gray-50">Cancel</button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="tw-display text-xl font-bold">Manage Plans</h2>
+        <button onClick={() => setEditing({ id: '', name: '', ratePerSqft: 0, numVisits: 0, numPhotos: 0, numVideos: 0, hasLiveCall: false })} className="flex items-center gap-2 px-4 py-2 rounded-md text-white font-semibold tw-body hover:opacity-90 transition-opacity" style={{ background: "var(--blueprint)" }}>
+          <Plus size={16} /> Add New Plan
+        </button>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        {plans.map(p => (
+          <div key={p.id} className="bg-white p-5 rounded-lg border relative flex flex-col justify-between" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+            <div>
+              <div className="flex justify-between items-start mb-2">
+                <div className="tw-display font-bold text-lg">{p.name}</div>
+                <Badge tone="ink">₹{p.ratePerSqft}/sqft</Badge>
+              </div>
+              <ul className="tw-body text-sm space-y-1.5 mt-4" style={{ opacity: 0.8 }}>
+                <li>• {p.numVisits} visits per month</li>
+                <li>• {p.numPhotos === 999 ? 'Unlimited' : p.numPhotos} photos</li>
+                <li>• {p.numVideos === 999 ? 'Unlimited' : p.numVideos} video(s)</li>
+                {p.hasLiveCall && <li>• Includes live video call</li>}
+              </ul>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button onClick={() => setEditing(p)} className="flex-1 py-1.5 border rounded tw-body text-sm font-semibold hover:bg-gray-50 transition-colors">Edit</button>
+              <button onClick={() => handleDelete(p.id)} className="px-3 py-1.5 border border-red-200 text-red-600 rounded tw-body text-sm font-semibold hover:bg-red-50 transition-colors">Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

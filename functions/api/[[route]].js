@@ -12,14 +12,37 @@ app.get('/api/data', async (c) => {
   const { results: visits } = await db.prepare('SELECT * FROM visits').all()
   const { results: cases } = await db.prepare('SELECT * FROM cases').all()
   
+  const { results: plansRaw } = await db.prepare('SELECT * FROM plans').all()
+  let plans = plansRaw;
+  
+  if (plans.length === 0) {
+    const defaultPlans = [
+      { id: "essential", name: "Essential Watch", ratePerSqft: 1, numVisits: 1, numPhotos: 6, numVideos: 0, hasLiveCall: 0 },
+      { id: "standard", name: "Standard Watch", ratePerSqft: 2, numVisits: 2, numPhotos: 999, numVideos: 1, hasLiveCall: 0 },
+      { id: "premium", name: "Premium Watch", ratePerSqft: 3, numVisits: 4, numPhotos: 999, numVideos: 999, hasLiveCall: 1 }
+    ];
+    for (const p of defaultPlans) {
+      await db.prepare('INSERT INTO plans (id, name, ratePerSqft, numVisits, numPhotos, numVideos, hasLiveCall) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        .bind(p.id, p.name, p.ratePerSqft, p.numVisits, p.numPhotos, p.numVideos, p.hasLiveCall)
+        .run();
+    }
+    const { results: newPlans } = await db.prepare('SELECT * FROM plans').all()
+    plans = newPlans;
+  }
+  
   // Format into the structure the frontend expects
   const dbs = {
     customers: {},
     properties: {},
-    cases: {}
+    cases: {},
+    plans: {}
   }
   
   customers.forEach(cust => dbs.customers[cust.id] = cust)
+  plans.forEach(pl => {
+    pl.hasLiveCall = pl.hasLiveCall === 1;
+    dbs.plans[pl.id] = pl;
+  })
   
   // Attach visits to properties
   properties.forEach(prop => {
@@ -41,6 +64,35 @@ app.get('/api/data', async (c) => {
   cases.forEach(cs => dbs.cases[cs.id] = cs)
   
   return c.json(dbs)
+})
+
+// POST /api/plans - Add plan
+app.post('/api/plans', async (c) => {
+  const db = c.env.DB
+  const body = await c.req.json()
+  await db.prepare('INSERT INTO plans (id, name, ratePerSqft, numVisits, numPhotos, numVideos, hasLiveCall) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(body.id, body.name, body.ratePerSqft, body.numVisits, body.numPhotos, body.numVideos, body.hasLiveCall ? 1 : 0)
+    .run()
+  return c.json({ success: true })
+})
+
+// PUT /api/plans/:id - Update plan
+app.put('/api/plans/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  await db.prepare('UPDATE plans SET name = ?, ratePerSqft = ?, numVisits = ?, numPhotos = ?, numVideos = ?, hasLiveCall = ? WHERE id = ?')
+    .bind(body.name, body.ratePerSqft, body.numVisits, body.numPhotos, body.numVideos, body.hasLiveCall ? 1 : 0, id)
+    .run()
+  return c.json({ success: true })
+})
+
+// DELETE /api/plans/:id - Delete plan
+app.delete('/api/plans/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  await db.prepare('DELETE FROM plans WHERE id = ?').bind(id).run()
+  return c.json({ success: true })
 })
 
 // POST /api/customers - Add customer

@@ -1256,6 +1256,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
       )}
       {showEdit && (
         <AddPropertyModal 
+          dbs={dbs}
           initialData={p} 
           onClose={() => setShowEdit(false)} 
           onSave={(updatedForm) => {
@@ -1345,7 +1346,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
 
   if (openProp) {
     const p = dbs.properties[openProp];
-    return <CustomerPropertyDetail p={p} customer={customer} onBack={() => setOpenProp(null)} onChangePlan={(planId) => changePlan(p.id, planId)} onAgree={() => handleAgree(p.id)} onUpdate={updateProperty} onLogout={onLogout} />;
+    return <CustomerPropertyDetail p={p} customer={customer} onBack={() => setOpenProp(null)} onChangePlan={(planId) => changePlan(p.id, planId)} onAgree={() => handleAgree(p.id)} onUpdate={updateProperty} onLogout={onLogout} dbs={dbs} />;
   }
 
   // Pick the first active property's plan info for the header
@@ -1486,12 +1487,12 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
         </div>
       )}
 
-      {showAdd && <AddPropertyModal onClose={() => setShowAdd(false)} onSave={addProperty} />}
+      {showAdd && <AddPropertyModal dbs={dbs} onClose={() => setShowAdd(false)} onSave={addProperty} />}
     </Shell>
   );
 }
 
-function AddPropertyModal({ onClose, onSave, initialData }) {
+function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
   const [step, setStep] = useState(1); // 1=details, 2=agreement, 3=payment
   const [form, setForm] = useState(initialData || { type: PROPERTY_TYPES[0], title: "", address: "", latlong: "", size: "", summary: "", plan: "essential", billingCycle: "1_month" });
   const [docFile, setDocFile] = useState(null);
@@ -1499,8 +1500,8 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
   const [paying, setPaying] = useState(false);
 
   const selectedPlan = dbs.plans[form.plan];
-  const monthlyFee = calcFee(form.plan, form.size, '1_month');
-  const feeAmount = calcFee(form.plan, form.size, form.billingCycle);
+  const monthlyFee = calcFee(form.plan, form.size, '1_month', dbs.plans);
+  const feeAmount = calcFee(form.plan, form.size, form.billingCycle, dbs.plans);
 
   const handleDetailsNext = (e) => {
     e.preventDefault();

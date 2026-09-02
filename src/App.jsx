@@ -524,7 +524,12 @@ function Landing({ onLogin, dbs }) {
             setLeadMsg(null);
           }, 4000);
         },
-        onError: () => {
+        onError: async () => {
+          await fetch(`/api/leads/${leadId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'payment_failed' })
+          });
           setLeadMsg({ type: 'error', text: "Payment failed or was cancelled. Your details are saved, and we will contact you." });
           setTimeout(() => {
             setCheckoutModal(false);
@@ -1190,7 +1195,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                 ))}
                 {/* headerAction (New Customer) in mobile menu */}
                 {headerAction && (
-                  <div className="px-3 py-2 border-t border-gray-100">
+                  <div className="px-3 py-2 border-t border-gray-100 [&>button]:!text-[var(--ink)] [&>button]:w-full [&>button]:justify-start [&>button]:!px-1">
                     {headerAction}
                   </div>
                 )}
@@ -2050,12 +2055,12 @@ function AdminLeadsTab({ dbs, refresh }) {
                 </td>
                 <td className="p-4">
                   <Badge tone={ld.status === 'paid' ? 'moss' : ld.status === 'called_back' ? 'clay' : 'tomato'}>
-                    {ld.status === 'paid' ? 'Paid' : ld.status === 'called_back' ? 'Contacted' : 'Pending'}
+                    {ld.status === 'paid' ? 'Paid' : ld.status === 'called_back' ? 'Contacted' : ld.status === 'payment_failed' ? 'Failed Payment' : 'Pending'}
                   </Badge>
                   {ld.paymentId && <div className="tw-mono text-[10px] mt-1 text-gray-400">{ld.paymentId}</div>}
                 </td>
                 <td className="p-4">
-                  {ld.status === 'pending' && (
+                  {(ld.status === 'pending' || ld.status === 'payment_failed') && (
                     <button onClick={() => updateStatus(ld, 'called_back')} className="text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-gray-200 bg-gray-100 transition-colors text-gray-700">
                       Mark Contacted
                     </button>

@@ -937,6 +937,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               )}
             </div>
           </div>
+        </div>
         {tabs && (
           <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-2 px-2">
             {tabs.map((t) => (

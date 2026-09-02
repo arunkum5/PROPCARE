@@ -1348,18 +1348,9 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
     const p = dbs.properties[openProp];
     return <CustomerPropertyDetail p={p} customer={customer} onBack={() => setOpenProp(null)} onChangePlan={(planId) => changePlan(p.id, planId)} onAgree={() => handleAgree(p.id)} onUpdate={updateProperty} onLogout={onLogout} dbs={dbs} />;
   }
-
-  // Pick the first active property's plan info for the header
-  const activeProp = myProps.find(p => p.status === 'active' && p.paymentDate);
-  const headerPlanInfo = activeProp ? {
-    planName: dbs.plans[activeProp.plan]?.name || activeProp.plan,
-    expiry: activeProp.expiryDate || null,
-  } : null;
-
   return (
     <Shell 
       title="TrustWork" subtitle={customer.name} onLogout={onLogout} onRefresh={refresh}
-      planInfo={headerPlanInfo}
       tabs={[
         { id: "profile", label: "Profile", icon: User },
         { id: "properties", label: "My properties", icon: Landmark },
@@ -1425,7 +1416,10 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
               {myProps.map((p) => (
                 <button key={p.id} onClick={() => setOpenProp(p.id)} className="text-left p-5 rounded-lg bg-white transition-all duration-200 hover:shadow-xl hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
                   <div className="flex justify-between items-start gap-2">
-                    <Badge tone="ink">{p.type}</Badge>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge tone="ink">{p.type}</Badge>
+                      <Badge tone="brass">{dbs.plans[p.plan]?.name || p.plan}</Badge>
+                    </div>
                     <Badge tone={p.status === "active" ? "moss" : "brass"}>{p.status === "active" ? "Active" : "Pending"}</Badge>
                   </div>
                   <div className="tw-mono text-[10px] mt-3 uppercase tracking-wider" style={{ opacity: 0.5 }}>{p.id}</div>

@@ -2259,8 +2259,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
       onSettings={() => setEditCust(dbs.customers['admin'])}
       tabs={[
         { id: "customers", label: "Customers", icon: Users },
-        { id: "leads", label: "Leads", icon: UserPlus },
         { id: "properties", label: "Properties", icon: Landmark },
+        { id: "leads", label: "Leads", icon: UserPlus },
         { id: "plans", label: "Plans", icon: ClipboardList },
         { id: "billing", label: "Billing & Visits", icon: CreditCard },
         { id: "cases", label: "Cases", icon: MessageSquare },

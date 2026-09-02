@@ -1559,6 +1559,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
   const [paying, setPaying] = useState(false);
 
   const selectedPlan = PLANS.find(p => p.id === form.plan);
+  const monthlyFee = calcFee(form.plan, form.size, '1_month');
   const feeAmount = calcFee(form.plan, form.size, form.billingCycle);
 
   const handleDetailsNext = (e) => {
@@ -1569,7 +1570,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
   };
 
   const handlePayment = async () => {
-    if (!monthlyFee) return;
+    if (!feeAmount) return;
     setPaying(true);
     try {
       // 1. Create order on backend

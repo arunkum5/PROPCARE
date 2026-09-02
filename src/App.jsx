@@ -500,9 +500,9 @@ function Landing({ onLogin, dbs }) {
       <div className="flex items-center justify-between px-6 sm:px-10 py-5 animate-fade-in-up" style={{ borderBottom: "1px solid rgba(30,42,47,0.1)" }}>
         <div className="flex items-center gap-2.5 tw-body">
           <img src="/newlogo.png" alt="TrustWork" className="h-12 w-auto object-contain" />
-          <div className="leading-tight">
-            <div className="tw-display font-bold text-[17px]">TrustWork</div>
-            <div className="text-[9px] tw-mono tracking-[0.15em] uppercase" style={{ opacity: 0.65 }}>Property Care & Management</div>
+          <div className="leading-tight mt-0.5">
+            <div className="tw-display font-bold text-[21px]">TrustWork</div>
+            <div className="text-[10px] tw-body tracking-wider uppercase font-bold" style={{ color: "var(--brass)", opacity: 0.9 }}>Property Care & Management</div>
           </div>
         </div>
         <div className="flex items-center gap-5 sm:gap-8">

@@ -312,7 +312,7 @@ async function processCheckout({ amount, description, onSuccess, onError }) {
   }
 }
 
-const PROPERTY_TYPES = ["Vacant Plot", "Agricultural Land", "Commercial Land", "Flat / Apartment", "Independent House", "Villa"];
+const PROPERTY_TYPES = ["Vacant Plot", "Agricultural Land", "Commercial Land", "Flat / Apartment", "Independent House", "Villa", "Other"];
 
 /* ---------- small UI atoms ---------- */
 function Seal({ size = 44, label }) {
@@ -1936,8 +1936,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
       ]}
       activeTab={tab} onTabChange={setTab}
       headerAction={
-        <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-1.5 rounded-md cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "rgba(255,255,255,0.15)", color: "#F6F1E7", border: "1px solid rgba(255,255,255,0.25)" }}>
-          <UserPlus size={14} /> <span className="hidden sm:inline">New customer</span>
+        <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold opacity-80 hover:opacity-100 transition-opacity" style={{ color: "#F6F1E7" }}>
+          <Plus size={16} /> New Customer
         </button>
       }
     >

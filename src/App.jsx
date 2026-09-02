@@ -1471,10 +1471,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4 pt-3 border-t flex justify-between items-center tw-body text-xs font-semibold" style={{ color: "var(--blueprint)", borderColor: "rgba(30,42,47,0.08)" }}>
-                    <span>View property details</span>
-                    <Eye size={14} />
-                  </div>
+
                 </button>
               ))}
             </div>
@@ -2022,10 +2019,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                         <div className="tw-mono text-[10px] mt-3 uppercase tracking-wider" style={{ opacity: 0.5 }}>{p.id}</div>
                         <div className="tw-display font-bold text-lg mt-0.5">{p.title}</div>
                         <div className="tw-body text-sm mt-1 flex items-center gap-1" style={{ opacity: 0.6 }}><MapPin size={12} />{p.address}</div>
-                        <div className="mt-4 pt-3 border-t flex justify-between items-center tw-body text-xs font-semibold" style={{ color: "var(--blueprint)", borderColor: "rgba(30,42,47,0.08)" }}>
-                          <span>View property details</span>
-                          <Eye size={14} />
-                        </div>
+
                       </button>
                     ))}
                   </div>
@@ -2095,10 +2089,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                 <div className="tw-mono text-[10px] mt-3 uppercase tracking-wider" style={{ opacity: 0.5 }}>{p.id}</div>
                 <div className="tw-display font-bold text-lg mt-0.5">{p.title}</div>
                 <div className="tw-body text-sm mt-1" style={{ opacity: 0.6 }}>{owner ? owner.name : p.customerId}</div>
-                <div className="mt-4 pt-3 border-t flex justify-between items-center tw-body text-xs font-semibold" style={{ color: "var(--blueprint)", borderColor: "rgba(30,42,47,0.08)" }}>
-                  <span>View property details</span>
-                  <Eye size={14} />
-                </div>
+
               </button>
             );
           })}
@@ -2188,7 +2179,7 @@ function AddVisitForm({ onAdd }) {
         {/* ── PHOTOS ── */}
         <div className="mb-4">
           <div className="tw-body text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ opacity: 0.65 }}>
-            <ImageIcon size={12} /> Photos <span style={{ opacity: 0.5 }}>(max 10 MB each)</span>
+            <ImageIcon size={12} /> Photos <span style={{ opacity: 0.5 }}>(max 5 MB each)</span>
             {photos.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full text-white text-[10px] font-bold" style={{ background: "var(--blueprint)" }}>{photos.length}</span>}
           </div>
           <div className="space-y-2">
@@ -2202,7 +2193,7 @@ function AddVisitForm({ onAdd }) {
                     onChange={(e) => {
                       const f = e.target.files[0];
                       if (!f) return;
-                      if (f.size > 10 * 1024 * 1024) { alert("Photo exceeds 10MB limit."); return; }
+                      if (f.size > 5 * 1024 * 1024) { alert("Photo exceeds 5MB limit."); return; }
                       setPhotoSlots(prev => prev.map((s, idx) => idx === i ? f : s));
                       e.target.value = "";
                     }}

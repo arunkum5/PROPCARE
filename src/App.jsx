@@ -1900,11 +1900,11 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
             </div>
             <div>
               <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Requested Plan</div>
-              <div className="tw-body font-semibold text-sm">{dbs.plans[p.plan]?.name || p.plan}</div>
+              <div className="tw-body font-semibold text-sm">{dbs.plans[p.plan]?.name || p.plan} (₹{dbs.plans[p.plan]?.ratePerSqft || 0}/sqft)</div>
             </div>
             <div>
               <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Billing Cycle</div>
-              <div className="tw-body font-semibold text-sm capitalize">{p.billingCycle?.replace('_', ' ')}</div>
+              <div className="tw-body font-semibold text-sm capitalize">{p.billingCycle?.replace('_', ' ')} (₹{calcFee(p.plan, p.size, p.billingCycle, dbs.plans)?.toLocaleString('en-IN') || 0})</div>
             </div>
             {p.latlong && (
               <div className="sm:col-span-2">

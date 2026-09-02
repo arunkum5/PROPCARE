@@ -1991,7 +1991,10 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
             return (
               <button key={p.id} onClick={() => setOpenProp(p.id)} className="text-left p-5 rounded-lg bg-white transition-all duration-200 hover:shadow-xl hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
                 <div className="flex justify-between items-start gap-2">
-                  <Badge tone="ink">{p.type}</Badge>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge tone="ink">{p.type}</Badge>
+                    <Badge tone="brass">{dbs.plans[p.plan]?.name || p.plan}</Badge>
+                  </div>
                   <Badge tone={p.status === "active" ? "moss" : p.status === "delete_pending" ? "tomato" : "brass"}>
                     {p.status === "active" ? "Active" : p.status === "delete_pending" ? "Deletion Requested" : "Pending"}
                   </Badge>

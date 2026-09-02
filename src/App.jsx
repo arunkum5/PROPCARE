@@ -1013,14 +1013,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
   const [showEdit, setShowEdit] = useState(false);
   const [paying, setPaying] = useState(false);
 
-  const calcFee = (planId, size, cycle) => {
-    const plan = dbs.plans[planId];
-    if (!plan) return 0;
-    const rate = plan.sqftRate || 0;
-    const base = rate * size;
-    const multiplier = cycle === '12_months' ? 12 : cycle === '6_months' ? 6 : 1;
-    return base * multiplier;
-  };
+
 
   const handleAgree = () => {
     setAgreed(true);
@@ -1028,7 +1021,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
   };
 
   const handleRenew = () => {
-    const fee = calcFee(p.plan, p.size, p.billingCycle);
+    const fee = calcFee(p.plan, p.size, p.billingCycle, dbs.plans);
     if (!fee) return alert("Error calculating fee.");
     setPaying(true);
     processCheckout({
@@ -1050,7 +1043,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
   };
 
   const handleBuyExtraVisit = () => {
-    const monthlyFee = calcFee(p.plan, p.size, '1_month');
+    const monthlyFee = calcFee(p.plan, p.size, '1_month', dbs.plans);
     const extraVisitCost = monthlyFee * 0.90; // 10% discount
     if (!extraVisitCost) return alert("Error calculating cost.");
     setPaying(true);
@@ -1212,7 +1205,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
             <div className="p-4 rounded-md" style={{ background: "rgba(30,42,47,0.02)", border: "1px solid rgba(30,42,47,0.05)" }}>
               <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>CURRENT PLAN</div>
               <div className="tw-body font-bold text-base">{dbs.plans[p.plan]?.name || p.plan} — ₹{dbs.plans[p.plan]?.ratePerSqft || 0}/sqft/mo</div>
-              <div className="tw-body text-sm mt-1" style={{ opacity: 0.8 }}>Cycle: {p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Every 6 Months' : 'Monthly'} (₹{calcFee(p.plan, p.size, p.billingCycle).toLocaleString('en-IN')})</div>
+              <div className="tw-body text-sm mt-1" style={{ opacity: 0.8 }}>Cycle: {p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Every 6 Months' : 'Monthly'} (₹{calcFee(p.plan, p.size, p.billingCycle, dbs.plans).toLocaleString('en-IN')})</div>
               <div className="tw-body text-[11px] mt-2 font-medium" style={{ opacity: 0.65 }}>
                 {dbs.plans[p.plan]?.numVisits || 0} visits · {dbs.plans[p.plan]?.numPhotos === 999 ? 'Unlimited' : dbs.plans[p.plan]?.numPhotos || 0} photos · {dbs.plans[p.plan]?.numVideos === 999 ? 'Unlimited' : dbs.plans[p.plan]?.numVideos || 0} video(s)
               </div>
@@ -1226,7 +1219,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
                 <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>NEXT RENEWAL</div>
                 <div className="tw-body font-bold text-base">{p.expiryDate ? fmtDate(p.expiryDate) : '—'}</div>
                 <div className="tw-body text-[11px] mt-1 font-medium text-green-700">
-                  Amount due: ₹{calcFee(p.plan, p.size, p.billingCycle).toLocaleString('en-IN')}
+                  Amount due: ₹{calcFee(p.plan, p.size, p.billingCycle, dbs.plans).toLocaleString('en-IN')}
                 </div>
                 <div className="tw-body text-[11px] mt-0.5" style={{ opacity: 0.7 }}>Last paid: {p.paymentDate ? fmtDate(p.paymentDate) : '—'}</div>
               </div>
@@ -1237,7 +1230,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
           <div className="border-t pt-4 mt-2 flex justify-between items-center" style={{ borderColor: "rgba(30,42,47,0.1)" }}>
             <div>
               <div className="tw-body font-semibold text-sm">Need an extra visit this month?</div>
-              <div className="tw-body text-xs mt-0.5" style={{ opacity: 0.7 }}>Purchase an on-demand visit for ₹{calcFee(p.plan, p.size, '1_month') * 0.90} (10% off)</div>
+              <div className="tw-body text-xs mt-0.5" style={{ opacity: 0.7 }}>Purchase an on-demand visit for ₹{calcFee(p.plan, p.size, '1_month', dbs.plans) * 0.90} (10% off)</div>
             </div>
             <button disabled={paying} onClick={handleBuyExtraVisit} className="px-3 py-1.5 rounded text-sm font-semibold tw-body cursor-pointer transition-colors disabled:opacity-50" style={{ background: 'var(--brass)', color: 'var(--blueprint)' }}>{paying ? '...' : 'Buy Extra Visit'}</button>
           </div>

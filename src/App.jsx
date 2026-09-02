@@ -1303,6 +1303,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       expiryDate: form.expiryDate || null,
       paymentStatus: form.paymentStatus || null,
       paymentId: form.paymentId || null,
+      docName: form.docName || null,
     };
     await fetch('/api/properties', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newProp) });
     refresh();
@@ -1635,7 +1636,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
               <Field label="Ownership Proof Document (Max 5MB)">
                 <input type="file" accept=".pdf,image/*" className={inputCls} style={inputStyle} onChange={(e) => {
                   const file = e.target.files[0];
-                  if (file && file.size > 5 * 1024 * 1024) { alert("File size must be less than 5MB."); e.target.value = ""; setDocFile(null); } else { setDocFile(file); }
+                  if (file && file.size > 5 * 1024 * 1024) { alert("File size must be less than 5MB."); e.target.value = ""; setDocFile(null); } else if (file) { setDocFile(file); setForm({ ...form, docName: file.name }); }
                 }} />
                 {docFile && <div className="text-xs mt-1 text-green-700 font-medium flex items-center gap-1"><CheckCircle2 size={12} /> {docFile.name}</div>}
               </Field>
@@ -1852,14 +1853,19 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           <MapPin size={13} /> {p.address}
         </div>
 
-        <div className="p-5 rounded-lg bg-white mb-6" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-          <div className="tw-display font-bold text-lg mb-4">Property Details</div>
-          <div className="grid sm:grid-cols-2 gap-y-4 gap-x-8">
-            <div>
+        <details className="bg-white rounded-lg mb-6 group" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          <summary className="p-4 sm:p-5 cursor-pointer flex justify-between items-center list-none outline-none">
+            <div className="tw-display font-bold text-lg">Property Details</div>
+            <div className="text-gray-400 group-open:rotate-180 transition-transform duration-200">
+              <ChevronDown size={20} />
+            </div>
+          </summary>
+          <div className="p-4 sm:p-5 pt-0 grid sm:grid-cols-2 gap-y-4 gap-x-8 border-t" style={{ borderColor: "rgba(30,42,47,0.05)" }}>
+            <div className="mt-4">
               <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Type</div>
               <div className="tw-body font-semibold text-sm">{p.type}</div>
             </div>
-            <div>
+            <div className="mt-4">
               <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Size</div>
               <div className="tw-body font-semibold text-sm">{p.size} sq. ft</div>
             </div>
@@ -1871,6 +1877,18 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
               <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Billing Cycle</div>
               <div className="tw-body font-semibold text-sm capitalize">{p.billingCycle?.replace('_', ' ')}</div>
             </div>
+            {p.latlong && (
+              <div className="sm:col-span-2">
+                <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Map Link</div>
+                <a href={p.latlong} target="_blank" rel="noreferrer" className="tw-body text-sm text-blue-600 hover:underline">{p.latlong}</a>
+              </div>
+            )}
+            {p.docName && (
+              <div className="sm:col-span-2">
+                <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Proof Document</div>
+                <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div>
+              </div>
+            )}
             {p.summary && (
               <div className="sm:col-span-2 mt-2">
                 <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>
@@ -1878,7 +1896,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
               </div>
             )}
           </div>
-        </div>
+        </details>
 
         <AddVisitForm onAdd={(v) => addVisit(p.id, v)} />
 

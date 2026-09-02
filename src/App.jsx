@@ -1778,11 +1778,11 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         { id: "cases", label: "Cases", icon: MessageSquare },
       ]}
       activeTab={tab} onTabChange={setTab}
-      headerAction={tab === "customers" ? (
+      headerAction={
         <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3.5 py-1.5 rounded-md cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "rgba(255,255,255,0.15)", color: "#F6F1E7", border: "1px solid rgba(255,255,255,0.25)" }}>
           <UserPlus size={14} /> <span className="hidden sm:inline">New customer</span>
         </button>
-      ) : null}
+      }
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
         {[

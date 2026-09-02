@@ -1141,11 +1141,13 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               </button>
             )}
 
-            {/* Spacer & Contact Info */}
             <div className="flex-1 flex justify-end items-center gap-5 tw-body font-semibold text-[13px] pr-2" style={{ color: "rgba(246,241,231,0.7)" }}>
-              <a href="tel:+919353010107" className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
-                <Phone size={13} /> +91 9353010107, +91 7676740107
-              </a>
+              <div className="hidden lg:flex items-center gap-1.5">
+                <Phone size={13} />
+                <a href="tel:+919353010107" className="hover:text-white transition-colors cursor-pointer">+91 9353010107</a>
+                <span style={{ opacity: 0.5 }}>,</span>
+                <a href="tel:+917676740107" className="hover:text-white transition-colors cursor-pointer">+91 7676740107</a>
+              </div>
               <a href="mailto:care@trustwork.co.in" className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
                 <Mail size={13} /> care@trustwork.co.in
               </a>

@@ -83,8 +83,8 @@ app.delete('/api/customers/:id', async (c) => {
 app.post('/api/properties', async (c) => {
   const db = c.env.DB
   const body = await c.req.json()
-  await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(body.id, body.customerId, body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null)
+  await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId, billingCycle, pendingExtraVisits) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(body.id, body.customerId, body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null, body.billingCycle || '1_month', body.pendingExtraVisits || 0)
     .run()
   return c.json({ success: true })
 })
@@ -95,8 +95,8 @@ app.put('/api/properties/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json()
   
-  await db.prepare('UPDATE properties SET type = ?, title = ?, address = ?, latlong = ?, size = ?, summary = ?, plan = ?, status = ?, agreed = ?, agreementSigned = ?, paymentDate = ?, expiryDate = ?, paymentStatus = ?, paymentId = ? WHERE id = ?')
-    .bind(body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null, id)
+  await db.prepare('UPDATE properties SET type = ?, title = ?, address = ?, latlong = ?, size = ?, summary = ?, plan = ?, status = ?, agreed = ?, agreementSigned = ?, paymentDate = ?, expiryDate = ?, paymentStatus = ?, paymentId = ?, billingCycle = ?, pendingExtraVisits = ? WHERE id = ?')
+    .bind(body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null, body.billingCycle || '1_month', body.pendingExtraVisits || 0, id)
     .run()
   
   return c.json({ success: true })

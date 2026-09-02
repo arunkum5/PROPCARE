@@ -4,7 +4,7 @@ import {
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
   UserPlus, User, Search, ArrowLeft, Sprout, Fence, Eye, EyeOff, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon
+  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon, CreditCard
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -242,17 +242,76 @@ const PLANS = [
   { id: "premium", name: "Premium Watch", visits: "4 visits / month", media: "Unlimited photos + video + live call", ratePerSqft: 3 },
 ];
 
-function calcMonthlyFee(plan, sqft) {
+function calcFee(plan, sqft, cycle = '1_month') {
   const p = PLANS.find(pl => pl.id === plan);
   const s = parseFloat(sqft) || 0;
-  return p && s > 0 ? p.ratePerSqft * s : null;
+  if (!p || s <= 0) return null;
+  const monthly = p.ratePerSqft * s;
+  if (cycle === '12_months') return monthly * 12 * 0.90; // 10% discount
+  if (cycle === '6_months') return monthly * 6 * 0.96; // 4% discount
+  return monthly;
 }
 
-function calcExpiry(paymentDate) {
+function calcExpiry(paymentDate, cycle = '1_month') {
   if (!paymentDate) return null;
   const d = new Date(paymentDate);
-  d.setMonth(d.getMonth() + 1);
+  const monthsToAdd = cycle === '12_months' ? 12 : cycle === '6_months' ? 6 : 1;
+  d.setMonth(d.getMonth() + monthsToAdd);
   return d.toISOString();
+}
+
+}
+
+async function processCheckout({ amount, description, onSuccess, onError }) {
+  try {
+    const orderRes = await fetch('/api/razorpay/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: Math.round(amount * 100) }), // paise
+    });
+    const order = await orderRes.json();
+    if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
+
+    if (!window.Razorpay) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    const rzp = new window.Razorpay({
+      key: 'rzp_test_TX8LUu02uZR0dl',
+      amount: order.amount,
+      currency: order.currency,
+      order_id: order.orderId,
+      name: 'TrustWork Property Care',
+      description,
+      theme: { color: '#16323F' },
+      handler: async (response) => {
+        const verRes = await fetch('/api/razorpay/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          }),
+        });
+        const verData = await verRes.json();
+        if (verData.success) {
+          onSuccess(response.razorpay_payment_id);
+        } else {
+          onError(new Error('Payment verification failed. Please contact support.'));
+        }
+      },
+      modal: { ondismiss: () => onError(new Error('Payment cancelled.')) },
+    });
+    rzp.open();
+  } catch (err) {
+    onError(err);
+  }
 }
 
 const PROPERTY_TYPES = ["Vacant Plot", "Agricultural Land", "Commercial Land", "Flat / Apartment", "Independent House", "Villa"];
@@ -1029,10 +1088,55 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
 function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, onUpdate, onLogout }) {
   const [agreed, setAgreed] = useState(p.agreed || false);
   const [showEdit, setShowEdit] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   const handleAgree = () => {
     setAgreed(true);
     if (onAgree) onAgree();
+  };
+
+  const handleRenew = () => {
+    const fee = calcFee(p.plan, p.size, p.billingCycle);
+    if (!fee) return alert("Error calculating fee.");
+    setPaying(true);
+    processCheckout({
+      amount: fee,
+      description: `Renewal: ${PLANS.find(pl => pl.id === p.plan)?.name}`,
+      onSuccess: async (paymentId) => {
+        const paymentDate = new Date().toISOString();
+        const expiryDate = calcExpiry(paymentDate, p.billingCycle);
+        const updated = { ...p, paymentDate, expiryDate, paymentStatus: 'paid', paymentId };
+        await onUpdate(updated);
+        setPaying(false);
+        alert("Plan renewed successfully!");
+      },
+      onError: (err) => {
+        setPaying(false);
+        alert(err.message);
+      }
+    });
+  };
+
+  const handleBuyExtraVisit = () => {
+    const monthlyFee = calcFee(p.plan, p.size, '1_month');
+    const extraVisitCost = monthlyFee * 0.90; // 10% discount
+    if (!extraVisitCost) return alert("Error calculating cost.");
+    setPaying(true);
+    processCheckout({
+      amount: extraVisitCost,
+      description: `Extra Visit (10% Off) - ${p.title}`,
+      onSuccess: async (paymentId) => {
+        const pendingExtraVisits = (p.pendingExtraVisits || 0) + 1;
+        const updated = { ...p, pendingExtraVisits };
+        await onUpdate(updated);
+        setPaying(false);
+        alert("Extra visit purchased successfully! Our team will be notified.");
+      },
+      onError: (err) => {
+        setPaying(false);
+        alert(err.message);
+      }
+    });
   };
 
   const groupedVisits = (p.visits || []).reduce((acc, v) => {
@@ -1130,12 +1234,41 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
           </div>
         </div>
       ) : (
-        <div className="mb-8 flex items-center justify-between p-4 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-          <div className="flex items-center gap-3">
-            <CheckCircle2 size={18} style={{ color: "var(--moss)" }} />
-            <div className="tw-body text-sm font-semibold">Care Plan Active: {PLANS.find(pl => pl.id === p.plan)?.name || p.plan}</div>
+        <div className="mb-8 p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="tw-display font-bold text-lg">Billing & Plan</div>
+            <Badge tone="moss">Agreement signed & Paid</Badge>
           </div>
-          <Badge tone="moss">Agreement signed & Paid</Badge>
+          
+          <div className="grid sm:grid-cols-2 gap-4 mb-5">
+            <div className="p-4 rounded-md" style={{ background: "rgba(30,42,47,0.02)", border: "1px solid rgba(30,42,47,0.05)" }}>
+              <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>CURRENT PLAN</div>
+              <div className="tw-body font-bold text-base">{PLANS.find(pl => pl.id === p.plan)?.name || p.plan}</div>
+              <div className="tw-body text-sm mt-1" style={{ opacity: 0.8 }}>Cycle: {p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Every 6 Months' : 'Monthly'}</div>
+            </div>
+            
+            <div className="p-4 rounded-md flex justify-between items-center" style={{ background: "rgba(30,42,47,0.02)", border: "1px solid rgba(30,42,47,0.05)" }}>
+              <div>
+                <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>NEXT RENEWAL</div>
+                <div className="tw-body font-bold text-base">{p.expiryDate ? fmtDate(p.expiryDate) : '—'}</div>
+                <div className="tw-body text-xs mt-1" style={{ opacity: 0.7 }}>Last paid: {p.paymentDate ? fmtDate(p.paymentDate) : '—'}</div>
+              </div>
+              <button disabled={paying} onClick={handleRenew} className="px-3 py-1.5 rounded bg-white text-sm font-semibold tw-body shadow-sm border cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50" style={{ color: 'var(--blueprint)', borderColor: 'rgba(30,42,47,0.1)' }}>{paying ? '...' : 'Renew'}</button>
+            </div>
+          </div>
+
+          <div className="border-t pt-4 mt-2 flex justify-between items-center" style={{ borderColor: "rgba(30,42,47,0.1)" }}>
+            <div>
+              <div className="tw-body font-semibold text-sm">Need an extra visit this month?</div>
+              <div className="tw-body text-xs mt-0.5" style={{ opacity: 0.7 }}>Purchase an on-demand visit for ₹{calcFee(p.plan, p.size, '1_month') * 0.90} (10% off)</div>
+            </div>
+            <button disabled={paying} onClick={handleBuyExtraVisit} className="px-3 py-1.5 rounded text-sm font-semibold tw-body cursor-pointer transition-colors disabled:opacity-50" style={{ background: 'var(--brass)', color: 'var(--blueprint)' }}>{paying ? '...' : 'Buy Extra Visit'}</button>
+          </div>
+          {p.pendingExtraVisits > 0 && (
+            <div className="mt-3 tw-body text-xs font-semibold px-3 py-2 rounded-md" style={{ background: 'rgba(75,93,69,0.1)', color: 'var(--moss)' }}>
+              ✓ You have {p.pendingExtraVisits} pending extra visit(s) requested.
+            </div>
+          )}
         </div>
       )}
 
@@ -1422,13 +1555,13 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
 
 function AddPropertyModal({ onClose, onSave, initialData }) {
   const [step, setStep] = useState(1); // 1=details, 2=agreement, 3=payment
-  const [form, setForm] = useState(initialData || { type: PROPERTY_TYPES[0], title: "", address: "", latlong: "", size: "", summary: "", plan: "essential" });
+  const [form, setForm] = useState(initialData || { type: PROPERTY_TYPES[0], title: "", address: "", latlong: "", size: "", summary: "", plan: "essential", billingCycle: "1_month" });
   const [docFile, setDocFile] = useState(null);
   const [agreed, setAgreed] = useState(false);
   const [paying, setPaying] = useState(false);
 
   const selectedPlan = PLANS.find(p => p.id === form.plan);
-  const monthlyFee = calcMonthlyFee(form.plan, form.size);
+  const feeAmount = calcFee(form.plan, form.size, form.billingCycle);
 
   const handleDetailsNext = (e) => {
     e.preventDefault();
@@ -1445,7 +1578,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
       const orderRes = await fetch('/api/razorpay/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: monthlyFee * 100 }), // paise
+        body: JSON.stringify({ amount: feeAmount * 100 }), // paise
       });
       const order = await orderRes.json();
       if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
@@ -1483,7 +1616,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
           const verData = await verRes.json();
           if (verData.success) {
             const paymentDate = new Date().toISOString();
-            const expiryDate = calcExpiry(paymentDate);
+            const expiryDate = calcExpiry(paymentDate, form.billingCycle);
             onSave({ ...form, agreementSigned: true, paymentDate, expiryDate, paymentStatus: 'paid', paymentId: response.razorpay_payment_id });
           } else {
             alert('Payment verification failed. Please contact support.');
@@ -1616,9 +1749,28 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
               <div className="flex justify-between tw-body text-sm mb-1"><span>Plan</span><span className="font-semibold">{selectedPlan?.name}</span></div>
               <div className="flex justify-between tw-body text-sm mb-1"><span>Property size</span><span>{form.size} sq ft</span></div>
               <div className="flex justify-between tw-body text-sm mb-1"><span>Rate</span><span>₹{selectedPlan?.ratePerSqft}/sqft/month</span></div>
-              <div className="border-t mt-3 pt-3 flex justify-between tw-body font-bold" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
-                <span>Monthly Total</span>
-                <span style={{ color: 'var(--blueprint)' }}>₹{monthlyFee ? monthlyFee.toLocaleString('en-IN') : '—'}</span>
+              
+              <div className="mt-4 mb-2">
+                <div className="tw-body text-xs font-semibold mb-2" style={{ opacity: 0.6 }}>SELECT BILLING CYCLE</div>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-3 p-2 rounded border cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: form.billingCycle === '1_month' ? 'var(--blueprint)' : 'rgba(30,42,47,0.1)' }}>
+                    <input type="radio" name="cycle" checked={form.billingCycle === '1_month'} onChange={() => setForm({...form, billingCycle: '1_month'})} />
+                    <span className="tw-body text-sm flex-1">Pay Monthly</span>
+                  </label>
+                  <label className="flex items-center gap-3 p-2 rounded border cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: form.billingCycle === '6_months' ? 'var(--blueprint)' : 'rgba(30,42,47,0.1)' }}>
+                    <input type="radio" name="cycle" checked={form.billingCycle === '6_months'} onChange={() => setForm({...form, billingCycle: '6_months'})} />
+                    <span className="tw-body text-sm flex-1">Pay for 6 Months <Badge tone="moss">4% off</Badge></span>
+                  </label>
+                  <label className="flex items-center gap-3 p-2 rounded border cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: form.billingCycle === '12_months' ? 'var(--blueprint)' : 'rgba(30,42,47,0.1)' }}>
+                    <input type="radio" name="cycle" checked={form.billingCycle === '12_months'} onChange={() => setForm({...form, billingCycle: '12_months'})} />
+                    <span className="tw-body text-sm flex-1">Pay Annually <Badge tone="moss">10% off</Badge></span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="border-t mt-4 pt-3 flex justify-between tw-body font-bold" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+                <span>Total Amount</span>
+                <span style={{ color: 'var(--blueprint)' }}>₹{feeAmount ? feeAmount.toLocaleString('en-IN') : '—'}</span>
               </div>
             </div>
             <div className="rounded-md p-3 mb-4 text-xs tw-body flex items-start gap-2" style={{ background: 'rgba(184,134,59,0.08)', border: '1px solid rgba(184,134,59,0.2)', color: 'var(--brass)' }}>
@@ -1626,11 +1778,11 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setStep(2)} className="py-2.5 px-4 rounded-md font-semibold tw-body cursor-pointer hover:opacity-80" style={{ background: 'rgba(30,42,47,0.08)', color: 'var(--ink)' }}>← Back</button>
-              <button disabled={paying || !monthlyFee} onClick={handlePayment} className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: paying ? 'gray' : '#2E7D32' }}>
-                {paying ? 'Processing...' : `Pay ₹${monthlyFee ? monthlyFee.toLocaleString('en-IN') : '—'} via Razorpay`}
+              <button disabled={paying || !feeAmount} onClick={handlePayment} className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: paying ? 'gray' : '#2E7D32' }}>
+                {paying ? 'Processing...' : `Pay ₹${feeAmount ? feeAmount.toLocaleString('en-IN') : '—'} via Razorpay`}
               </button>
             </div>
-            {!monthlyFee && <p className="text-xs text-red-500 mt-2 tw-body">Please go back and enter the property size to calculate fee.</p>}
+            {!feeAmount && <p className="text-xs text-red-500 mt-2 tw-body">Please go back and enter the property size to calculate fee.</p>}
           </div>
         )}
       </div>
@@ -1782,6 +1934,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         { id: "customers", label: "Customers", icon: Users },
         { id: "properties", label: "Properties", icon: Landmark },
         { id: "cases", label: "Cases", icon: MessageSquare },
+        { id: "billing", label: "Billing & Visits", icon: CreditCard },
       ]}
       activeTab={tab} onTabChange={setTab}
       headerAction={
@@ -1924,6 +2077,9 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           {cases.length === 0 && <p className="tw-body text-sm" style={{ opacity: 0.55 }}>No cases raised yet.</p>}
         </div>
       )}
+
+      {tab === "billing" && <AdminBillingTab dbs={dbs} refresh={refresh} />}
+
 
       {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} dbs={dbs} />}
       {editCust && <EditCustomerModal customer={editCust} onClose={() => setEditCust(null)} onSave={updateCustomer} />}
@@ -2189,6 +2345,108 @@ function CredsModal({ creds, onClose }) {
 }
 
 /* ================= ROOT APP ================= */
+
+function AdminBillingTab({ dbs, refresh }) {
+  const [filter, setFilter] = useState("all");
+  const properties = Object.values(dbs.properties || {});
+  
+  const now = new Date();
+  const next7Days = new Date(now);
+  next7Days.setDate(next7Days.getDate() + 7);
+
+  const getStatus = (p) => {
+    if (!p.expiryDate) return "unknown";
+    const exp = new Date(p.expiryDate);
+    if (exp < now) return "overdue";
+    if (exp <= next7Days) return "upcoming";
+    return "active";
+  };
+
+  const filteredProps = properties.filter(p => {
+    if (filter === "all") return true;
+    if (filter === "pending_extra") return p.pendingExtraVisits > 0;
+    return getStatus(p) === filter;
+  });
+
+  const completeExtraVisit = async (p) => {
+    if (!window.confirm("Mark one extra visit as completed for this property?")) return;
+    const updated = { ...p, pendingExtraVisits: Math.max(0, (p.pendingExtraVisits || 0) - 1) };
+    await fetch(`/api/properties/${p.id}`, { method: 'PUT', body: JSON.stringify(updated) });
+    refresh();
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+        {[{id: 'all', label: 'All'}, {id: 'overdue', label: 'Overdue'}, {id: 'upcoming', label: 'Upcoming Renewals'}, {id: 'active', label: 'Active'}, {id: 'pending_extra', label: 'Pending Extra Visits'}].map(f => (
+          <button key={f.id} onClick={() => setFilter(f.id)} className="tw-body text-sm font-semibold px-4 py-2 rounded-full whitespace-nowrap transition-colors" style={{ background: filter === f.id ? "var(--blueprint)" : "white", color: filter === f.id ? "white" : "var(--ink)", border: "1px solid rgba(30,42,47,0.1)" }}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-lg overflow-hidden border" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="tw-body text-xs text-gray-500 bg-gray-50 border-b">
+                <th className="p-4 font-semibold uppercase tracking-wider">Property & Customer</th>
+                <th className="p-4 font-semibold uppercase tracking-wider">Plan & Cycle</th>
+                <th className="p-4 font-semibold uppercase tracking-wider">Payment Status</th>
+                <th className="p-4 font-semibold uppercase tracking-wider">Extra Visits</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredProps.map(p => {
+                const owner = dbs.customers[p.customerId];
+                const status = getStatus(p);
+                const statusTone = status === 'overdue' ? 'tomato' : status === 'upcoming' ? 'brass' : 'moss';
+                const statusLabel = status === 'overdue' ? 'Overdue' : status === 'upcoming' ? 'Upcoming' : 'Active';
+                
+                return (
+                  <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="p-4">
+                      <div className="tw-body font-bold text-sm text-gray-900">{p.title}</div>
+                      <div className="tw-body text-xs text-gray-500 mt-1">{owner?.name || p.customerId}</div>
+                      <div className="tw-mono text-[10px] text-gray-400 mt-0.5">{p.id}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="tw-body text-sm font-medium">{PLANS.find(pl => pl.id === p.plan)?.name || p.plan}</div>
+                      <div className="tw-body text-xs text-gray-500 mt-1">{p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Semi-Annually' : 'Monthly'}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge tone={statusTone}>{statusLabel}</Badge>
+                      </div>
+                      <div className="tw-body text-xs text-gray-600 mt-1">Due: {p.expiryDate ? fmtDate(p.expiryDate) : '—'}</div>
+                      <div className="tw-body text-[11px] text-gray-400 mt-0.5">Last Paid: {p.paymentDate ? fmtDate(p.paymentDate) : '—'}</div>
+                    </td>
+                    <td className="p-4">
+                      {p.pendingExtraVisits > 0 ? (
+                        <div>
+                          <Badge tone="clay">{p.pendingExtraVisits} Pending</Badge>
+                          <button onClick={() => completeExtraVisit(p)} className="block mt-2 text-[11px] font-semibold text-white px-2 py-1 rounded bg-green-600 hover:bg-green-700 transition-colors">
+                            Mark Complete
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="tw-body text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredProps.length === 0 && (
+                <tr><td colSpan="4" className="p-8 text-center text-gray-400 text-sm">No properties found matching this filter.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState("landing"); // landing | login | customer | admin
   const [session, setSession] = useState(null); // { role, customerId }

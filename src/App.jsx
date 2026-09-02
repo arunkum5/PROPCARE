@@ -1189,7 +1189,10 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
               <div>
                 <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>NEXT RENEWAL</div>
                 <div className="tw-body font-bold text-base">{p.expiryDate ? fmtDate(p.expiryDate) : '—'}</div>
-                <div className="tw-body text-xs mt-1" style={{ opacity: 0.7 }}>Last paid: {p.paymentDate ? fmtDate(p.paymentDate) : '—'}</div>
+                <div className="tw-body text-[11px] mt-1 font-medium text-green-700">
+                  Amount due: ₹{calcFee(p.plan, p.size, p.billingCycle).toLocaleString('en-IN')}
+                </div>
+                <div className="tw-body text-[11px] mt-0.5" style={{ opacity: 0.7 }}>Last paid: {p.paymentDate ? fmtDate(p.paymentDate) : '—'}</div>
               </div>
               <button disabled={paying} onClick={handleRenew} className="px-3 py-1.5 rounded bg-white text-sm font-semibold tw-body shadow-sm border cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50" style={{ color: 'var(--blueprint)', borderColor: 'rgba(30,42,47,0.1)' }}>{paying ? '...' : 'Renew'}</button>
             </div>

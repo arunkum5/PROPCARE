@@ -1118,6 +1118,9 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
 
           {/* Desktop: tabs + actions — all inline */}
           <div className="hidden sm:flex items-center gap-4 flex-1 flex-wrap pl-4">
+            {/* New Customer (or other headerAction) */}
+            {headerAction && headerAction}
+
             {/* Tabs */}
             {tabs && tabs.map((t) => (
               <button
@@ -1129,9 +1132,6 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                 <t.icon size={14} /> {t.label}
               </button>
             ))}
-
-            {/* New Customer (or other headerAction) */}
-            {headerAction && headerAction}
 
             {/* Refresh */}
             {onRefresh && (
@@ -1187,18 +1187,18 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
+                {/* headerAction (New Customer) in mobile menu */}
+                {headerAction && (
+                  <div className="px-3 py-2 border-b border-gray-100 [&>button]:!text-[var(--ink)] [&>button]:w-full [&>button]:justify-start [&>button]:!px-1">
+                    {headerAction}
+                  </div>
+                )}
                 {/* Tabs in menu on mobile */}
                 {tabs && tabs.map((t) => (
                   <button key={t.id} onClick={() => { onTabChange(t.id); setMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm font-semibold flex items-center gap-2 cursor-pointer transition-colors" style={{ color: activeTab === t.id ? "var(--blueprint)" : "var(--ink)", background: activeTab === t.id ? "rgba(22,50,63,0.05)" : "transparent" }}>
                     <t.icon size={14} /> {t.label}
                   </button>
                 ))}
-                {/* headerAction (New Customer) in mobile menu */}
-                {headerAction && (
-                  <div className="px-3 py-2 border-t border-gray-100 [&>button]:!text-[var(--ink)] [&>button]:w-full [&>button]:justify-start [&>button]:!px-1">
-                    {headerAction}
-                  </div>
-                )}
                 {/* Divider */}
                 {(tabs || headerAction) && <div className="border-t border-gray-100 my-1" />}
                 {/* Refresh */}
@@ -2261,9 +2261,9 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         { id: "customers", label: "Customers", icon: Users },
         { id: "leads", label: "Leads", icon: UserPlus },
         { id: "properties", label: "Properties", icon: Landmark },
-        { id: "cases", label: "Cases", icon: MessageSquare },
         { id: "plans", label: "Plans", icon: ClipboardList },
         { id: "billing", label: "Billing & Visits", icon: CreditCard },
+        { id: "cases", label: "Cases", icon: MessageSquare },
       ]}
       activeTab={tab} onTabChange={setTab}
       headerAction={

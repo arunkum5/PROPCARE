@@ -51,6 +51,25 @@ CREATE TABLE IF NOT EXISTS cases (
   FOREIGN KEY(propertyId) REFERENCES properties(id)
 );
 
+CREATE TABLE IF NOT EXISTS leads (
+  id TEXT PRIMARY KEY,
+  name TEXT,
+  phone TEXT,
+  propertyType TEXT,
+  size TEXT,
+  plan TEXT,
+  cycle TEXT,
+  amount REAL,
+  status TEXT,
+  paymentId TEXT,
+  createdAt TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stats (
+  key TEXT PRIMARY KEY,
+  value INTEGER
+);
+
 -- Insert default admin account
 INSERT OR IGNORE INTO customers (id, name, phone, email, password, createdAt) 
 VALUES ('admin', 'TrustWork Admin', '9448610107', 'admin@trustwork.co.in', 'admin123', '2024-01-01T00:00:00.000Z');

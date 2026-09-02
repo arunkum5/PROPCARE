@@ -471,6 +471,56 @@ function Landing({ onLogin, dbs }) {
   const [leadForm, setLeadForm] = useState({ name: '', phone: '', email: '' });
 
   const activeCalcPlan = calcPlan || plansList[0]?.id || '';
+
+  const handleLeadSubmit = async (action) => {
+    if (!leadForm.name || !leadForm.phone) {
+      alert("Please provide your name and phone number so we can contact you.");
+      return;
+    }
+    const leadId = `ld_${Date.now()}`;
+    const amount = Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans));
+    
+    await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: leadId,
+        name: leadForm.name,
+        phone: leadForm.phone,
+        propertyType: calcType,
+        size: calcSize,
+        plan: activeCalcPlan,
+        cycle: calcCycle,
+        amount: amount,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      })
+    });
+
+    if (action === 'callback') {
+      alert("Thank you! Our team has received your request and will contact you shortly.");
+      setCheckoutModal(false);
+    } else {
+      await processCheckout({
+        amount: amount,
+        description: `Plan: ${dbs.plans[activeCalcPlan]?.name} for ${calcSize} sqft`,
+        onSuccess: async (paymentId) => {
+          await fetch(`/api/leads/${leadId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'paid', paymentId })
+          });
+          alert("Payment Successful! We will contact you to begin onboarding.");
+          setCheckoutModal(false);
+        },
+        onError: () => {
+          alert("Payment failed or was cancelled. Your details are saved, and we will contact you.");
+          setCheckoutModal(false);
+        }
+      });
+    }
+  };
+
   const services = [
     {
       icon: Trees, title: "Vacant Plot & Land",
@@ -834,7 +884,7 @@ function Landing({ onLogin, dbs }) {
             </div>
           </div>
           <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.55 }}>
-            <MapPin size={11} /> Rajajinagar 2nd Stage, Bangalore - 560010
+            <MapPin size={11} /> Rajajinagar 2nd Stage, Bangalore - 560010 <span className="ml-2">(visitors: {dbs?.stats?.page_visits || 1})</span>
           </div>
         </div>
         
@@ -871,26 +921,24 @@ function Landing({ onLogin, dbs }) {
                 <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Phone Number</label>
                 <input type="tel" placeholder="+91 90000 00000" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.phone} onChange={e => setLeadForm({...leadForm, phone: e.target.value})} />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Email Address</label>
-                <input type="email" placeholder="john@example.com" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.email} onChange={e => setLeadForm({...leadForm, email: e.target.value})} />
-              </div>
             </div>
 
-            <button 
-              onClick={() => {
-                if (!leadForm.name || !leadForm.phone) {
-                  alert("Please provide your name and phone number so we can contact you.");
-                  return;
-                }
-                alert("Thank you! Our team has received your request and will contact you shortly to complete the payment setup.");
-                setCheckoutModal(false);
-              }}
-              className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
-              style={{ background: "var(--blueprint)", color: "white" }}
-            >
-              Proceed to Payment (₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')})
-            </button>
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => handleLeadSubmit('payment')}
+                className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
+                style={{ background: "var(--blueprint)", color: "white" }}
+              >
+                Proceed to Payment (₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')})
+              </button>
+              <button 
+                onClick={() => handleLeadSubmit('callback')}
+                className="w-full py-3.5 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors border-2 border-gray-200" 
+                style={{ color: "var(--ink)" }}
+              >
+                Request a Callback
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1929,6 +1977,65 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
   );
 }
 
+function AdminLeadsTab({ dbs, refresh }) {
+  const leads = Object.values(dbs.leads || {}).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  
+  const updateStatus = async (lead, status) => {
+    await fetch(`/api/leads/${lead.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    refresh();
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+      <div className="p-4 border-b border-gray-100 tw-display font-bold text-lg">Sales Leads ({leads.length})</div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left tw-body text-sm">
+          <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500">
+            <tr>
+              <th className="p-4 font-bold">Date</th>
+              <th className="p-4 font-bold">Contact</th>
+              <th className="p-4 font-bold">Property Details</th>
+              <th className="p-4 font-bold">Status</th>
+              <th className="p-4 font-bold">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leads.map(ld => (
+              <tr key={ld.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                <td className="p-4 tw-mono text-xs whitespace-nowrap" style={{ opacity: 0.7 }}>{new Date(ld.createdAt).toLocaleDateString()}</td>
+                <td className="p-4">
+                  <div className="font-semibold" style={{ color: "var(--ink)" }}>{ld.name}</div>
+                  <div className="text-xs text-gray-500">{ld.phone}</div>
+                </td>
+                <td className="p-4">
+                  <div>{ld.propertyType} — {ld.size} sqft</div>
+                  <div className="text-xs text-gray-500">{dbs.plans[ld.plan]?.name} ({ld.cycle?.replace('_', ' ')}) — ₹{ld.amount?.toLocaleString('en-IN')}</div>
+                </td>
+                <td className="p-4">
+                  <Badge tone={ld.status === 'paid' ? 'moss' : ld.status === 'called_back' ? 'clay' : 'tomato'}>
+                    {ld.status === 'paid' ? 'Paid' : ld.status === 'called_back' ? 'Contacted' : 'Pending'}
+                  </Badge>
+                  {ld.paymentId && <div className="tw-mono text-[10px] mt-1 text-gray-400">{ld.paymentId}</div>}
+                </td>
+                <td className="p-4">
+                  {ld.status === 'pending' && (
+                    <button onClick={() => updateStatus(ld, 'called_back')} className="text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-gray-200 bg-gray-100 transition-colors text-gray-700">
+                      Mark Contacted
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {leads.length === 0 && (
+              <tr><td colSpan="5" className="p-8 text-center text-gray-400">No leads captured yet.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /* ================= ADMIN DASHBOARD ================= */
 function AdminDashboard({ dbs, refresh, onLogout }) {
   const [tab, setTab] = useState("customers");
@@ -2110,6 +2217,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
       onSettings={() => setEditCust(dbs.customers['admin'])}
       tabs={[
         { id: "customers", label: "Customers", icon: Users },
+        { id: "leads", label: "Leads", icon: UserPlus },
         { id: "properties", label: "Properties", icon: Landmark },
         { id: "cases", label: "Cases", icon: MessageSquare },
         { id: "plans", label: "Plans", icon: ClipboardList },
@@ -2267,6 +2375,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
 
       {tab === "billing" && <AdminBillingTab dbs={dbs} refresh={refresh} />}
       {tab === "plans" && <AdminPlansTab dbs={dbs} refresh={refresh} />}
+      {tab === "leads" && <AdminLeadsTab dbs={dbs} refresh={refresh} />}
 
 
       {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} dbs={dbs} />}

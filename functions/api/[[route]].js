@@ -7,10 +7,16 @@ const app = new Hono()
 app.get('/api/data', async (c) => {
   const db = c.env.DB
   
+  // Track page visit
+  await db.prepare('INSERT INTO stats (key, value) VALUES (?, 1) ON CONFLICT(key) DO UPDATE SET value = value + 1').bind('page_visits').run()
+  const { results: statsData } = await db.prepare('SELECT value FROM stats WHERE key = ?').bind('page_visits').all()
+  const page_visits = statsData[0]?.value || 1;
+
   const { results: customers } = await db.prepare('SELECT * FROM customers').all()
   const { results: properties } = await db.prepare('SELECT * FROM properties').all()
   const { results: visits } = await db.prepare('SELECT * FROM visits').all()
   const { results: cases } = await db.prepare('SELECT * FROM cases').all()
+  const { results: leads } = await db.prepare('SELECT * FROM leads').all()
   
   const { results: plansRaw } = await db.prepare('SELECT * FROM plans').all()
   let plans = plansRaw;
@@ -35,10 +41,13 @@ app.get('/api/data', async (c) => {
     customers: {},
     properties: {},
     cases: {},
-    plans: {}
+    plans: {},
+    leads: {},
+    stats: { page_visits }
   }
   
   customers.forEach(cust => dbs.customers[cust.id] = cust)
+  leads.forEach(ld => dbs.leads[ld.id] = ld)
   plans.forEach(pl => {
     pl.hasLiveCall = pl.hasLiveCall === 1;
     dbs.plans[pl.id] = pl;
@@ -64,6 +73,33 @@ app.get('/api/data', async (c) => {
   cases.forEach(cs => dbs.cases[cs.id] = cs)
   
   return c.json(dbs)
+})
+
+// POST /api/leads - Create lead
+app.post('/api/leads', async (c) => {
+  const db = c.env.DB
+  const body = await c.req.json()
+  await db.prepare('INSERT INTO leads (id, name, phone, propertyType, size, plan, cycle, amount, status, paymentId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(body.id, body.name, body.phone, body.propertyType, body.size, body.plan, body.cycle, body.amount, body.status, body.paymentId || null, body.createdAt)
+    .run()
+  return c.json({ success: true })
+})
+
+// PUT /api/leads/:id - Update lead status
+app.put('/api/leads/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  if (body.paymentId) {
+    await db.prepare('UPDATE leads SET status = ?, paymentId = ? WHERE id = ?')
+      .bind(body.status, body.paymentId, id)
+      .run()
+  } else {
+    await db.prepare('UPDATE leads SET status = ? WHERE id = ?')
+      .bind(body.status, id)
+      .run()
+  }
+  return c.json({ success: true })
 })
 
 // POST /api/plans - Add plan

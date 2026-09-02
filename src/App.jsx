@@ -2393,7 +2393,7 @@ function AdminBillingTab({ dbs, refresh }) {
 export default function App() {
   const [view, setView] = useState("landing"); // landing | login | customer | admin
   const [session, setSession] = useState(null); // { role, customerId }
-  const [dbs, setDbs] = useState({ admin: null, customers: {}, properties: {}, cases: {} });
+  const [dbs, setDbs] = useState({ admin: null, customers: {}, properties: {}, cases: {}, plans: {} });
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {

@@ -1135,24 +1135,18 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
             <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Size</div>
             <div className="tw-body font-semibold text-sm">{p.size} sq. ft</div>
           </div>
-          {p.latlong && (
-            <div className="sm:col-span-2">
-              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Map Link</div>
-              <a href={p.latlong} target="_blank" rel="noreferrer" className="tw-body text-sm text-blue-600 hover:underline">{p.latlong}</a>
-            </div>
-          )}
-          {p.docName && (
-            <div className="sm:col-span-2">
-              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Proof Document</div>
-              <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div>
-            </div>
-          )}
-          {p.summary && (
-            <div className="sm:col-span-2 mt-2">
-              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>
-              <p className="tw-body text-sm leading-relaxed">{p.summary}</p>
-            </div>
-          )}
+          <div className="sm:col-span-2">
+            <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Map Link</div>
+            {p.latlong ? <a href={p.latlong} target="_blank" rel="noreferrer" className="tw-body text-sm text-blue-600 hover:underline">{p.latlong}</a> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
+          </div>
+          <div className="sm:col-span-2">
+            <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Proof Document</div>
+            {p.docName ? <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
+          </div>
+          <div className="sm:col-span-2 mt-2">
+            <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>
+            {p.summary ? <p className="tw-body text-sm leading-relaxed">{p.summary}</p> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
+          </div>
         </div>
       </details>
       {!agreed ? (
@@ -1906,24 +1900,18 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
               <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Billing Cycle</div>
               <div className="tw-body font-semibold text-sm capitalize">{p.billingCycle?.replace('_', ' ')} (₹{calcFee(p.plan, p.size, p.billingCycle, dbs.plans)?.toLocaleString('en-IN') || 0})</div>
             </div>
-            {p.latlong && (
-              <div className="sm:col-span-2">
-                <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Map Link</div>
-                <a href={p.latlong} target="_blank" rel="noreferrer" className="tw-body text-sm text-blue-600 hover:underline">{p.latlong}</a>
-              </div>
-            )}
-            {p.docName && (
-              <div className="sm:col-span-2">
-                <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Proof Document</div>
-                <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div>
-              </div>
-            )}
-            {p.summary && (
-              <div className="sm:col-span-2 mt-2">
-                <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>
-                <p className="tw-body text-sm leading-relaxed">{p.summary}</p>
-              </div>
-            )}
+            <div className="sm:col-span-2">
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Map Link</div>
+              {p.latlong ? <a href={p.latlong} target="_blank" rel="noreferrer" className="tw-body text-sm text-blue-600 hover:underline">{p.latlong}</a> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
+            </div>
+            <div className="sm:col-span-2">
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Proof Document</div>
+              {p.docName ? <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
+            </div>
+            <div className="sm:col-span-2 mt-2">
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>
+              {p.summary ? <p className="tw-body text-sm leading-relaxed">{p.summary}</p> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
+            </div>
           </div>
         </details>
 

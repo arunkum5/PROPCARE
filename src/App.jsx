@@ -929,9 +929,6 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               </button>
             ))}
 
-            {/* Spacer */}
-            <div className="flex-1" />
-
             {/* New Customer (or other headerAction) */}
             {headerAction && headerAction}
 
@@ -941,6 +938,9 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                 <RefreshCw size={14} /> Refresh
               </button>
             )}
+
+            {/* Spacer — pushes Menu to far right */}
+            <div className="flex-1" />
 
             {/* Menu (settings + logout) */}
             <div className="relative">

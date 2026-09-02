@@ -40,9 +40,12 @@ const MAP_LOCATIONS = [
 
 function LocationsMap() {
   return (
-    <div className="px-6 sm:px-10 py-16 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.25s" }}>
+    <div id="areas-serving" className="px-6 sm:px-10 py-16 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.25s" }}>
       <h2 className="tw-display font-bold text-2xl mb-2">Currently serving locations</h2>
-      <p className="tw-body text-sm mb-8" style={{ opacity: 0.7 }}>A snapshot of properties we manage across Karnataka.</p>
+      <p className="tw-body text-sm mb-4" style={{ opacity: 0.7 }}>A snapshot of properties we manage across Karnataka.</p>
+      <div className="mb-8 tw-body text-sm font-semibold inline-flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ color: "var(--brass)", background: "rgba(184,134,59,0.1)", border: "1px solid rgba(184,134,59,0.2)" }}>
+        ✨ We have dedicated field crews across Karnataka and serve anywhere and everywhere in the state.
+      </div>
       <div className="w-full h-[400px] sm:h-[500px] rounded-xl overflow-hidden shadow-sm relative z-0" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
         <MapContainer center={[13.05, 77.5]} zoom={10} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
           <TileLayer attribution='&amp;copy; &lt;a href="https://www.openstreetmap.org/copyright"&gt;OpenStreetMap&lt;/a&gt; contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -574,6 +577,14 @@ function Landing({ onLogin, dbs }) {
             <div className="text-[10px] tw-body tracking-wider uppercase font-bold" style={{ color: "var(--brass)", opacity: 0.9 }}>Property Care & Management</div>
           </div>
         </div>
+
+        <div className="hidden lg:flex items-center gap-8 tw-body font-bold text-[15px] mr-auto ml-16" style={{ color: "var(--ink)" }}>
+          <button onClick={() => document.getElementById('about-us').scrollIntoView({ behavior: 'smooth' })} className="hover:text-[var(--brass)] transition-colors cursor-pointer">About Us</button>
+          <button onClick={() => document.getElementById('areas-serving').scrollIntoView({ behavior: 'smooth' })} className="hover:text-[var(--brass)] transition-colors cursor-pointer">Areas Serving</button>
+          <button onClick={() => document.getElementById('what-we-do').scrollIntoView({ behavior: 'smooth' })} className="hover:text-[var(--brass)] transition-colors cursor-pointer">What We Do</button>
+          <button onClick={() => document.getElementById('care-plans').scrollIntoView({ behavior: 'smooth' })} className="hover:text-[var(--brass)] transition-colors cursor-pointer">Check the Plans</button>
+        </div>
+
         <div className="flex items-center gap-5 sm:gap-8">
           <div className="hidden lg:flex items-center gap-4 mr-2">
             <a href="#" className="hover:scale-110 transition-transform" style={{ color: "#E1306C" }}>
@@ -614,7 +625,7 @@ function Landing({ onLogin, dbs }) {
         <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('/new2.jpg')", opacity: 0, animation: "bgFade2 12s infinite" }} />
         <div className="absolute inset-0 z-0" style={{ background: "linear-gradient(rgba(22, 50, 63, 0.7), rgba(22, 50, 63, 0.95))" }} />
         
-        <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <div id="about-us" className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           {/* Left Side: Text */}
           <div className="flex-1 text-center lg:text-left">
             <div className="inline-block px-6 py-2.5 rounded-full border-2 tw-body text-base font-bold shadow-lg transform hover:scale-105 transition-transform cursor-default mb-8" style={{ borderColor: "rgba(184,134,59,0.5)", color: "white", background: "var(--brass)" }}>
@@ -700,7 +711,7 @@ function Landing({ onLogin, dbs }) {
       <LocationsMap />
 
       {/* WHAT WE DO */}
-      <div className="relative px-6 sm:px-10 py-24 animate-fade-in-up bg-fixed bg-center bg-cover" style={{ backgroundImage: "url('/new3.jpg')", animationDelay: "0.2s" }}>
+      <div id="what-we-do" className="relative px-6 sm:px-10 py-24 animate-fade-in-up bg-fixed bg-center bg-cover" style={{ backgroundImage: "url('/new3.jpg')", animationDelay: "0.2s" }}>
         <div className="absolute inset-0 z-0" style={{ background: "rgba(246, 241, 231, 0.90)" }} />
         <div className="relative z-10 max-w-6xl mx-auto">
           <div className="text-center mb-16">

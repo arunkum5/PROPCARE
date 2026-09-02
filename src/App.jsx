@@ -1079,6 +1079,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
       </div>
       <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
+          <div className="tw-mono text-[11px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>{p.id}</div>
           <div className="tw-display font-bold text-2xl">{p.title}</div>
           <div className="tw-body text-sm flex items-center gap-1.5 mt-1" style={{ opacity: 0.65 }}>
             <MapPin size={14} /> {p.address}
@@ -1355,7 +1356,8 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
                     <Badge tone="ink">{p.type}</Badge>
                     <Badge tone={p.status === "active" ? "moss" : "brass"}>{p.status === "active" ? "Active" : "Pending"}</Badge>
                   </div>
-                  <div className="tw-display font-bold text-lg mt-3">{p.title}</div>
+                  <div className="tw-mono text-[10px] mt-3 uppercase tracking-wider" style={{ opacity: 0.5 }}>{p.id}</div>
+                  <div className="tw-display font-bold text-lg mt-0.5">{p.title}</div>
                   <div className="tw-body text-sm flex items-center gap-1.5 mt-1" style={{ opacity: 0.6 }}>
                     <MapPin size={13} /> {p.address}
                   </div>
@@ -1840,7 +1842,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                             {p.status === "active" ? "Active" : p.status === "delete_pending" ? "Deletion Requested" : "Pending"}
                           </Badge>
                         </div>
-                        <div className="tw-display font-bold text-lg mt-3">{p.title}</div>
+                        <div className="tw-mono text-[10px] mt-3 uppercase tracking-wider" style={{ opacity: 0.5 }}>{p.id}</div>
+                        <div className="tw-display font-bold text-lg mt-0.5">{p.title}</div>
                         <div className="tw-body text-sm mt-1 flex items-center gap-1" style={{ opacity: 0.6 }}><MapPin size={12} />{p.address}</div>
                       </button>
                     ))}
@@ -1905,7 +1908,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                     {p.status === "active" ? "Active" : p.status === "delete_pending" ? "Deletion Requested" : "Pending"}
                   </Badge>
                 </div>
-                <div className="tw-display font-bold text-lg mt-3">{p.title}</div>
+                <div className="tw-mono text-[10px] mt-3 uppercase tracking-wider" style={{ opacity: 0.5 }}>{p.id}</div>
+                <div className="tw-display font-bold text-lg mt-0.5">{p.title}</div>
                 <div className="tw-body text-sm mt-1" style={{ opacity: 0.6 }}>{owner ? owner.name : p.customerId}</div>
               </button>
             );

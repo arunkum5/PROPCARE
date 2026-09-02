@@ -907,7 +907,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
           </div>
 
           {/* Desktop: tabs + actions — all inline */}
-          <div className="hidden sm:flex items-center gap-1 flex-1 flex-wrap">
+          <div className="hidden sm:flex items-center gap-4 flex-1 flex-wrap pl-4">
             {/* Tabs */}
             {tabs && tabs.map((t) => (
               <button

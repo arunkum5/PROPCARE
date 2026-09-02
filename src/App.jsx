@@ -1426,7 +1426,7 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
 
   const handleDetailsNext = (e) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.address.trim()) return;
+    if (!form.title.trim() || !form.address.trim() || !form.size.trim()) return;
     if (initialData) { onSave(form); return; } // edit mode — just save
     setStep(2);
   };
@@ -1537,8 +1537,8 @@ function AddPropertyModal({ onClose, onSave, initialData }) {
                 <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
               </Field>
             </div>
-            <Field label="Property Size (sq ft)">
-              <input className={inputCls} style={inputStyle} placeholder="e.g. 1200" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
+            <Field label="Property Size (sq ft)" required>
+              <input className={inputCls} style={inputStyle} placeholder="e.g. 1200" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} required />
             </Field>
             <div className="sm:col-span-2">
               <Field label="Ownership Proof Document (Max 5MB)">

@@ -89,7 +89,7 @@ function Chatbot() {
     { label: 'What we do?', response: 'We act as a highly professional proxy for NRI or out-of-town property owners. We provide absolute peace of mind by acting as your trusted eyes and ears on the ground.' },
     { label: 'Our Experience', response: 'We have 10+ Years of experience, with 28+ properties currently handling, and a dedicated team of 20+ field crew members.' },
     { label: 'Plans & Pricing', response: 'Our comprehensive property care plans start from just ₹1 / Sq.ft / Month.' },
-    { label: 'How to register?', response: 'To register your property, simply Contact or WhatsApp us at +91 9448610107 and our team will get you onboarded instantly!' },
+    { label: 'How to register?', response: 'To register your property, simply Contact or WhatsApp us at +91 9353010107 or +91 7676740107 and our team will get you onboarded instantly!' },
     { label: 'Is my property secure?', response: 'Yes! We log all visits and provide time-stamped photos and videos of your property, which you can view anytime in your secure customer dashboard.' },
     { label: 'Can I request an extra visit?', response: 'Absolutely. You can request an on-demand visit directly from your dashboard at any time at a discounted rate.' },
     { label: 'How do payments work?', response: 'We support secure online payments via Razorpay. You can track your monthly or annual billing cycles and view past payments in your dashboard.' }
@@ -199,10 +199,10 @@ function FloatingControls() {
           </button>
         )}
         <Chatbot />
-        <a href="tel:+919448610107" className="p-3.5 rounded-full shadow-[0_4px_14px_rgba(0,102,255,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#0066FF" }}>
+        <a href="tel:+919353010107" className="p-3.5 rounded-full shadow-[0_4px_14px_rgba(0,102,255,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#0066FF" }}>
           <Phone size={24} />
         </a>
-        <a href="https://wa.me/919448610107" target="_blank" rel="noreferrer" className="p-3.5 rounded-full shadow-[0_4px_14px_rgba(37,211,102,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#25D366" }}>
+        <a href="https://wa.me/919353010107" target="_blank" rel="noreferrer" className="p-3.5 rounded-full shadow-[0_4px_14px_rgba(37,211,102,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#25D366" }}>
           <WhatsAppIcon size={26} />
         </a>
       </div>
@@ -524,9 +524,11 @@ function Landing({ onLogin, dbs }) {
             </a>
             <a href="#" className="hover:scale-110 transition-transform" style={{ color: "#25D366" }}><MessageCircle size={18} /></a>
           </div>
-          <a href="tel:+919448610107" className="hidden sm:flex items-center gap-1.5 tw-body font-semibold text-sm hover:opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
-            <Phone size={15} /> +91 9448610107
-          </a>
+          <div className="hidden sm:flex items-center gap-3 tw-body font-semibold text-sm" style={{ color: "var(--ink)" }}>
+            <a href="tel:+919353010107" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"><Phone size={15} /> +91 9353010107</a>
+            <span style={{ opacity: 0.3 }}>|</span>
+            <a href="tel:+917676740107" className="hover:opacity-70 transition-opacity">+91 7676740107</a>
+          </div>
           <button
             onClick={onLogin}
             className="tw-body flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:opacity-90 active:scale-95"
@@ -576,7 +578,7 @@ function Landing({ onLogin, dbs }) {
             </div>
 
             <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
-              <a href="https://wa.me/919448610107" target="_blank" rel="noopener noreferrer" className="tw-body flex items-center justify-center px-8 py-3.5 rounded-md font-bold text-[17px] shadow-lg transform hover:-translate-y-1 hover:shadow-2xl hover:scale-105 transition-all duration-300 active:scale-95" style={{ background: "var(--brass)", color: "var(--blueprint)", textDecoration: "none" }}>
+              <a href="https://wa.me/919353010107" target="_blank" rel="noopener noreferrer" className="tw-body flex items-center justify-center px-8 py-3.5 rounded-md font-bold text-[17px] shadow-lg transform hover:-translate-y-1 hover:shadow-2xl hover:scale-105 transition-all duration-300 active:scale-95" style={{ background: "var(--brass)", color: "var(--blueprint)", textDecoration: "none" }}>
                 Get your property watched
               </a>
             </div>
@@ -753,7 +755,7 @@ function Landing({ onLogin, dbs }) {
             <div className="tw-mono text-xs" style={{ opacity: 0.55 }}>TrustWork Property Care · Karnataka &amp; across India</div>
             <div className="hidden sm:block text-xs" style={{ opacity: 0.3 }}>|</div>
             <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.75 }}>
-               <Phone size={11} /> +91 9448610107
+               <Phone size={11} /> +91 9353010107, +91 7676740107
             </div>
           </div>
           <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.55 }}>

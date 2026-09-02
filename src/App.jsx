@@ -1122,7 +1122,10 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
             <span>I agree to the TrustWork Property Care Terms and Conditions and authorize inspections.</span>
           </label>
           <div className="text-sm tw-body mt-4 pt-4 flex items-center gap-2" style={{ borderTop: "1px solid rgba(30,42,47,0.1)" }}>
-            <span style={{ opacity: 0.7 }}>Payment Status:</span> <Badge tone="brass">Pending verification</Badge>
+            <span style={{ opacity: 0.7 }}>Payment Status:</span> 
+            <Badge tone={p.paymentStatus === 'paid' ? "moss" : "brass"}>
+              {p.paymentStatus === 'paid' ? "Paid" : "Pending verification"}
+            </Badge>
           </div>
         </div>
       ) : (
@@ -1218,6 +1221,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       id: propId, customerId: customer.id, type: form.type, title: form.title,
       address: form.address, latlong: form.latlong, size: form.size, summary: form.summary, plan: form.plan,
       status: "pending", createdAt: todayISO(), visits: [],
+      agreed: form.agreementSigned || false,
       agreementSigned: form.agreementSigned || false,
       paymentDate: form.paymentDate || null,
       expiryDate: form.expiryDate || null,

@@ -180,6 +180,14 @@ app.post('/api/razorpay/order', async (c) => {
   const keyId = 'rzp_test_TX8LUu02uZR0dl'
   const keySecret = c.env.RAZORPAY_KEY_SECRET
 
+  if (!keySecret) {
+    return c.json({ error: 'RAZORPAY_KEY_SECRET is not set in environment' }, 500)
+  }
+
+  if (!amount || amount < 100) {
+    return c.json({ error: 'Amount must be at least 100 paise (₹1)' }, 400)
+  }
+
   const credentials = btoa(`${keyId}:${keySecret}`)
   const res = await fetch('https://api.razorpay.com/v1/orders', {
     method: 'POST',
@@ -188,13 +196,13 @@ app.post('/api/razorpay/order', async (c) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      amount: amount, // in paise
+      amount: amount,
       currency: 'INR',
       receipt: `rcpt_${Date.now()}`,
     }),
   })
   const order = await res.json()
-  if (!res.ok) return c.json({ error: order.error?.description || 'Order creation failed' }, 400)
+  if (!res.ok) return c.json({ error: order.error?.description || 'Order creation failed', razorpay: order }, 400)
   return c.json({ orderId: order.id, amount: order.amount, currency: order.currency })
 })
 

@@ -939,13 +939,13 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
             )}
 
             {/* Spacer & Contact Info */}
-            <div className="flex-1 flex justify-end items-center gap-4 tw-mono text-[11px] pr-2" style={{ color: "rgba(246,241,231,0.6)" }}>
-              <div className="flex items-center gap-1.5 hidden lg:flex">
-                <Phone size={10} /> +91 9353010107, +91 7676740107
-              </div>
-              <div className="flex items-center gap-1.5 hidden lg:flex">
-                <Mail size={10} /> care@trustwork.co.in
-              </div>
+            <div className="flex-1 flex justify-end items-center gap-5 tw-body font-semibold text-[13px] pr-2" style={{ color: "rgba(246,241,231,0.7)" }}>
+              <a href="tel:+919353010107" className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
+                <Phone size={13} /> +91 9353010107, +91 7676740107
+              </a>
+              <a href="mailto:care@trustwork.co.in" className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
+                <Mail size={13} /> care@trustwork.co.in
+              </a>
             </div>
 
             {/* Menu (settings + logout) */}
@@ -964,9 +964,13 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                     <LogOut size={14} /> Log out
                   </button>
                   <div className="border-t border-gray-100 my-1" />
-                  <div className="px-4 py-2 flex flex-col gap-1.5 tw-mono text-[10px]" style={{ opacity: 0.6 }}>
-                    <div className="flex items-start gap-1.5"><Phone size={10} className="mt-0.5" /> <div>+91 9353010107<br/>+91 7676740107</div></div>
-                    <div className="flex items-center gap-1.5"><Mail size={10} /> care@trustwork.co.in</div>
+                  <div className="px-4 py-2 flex flex-col gap-2 tw-body font-semibold text-[13px]" style={{ color: "var(--ink)", opacity: 0.8 }}>
+                    <a href="tel:+919353010107" className="flex items-start gap-1.5 hover:text-blue-600 transition-colors cursor-pointer">
+                      <Phone size={13} className="mt-0.5" /> <div>+91 9353010107<br/>+91 7676740107</div>
+                    </a>
+                    <a href="mailto:care@trustwork.co.in" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors cursor-pointer">
+                      <Mail size={13} /> care@trustwork.co.in
+                    </a>
                   </div>
                 </div>
               )}

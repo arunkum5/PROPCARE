@@ -647,9 +647,9 @@ function Landing({ onLogin, dbs }) {
             </div>
 
             <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
-              <a href="https://wa.me/919353010107" target="_blank" rel="noopener noreferrer" className="tw-body flex items-center justify-center px-8 py-3.5 rounded-md font-bold text-[17px] shadow-lg transform hover:-translate-y-1 hover:shadow-2xl hover:scale-105 transition-all duration-300 active:scale-95" style={{ background: "var(--brass)", color: "var(--blueprint)", textDecoration: "none" }}>
+              <button onClick={() => document.getElementById('care-plans').scrollIntoView({ behavior: 'smooth' })} className="tw-body flex items-center justify-center px-8 py-3.5 rounded-md font-bold text-[17px] shadow-lg transform hover:-translate-y-1 hover:shadow-2xl hover:scale-105 transition-all duration-300 active:scale-95 cursor-pointer" style={{ background: "var(--brass)", color: "var(--blueprint)", textDecoration: "none", border: "none" }}>
                 Get your property watched
-              </a>
+              </button>
             </div>
           </div>
           
@@ -790,7 +790,7 @@ function Landing({ onLogin, dbs }) {
       <Testimonials />
 
       {/* PLANS */}
-      <div className="px-6 sm:px-10 py-16 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+      <div id="care-plans" className="px-6 sm:px-10 py-16 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
         <h2 className="tw-display font-bold text-2xl mb-2">Care plans</h2>
         <p className="tw-body text-sm mb-8" style={{ opacity: 0.7 }}>Pick a visit rhythm — change it anytime from your dashboard.</p>
         <div className="grid sm:grid-cols-3 gap-6">

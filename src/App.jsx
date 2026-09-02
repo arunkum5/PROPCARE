@@ -755,7 +755,7 @@ function Landing({ onLogin, dbs }) {
             <div className="tw-mono text-xs" style={{ opacity: 0.55 }}>TrustWork Property Care · Karnataka &amp; across India</div>
             <div className="hidden sm:block text-xs" style={{ opacity: 0.3 }}>|</div>
             <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.75 }}>
-               <Phone size={11} /> +91 9353010107, +91 7676740107
+               <Phone size={11} /> +91 9353010107, +91 7676740107 <span className="mx-1" style={{ opacity: 0.5 }}>|</span> <Mail size={11} /> <a href="mailto:care@trustwork.co.in" className="hover:underline">care@trustwork.co.in</a>
             </div>
           </div>
           <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.55 }}>

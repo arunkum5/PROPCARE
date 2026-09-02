@@ -1539,6 +1539,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
   const [paying, setPaying] = useState(false);
 
   const selectedPlan = dbs.plans[form.plan];
+  const isLocked = initialData && initialData.status === 'active';
   const monthlyFee = calcFee(form.plan, form.size, '1_month', dbs.plans);
   const feeAmount = calcFee(form.plan, form.size, form.billingCycle, dbs.plans);
 
@@ -1657,7 +1658,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
           <form onSubmit={handleDetailsNext} className="grid sm:grid-cols-2 gap-x-4">
             <div className="sm:col-span-2 tw-display font-bold text-lg mb-2">{initialData ? 'Edit Property' : 'Register a property'}</div>
             <Field label="Property type" required>
-              <select className={inputCls} style={inputStyle} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+              <select disabled={isLocked} className={inputCls} style={inputStyle} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                 {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </Field>
@@ -1666,18 +1667,26 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
             </Field>
             <div className="sm:col-span-2">
               <Field label="Address" required>
-                <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
+                <input disabled={isLocked} className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
               </Field>
             </div>
             <div className="sm:col-span-2">
               <Field label="Google map location link">
-                <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
+                <input disabled={isLocked} className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
               </Field>
             </div>
             <Field label="Property Size (sq ft)" required>
-              <input className={inputCls} style={inputStyle} placeholder="e.g. 1200" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} required />
+              <input disabled={isLocked} className={inputCls} style={inputStyle} placeholder="e.g. 1200" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} required />
             </Field>
             <div className="sm:col-span-2">
+              {isLocked && (
+                <div className="mb-4 p-3 rounded-md bg-orange-50 border border-orange-100 flex items-start gap-2">
+                  <AlertCircle size={16} className="text-orange-500 mt-0.5 flex-shrink-0" />
+                  <p className="tw-body text-xs text-orange-800 leading-relaxed">
+                    Core property details (address, location, size, and type) are locked because this property is currently active. To update these details, please contact support.
+                  </p>
+                </div>
+              )}
               <Field label="Ownership Proof Document (Max 5MB)">
                 <input type="file" accept=".pdf,image/*" className={inputCls} style={inputStyle} onChange={(e) => {
                   const file = e.target.files[0];

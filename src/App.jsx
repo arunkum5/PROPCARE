@@ -890,12 +890,25 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
 /* ================= SHARED SHELL ================= */
 function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange, headerAction }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshDone, setRefreshDone] = useState(false);
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setRefreshDone(false);
+    await onRefresh();
+    setRefreshing(false);
+    setRefreshDone(true);
+    setTimeout(() => setRefreshDone(false), 1800);
+  };
   return (
     <div className="min-h-full flex flex-col" style={{ background: "var(--paper)", color: "var(--ink)" }}>
       <style>{`
         .tw-display { font-family: 'Zilla Slab', serif; } .tw-body { font-family: 'Source Sans 3', sans-serif; } .tw-mono { font-family: 'IBM Plex Mono', monospace; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.7s linear infinite; }
       `}</style>
       <div className="px-4 sm:px-8 py-3 shrink-0" style={{ background: "var(--blueprint)" }}>
         <div className="flex items-center gap-3">
@@ -934,8 +947,9 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
 
             {/* Refresh */}
             {onRefresh && (
-              <button onClick={onRefresh} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "#F6F1E7" }} title="Refresh">
-                <RefreshCw size={14} /> Refresh
+              <button onClick={handleRefresh} disabled={refreshing} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors" style={{ color: refreshDone ? "#86efac" : "#F6F1E7", opacity: refreshing ? 0.7 : 1 }} title="Refresh">
+                <RefreshCw size={14} className={refreshing ? "spin" : ""} />
+                {refreshDone ? "Refreshed ✓" : "Refresh"}
               </button>
             )}
 
@@ -985,8 +999,9 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                 {(tabs || headerAction) && <div className="border-t border-gray-100 my-1" />}
                 {/* Refresh */}
                 {onRefresh && (
-                  <button onClick={() => { onRefresh(); setMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
-                    <RefreshCw size={14} /> Refresh
+                  <button onClick={() => { handleRefresh(); setMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: refreshDone ? "#16a34a" : "var(--ink)" }}>
+                    <RefreshCw size={14} className={refreshing ? "spin" : ""} />
+                    {refreshDone ? "Refreshed ✓" : "Refresh"}
                   </button>
                 )}
                 {/* Settings */}

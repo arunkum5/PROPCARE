@@ -897,16 +897,21 @@ function Landing({ onLogin, dbs }) {
       </div>
       {/* FOOTER */}
       <div className="px-6 sm:px-10 py-10 flex flex-col items-center justify-center gap-6 animate-fade-in-up text-center" style={{ borderTop: "1px solid rgba(30,42,47,0.1)", animationDelay: "0.5s" }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
-            <div className="tw-mono text-xs" style={{ opacity: 0.55 }}>TrustWork Property Care · Karnataka &amp; across India</div>
-            <div className="hidden sm:block text-xs" style={{ opacity: 0.3 }}>|</div>
-            <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.75 }}>
-               <Phone size={11} /> +91 9353010107, +91 7676740107 <span className="mx-1" style={{ opacity: 0.5 }}>|</span> <Mail size={11} /> <a href="mailto:care@trustwork.co.in" className="hover:underline">care@trustwork.co.in</a>
-            </div>
+        <div className="flex flex-col items-center gap-2 sm:gap-3">
+          <div className="tw-mono text-xs text-center" style={{ opacity: 0.55 }}>
+            TrustWork Property Care · Karnataka &amp; across India
           </div>
-          <div className="tw-mono text-xs flex items-center justify-center gap-1.5" style={{ opacity: 0.55 }}>
-            <MapPin size={11} /> Rajajinagar 2nd Stage, Bangalore - 560010 <span className="ml-2">(visitors: {dbs?.stats?.page_visits || 1})</span>
+          
+          <div className="tw-mono text-xs flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3" style={{ opacity: 0.75 }}>
+             <div className="flex items-center gap-1.5"><Phone size={11} /> +91 9353010107, +91 7676740107</div>
+             <div className="hidden sm:block" style={{ opacity: 0.3 }}>|</div>
+             <div className="flex items-center gap-1.5"><Mail size={11} /> <a href="mailto:care@trustwork.co.in" className="hover:underline">care@trustwork.co.in</a></div>
+          </div>
+
+          <div className="tw-mono text-xs flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3" style={{ opacity: 0.55 }}>
+            <div className="flex items-center gap-1.5 text-center"><MapPin size={11} className="shrink-0" /> Rajajinagar 2nd Stage, Bangalore - 560010</div>
+            <div className="hidden sm:block" style={{ opacity: 0.3 }}>|</div>
+            <div>(Visitors: {dbs?.stats?.page_visits || 1})</div>
           </div>
         </div>
         

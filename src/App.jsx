@@ -733,10 +733,11 @@ function Landing({ onLogin, dbs }) {
               <div className="absolute inset-0 z-0" style={{ background: "linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.97))" }} />
               {isPopular && <div className="absolute top-0 right-0 z-20 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white rounded-bl-2xl shadow-sm" style={{ background: "var(--brass)" }}>Most Popular</div>}
               <div className="relative z-10 flex flex-col h-full">
-                <div className="mb-5">
-                  <Badge tone={isPopular ? "brass" : "ink"}>₹{p.ratePerSqft}/sqft/month</Badge>
+                <div className="tw-display font-bold text-2xl mb-2" style={{ color: "var(--ink)", opacity: 0.8 }}>{p.name}</div>
+                <div className="mb-6 flex items-baseline gap-1">
+                  <span className="tw-display font-black text-4xl" style={{ color: isPopular ? "var(--brass)" : "var(--ink)" }}>₹{p.ratePerSqft}</span>
+                  <span className="tw-body font-bold text-sm" style={{ opacity: 0.6 }}>/ sqft / month</span>
                 </div>
-                <div className="tw-display font-bold text-3xl mb-6" style={{ color: "var(--ink)" }}>{p.name}</div>
                 <div className="tw-body text-[17px] space-y-4 font-semibold flex-1" style={{ color: "rgba(30,42,47,0.85)" }}>
                   <div className="flex gap-3 items-center"><Eye size={20} style={{ color: isPopular ? "var(--brass)" : "var(--clay)" }} /> {p.numVisits} visits / month</div>
                   <div className="flex gap-3 items-center"><Camera size={20} style={{ color: isPopular ? "var(--brass)" : "var(--clay)" }} /> {p.numPhotos === 999 ? 'Unlimited' : p.numPhotos} photos &amp; {p.numVideos === 999 ? 'Unlimited' : p.numVideos} video(s)</div>

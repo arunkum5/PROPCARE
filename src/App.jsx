@@ -938,8 +938,15 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               </button>
             )}
 
-            {/* Spacer — pushes Menu to far right */}
-            <div className="flex-1" />
+            {/* Spacer & Contact Info */}
+            <div className="flex-1 flex justify-end items-center gap-4 tw-mono text-[11px] pr-2" style={{ color: "rgba(246,241,231,0.6)" }}>
+              <div className="flex items-center gap-1.5 hidden lg:flex">
+                <Phone size={10} /> +91 9353010107, +91 7676740107
+              </div>
+              <div className="flex items-center gap-1.5 hidden lg:flex">
+                <Mail size={10} /> care@trustwork.co.in
+              </div>
+            </div>
 
             {/* Menu (settings + logout) */}
             <div className="relative">
@@ -956,6 +963,11 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                   <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
                     <LogOut size={14} /> Log out
                   </button>
+                  <div className="border-t border-gray-100 my-1" />
+                  <div className="px-4 py-2 flex flex-col gap-1.5 tw-mono text-[10px]" style={{ opacity: 0.6 }}>
+                    <div className="flex items-start gap-1.5"><Phone size={10} className="mt-0.5" /> <div>+91 9353010107<br/>+91 7676740107</div></div>
+                    <div className="flex items-center gap-1.5"><Mail size={10} /> care@trustwork.co.in</div>
+                  </div>
                 </div>
               )}
             </div>

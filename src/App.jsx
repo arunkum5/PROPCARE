@@ -1141,7 +1141,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
           </div>
           <div className="sm:col-span-2">
             <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Proof Document</div>
-            {p.docName ? <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
+            {p.docLink ? <a href={p.docLink} target="_blank" rel="noreferrer" className="tw-body text-sm flex items-center gap-1.5 text-blue-600 hover:underline"><FileText size={14}/> {p.docName || 'View Document'}</a> : p.docName ? <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
           </div>
           <div className="sm:col-span-2 mt-2">
             <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>
@@ -1329,6 +1329,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       paymentStatus: form.paymentStatus || null,
       paymentId: form.paymentId || null,
       docName: form.docName || null,
+      docLink: form.docLink || null,
     };
     await fetch('/api/properties', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newProp) });
     refresh();
@@ -1541,10 +1542,29 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
   const monthlyFee = calcFee(form.plan, form.size, '1_month', dbs.plans);
   const feeAmount = calcFee(form.plan, form.size, form.billingCycle, dbs.plans);
 
-  const handleDetailsNext = (e) => {
+  const handleDetailsNext = async (e) => {
     e.preventDefault();
     if (!form.title.trim() || !form.address.trim() || !form.size.trim()) return;
-    if (initialData) { onSave(form); return; } // edit mode — just save
+
+    let updatedForm = { ...form };
+    if (docFile) {
+      setPaying(true); // use paying state to show loading button
+      try {
+        const formData = new FormData();
+        formData.append('file', docFile);
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        updatedForm = { ...updatedForm, docName: docFile.name, docLink: data.url };
+      } catch (err) {
+        alert("Failed to upload document. Please try again.");
+        setPaying(false);
+        return;
+      }
+      setPaying(false);
+    }
+    setForm(updatedForm);
+
+    if (initialData) { onSave(updatedForm); return; } // edit mode — just save
     setStep(2);
   };
 
@@ -1908,7 +1928,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
             </div>
             <div className="sm:col-span-2">
               <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Proof Document</div>
-              {p.docName ? <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
+              {p.docLink ? <a href={p.docLink} target="_blank" rel="noreferrer" className="tw-body text-sm flex items-center gap-1.5 text-blue-600 hover:underline"><FileText size={14}/> {p.docName || 'View Document'}</a> : p.docName ? <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div> : <div className="tw-body text-sm italic" style={{ opacity: 0.5 }}>Not provided</div>}
             </div>
             <div className="sm:col-span-2 mt-2">
               <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>

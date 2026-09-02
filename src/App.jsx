@@ -499,7 +499,7 @@ function Landing({ onLogin, dbs }) {
       {/* NAV */}
       <div className="flex items-center justify-between px-6 sm:px-10 py-5 animate-fade-in-up" style={{ borderBottom: "1px solid rgba(30,42,47,0.1)" }}>
         <div className="flex items-center gap-2.5 tw-body">
-          <img src="/logo.png" alt="TrustWork" className="h-12 w-auto object-contain" style={{ mixBlendMode: 'multiply' }} />
+          <img src="/newlogo.png" alt="TrustWork" className="h-12 w-auto object-contain" />
           <div className="leading-tight">
             <div className="tw-display font-bold text-[17px]">TrustWork</div>
             <div className="text-[9px] tw-mono tracking-[0.15em] uppercase" style={{ opacity: 0.65 }}>Property Care & Management</div>

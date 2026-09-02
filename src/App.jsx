@@ -464,9 +464,11 @@ function Landing({ onLogin, dbs }) {
   const plansList = Object.values(dbs?.plans || {});
   const [policyModal, setPolicyModal] = useState(null);
   const [calcSize, setCalcSize] = useState('');
-  const [calcPlan, setCalcPlan] = useState('basic');
+  const [calcPlan, setCalcPlan] = useState('');
   const [calcCycle, setCalcCycle] = useState('1_month');
-  const [calcType, setCalcType] = useState('Apartment');
+  const [calcType, setCalcType] = useState('Flat / Apartment');
+
+  const activeCalcPlan = calcPlan || plansList[0]?.id || '';
   const services = [
     {
       icon: Trees, title: "Vacant Plot & Land",
@@ -764,11 +766,7 @@ function Landing({ onLogin, dbs }) {
             <div className="flex flex-col gap-2">
               <label className="tw-body text-xs font-bold uppercase tracking-wider" style={{ opacity: 0.6 }}>Property Type</label>
               <select className="px-4 py-3 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={calcType} onChange={e => setCalcType(e.target.value)}>
-                <option value="Empty Site">Empty Site</option>
-                <option value="Independent House">Independent House</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Villa">Villa</option>
-                <option value="Commercial">Commercial</option>
+                {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             
@@ -779,7 +777,7 @@ function Landing({ onLogin, dbs }) {
 
             <div className="flex flex-col gap-2">
               <label className="tw-body text-xs font-bold uppercase tracking-wider" style={{ opacity: 0.6 }}>Select Plan</label>
-              <select className="px-4 py-3 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={calcPlan} onChange={e => setCalcPlan(e.target.value)}>
+              <select className="px-4 py-3 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={activeCalcPlan} onChange={e => setCalcPlan(e.target.value)}>
                 {plansList.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
@@ -794,17 +792,17 @@ function Landing({ onLogin, dbs }) {
             </div>
           </div>
 
-          {calcSize > 0 && dbs?.plans?.[calcPlan] ? (
+          {calcSize > 0 && dbs?.plans?.[activeCalcPlan] ? (
             <div className="flex items-center gap-4 bg-[var(--blueprint)] p-6 rounded-2xl text-white relative z-10 shadow-lg">
               <div className="flex-1">
                 <div className="tw-body text-sm" style={{ opacity: 0.8 }}>Estimated {calcCycle === '1_month' ? 'Monthly' : calcCycle === '6_months' ? 'Bi-Annual' : 'Annual'} Cost</div>
                 <div className="tw-display font-black text-4xl mt-1" style={{ color: "var(--brass)" }}>
-                  ₹{Math.round(calcFee(calcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')}
+                  ₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')}
                 </div>
               </div>
               <div className="hidden sm:block text-right">
                 <div className="tw-body text-xs" style={{ opacity: 0.6 }}>Plan Rate</div>
-                <div className="tw-mono text-sm">₹{dbs.plans[calcPlan].ratePerSqft} / sqft</div>
+                <div className="tw-mono text-sm">₹{dbs.plans[activeCalcPlan].ratePerSqft} / sqft</div>
               </div>
             </div>
           ) : (

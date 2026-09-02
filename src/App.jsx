@@ -1126,6 +1126,42 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
         </Badge>
       </div>
 
+      <details className="bg-white rounded-lg mb-8 group" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+        <summary className="p-4 sm:p-5 cursor-pointer flex justify-between items-center list-none outline-none">
+          <div className="tw-display font-bold text-lg">Property Details</div>
+          <div className="text-gray-400 group-open:rotate-180 transition-transform duration-200">
+            <ChevronDown size={20} />
+          </div>
+        </summary>
+        <div className="p-4 sm:p-5 pt-0 grid sm:grid-cols-2 gap-y-4 gap-x-8 border-t" style={{ borderColor: "rgba(30,42,47,0.05)" }}>
+          <div className="mt-4">
+            <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Type</div>
+            <div className="tw-body font-semibold text-sm">{p.type}</div>
+          </div>
+          <div className="mt-4">
+            <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Size</div>
+            <div className="tw-body font-semibold text-sm">{p.size} sq. ft</div>
+          </div>
+          {p.latlong && (
+            <div className="sm:col-span-2">
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Map Link</div>
+              <a href={p.latlong} target="_blank" rel="noreferrer" className="tw-body text-sm text-blue-600 hover:underline">{p.latlong}</a>
+            </div>
+          )}
+          {p.docName && (
+            <div className="sm:col-span-2">
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Proof Document</div>
+              <div className="tw-body text-sm flex items-center gap-1.5"><FileText size={14}/> {p.docName}</div>
+            </div>
+          )}
+          {p.summary && (
+            <div className="sm:col-span-2 mt-2">
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>
+              <p className="tw-body text-sm leading-relaxed">{p.summary}</p>
+            </div>
+          )}
+        </div>
+      </details>
       {!agreed ? (
         <div className="mb-8 p-5 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
           <div className="tw-display font-bold text-lg mb-4">Agreement & Payment</div>
@@ -1176,7 +1212,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
             <div className="p-4 rounded-md" style={{ background: "rgba(30,42,47,0.02)", border: "1px solid rgba(30,42,47,0.05)" }}>
               <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>CURRENT PLAN</div>
               <div className="tw-body font-bold text-base">{dbs.plans[p.plan]?.name || p.plan} — ₹{dbs.plans[p.plan]?.ratePerSqft || 0}/sqft/mo</div>
-              <div className="tw-body text-sm mt-1" style={{ opacity: 0.8 }}>Cycle: {p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Every 6 Months' : 'Monthly'}</div>
+              <div className="tw-body text-sm mt-1" style={{ opacity: 0.8 }}>Cycle: {p.billingCycle === '12_months' ? 'Annually' : p.billingCycle === '6_months' ? 'Every 6 Months' : 'Monthly'} (₹{calcFee(p.plan, p.size, p.billingCycle).toLocaleString('en-IN')})</div>
               <div className="tw-body text-[11px] mt-2 font-medium" style={{ opacity: 0.65 }}>
                 {dbs.plans[p.plan]?.numVisits || 0} visits · {dbs.plans[p.plan]?.numPhotos === 999 ? 'Unlimited' : dbs.plans[p.plan]?.numPhotos || 0} photos · {dbs.plans[p.plan]?.numVideos === 999 ? 'Unlimited' : dbs.plans[p.plan]?.numVideos || 0} video(s)
               </div>

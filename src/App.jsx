@@ -2774,7 +2774,7 @@ function AdminBillingTab({ dbs, refresh }) {
 export default function App() {
   const [view, setView] = useState("landing"); // landing | login | customer | admin
   const [session, setSession] = useState(null); // { role, customerId }
-  const [dbs, setDbs] = useState({ admin: null, customers: {}, properties: {}, cases: {}, plans: {} });
+  const [dbs, setDbs] = useState({ admin: null, customers: {}, properties: {}, cases: {}, plans: {}, leads: {}, stats: {} });
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -2787,7 +2787,9 @@ export default function App() {
           customers: data.customers, 
           properties: data.properties, 
           cases: data.cases,
-          plans: data.plans
+          plans: data.plans,
+          leads: data.leads,
+          stats: data.stats
         });
       }
     } catch (e) {

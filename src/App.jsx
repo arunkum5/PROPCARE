@@ -625,7 +625,7 @@ function Landing({ onLogin, dbs }) {
         <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('/new2.jpg')", opacity: 0, animation: "bgFade2 12s infinite" }} />
         <div className="absolute inset-0 z-0" style={{ background: "linear-gradient(rgba(22, 50, 63, 0.7), rgba(22, 50, 63, 0.95))" }} />
         
-        <div id="about-us" className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           {/* Left Side: Text */}
           <div className="flex-1 text-center lg:text-left">
             <div className="inline-block px-6 py-2.5 rounded-full border-2 tw-body text-base font-bold shadow-lg transform hover:scale-105 transition-transform cursor-default mb-8" style={{ borderColor: "rgba(184,134,59,0.5)", color: "white", background: "var(--brass)" }}>
@@ -688,7 +688,7 @@ function Landing({ onLogin, dbs }) {
       <Stats />
 
       {/* HOW IT WORKS */}
-      <div className="px-6 sm:px-10 py-20 max-w-6xl mx-auto overflow-hidden">
+      <div id="about-us" className="px-6 sm:px-10 py-20 max-w-6xl mx-auto overflow-hidden">
         <h2 className="tw-display font-bold text-4xl mb-12 text-center animate-fade-in-up" style={{ animationDelay: "0.1s" }}>3 simple steps to total peace of mind</h2>
         <div className="grid sm:grid-cols-3 gap-8 relative">
           <div className="hidden sm:block absolute top-1/2 left-0 w-full h-0.5 -translate-y-1/2 z-0" style={{ background: "rgba(184,134,59,0.2)" }} />

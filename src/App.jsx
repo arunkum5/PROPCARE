@@ -457,8 +457,9 @@ function Testimonials() {
 }
 
 /* ================= LANDING ================= */
-function Landing({ onLogin }) {
-  const [policyModal, setPolicyModal] = useState(null);
+function Landing({ onLogin, dbs }) {
+  const plansList = Object.values(dbs?.plans || {});
+    const [policyModal, setPolicyModal] = useState(null);
   const services = [
     {
       icon: Trees, title: "Vacant Plot & Land",
@@ -719,23 +720,26 @@ function Landing({ onLogin }) {
         <h2 className="tw-display font-bold text-2xl mb-2">Care plans</h2>
         <p className="tw-body text-sm mb-8" style={{ opacity: 0.7 }}>Pick a visit rhythm — change it anytime from your dashboard.</p>
         <div className="grid sm:grid-cols-3 gap-6">
-          {plansList.map((p) => (
-            <div key={p.id} className="p-8 rounded-2xl relative transition-all duration-300 border-2 hover:-translate-y-2 hover:shadow-xl flex flex-col overflow-hidden group" style={{ borderColor: p.isPopular ? 'var(--brass)' : 'rgba(30,42,47,0.08)', boxShadow: p.isPopular ? '0 10px 40px rgba(184,134,59,0.15)' : '0 8px 30px rgba(0,0,0,0.06)' }}>
+          {plansList.map((p) => {
+            const isPopular = p.id === 'premium';
+            return (
+            <div key={p.id} className="p-8 rounded-2xl relative transition-all duration-300 border-2 hover:-translate-y-2 hover:shadow-xl flex flex-col overflow-hidden group" style={{ borderColor: isPopular ? 'var(--brass)' : 'rgba(30,42,47,0.08)', boxShadow: isPopular ? '0 10px 40px rgba(184,134,59,0.15)' : '0 8px 30px rgba(0,0,0,0.06)' }}>
               <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-110" style={{ background: `url('/${p.id}.png') center/cover` }} />
               <div className="absolute inset-0 z-0" style={{ background: "linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.97))" }} />
-              {p.isPopular && <div className="absolute top-0 right-0 z-20 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white rounded-bl-2xl shadow-sm" style={{ background: "var(--brass)" }}>Most Popular</div>}
+              {isPopular && <div className="absolute top-0 right-0 z-20 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white rounded-bl-2xl shadow-sm" style={{ background: "var(--brass)" }}>Most Popular</div>}
               <div className="relative z-10 flex flex-col h-full">
                 <div className="mb-5">
-                  <Badge tone={p.isPopular ? "brass" : "ink"}>{p.price}</Badge>
+                  <Badge tone={isPopular ? "brass" : "ink"}>₹{p.ratePerSqft}/sqft/month</Badge>
                 </div>
                 <div className="tw-display font-bold text-3xl mb-6" style={{ color: "var(--ink)" }}>{p.name}</div>
                 <div className="tw-body text-[17px] space-y-4 font-semibold flex-1" style={{ color: "rgba(30,42,47,0.85)" }}>
-                  <div className="flex gap-3 items-center"><Eye size={20} style={{ color: p.isPopular ? "var(--brass)" : "var(--clay)" }} /> {p.visits}</div>
-                  <div className="flex gap-3 items-center"><Camera size={20} style={{ color: p.isPopular ? "var(--brass)" : "var(--clay)" }} /> {p.media}</div>
+                  <div className="flex gap-3 items-center"><Eye size={20} style={{ color: isPopular ? "var(--brass)" : "var(--clay)" }} /> {p.numVisits} visits / month</div>
+                  <div className="flex gap-3 items-center"><Camera size={20} style={{ color: isPopular ? "var(--brass)" : "var(--clay)" }} /> {p.numPhotos === 999 ? 'Unlimited' : p.numPhotos} photos &amp; {p.numVideos === 999 ? 'Unlimited' : p.numVideos} video(s)</div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

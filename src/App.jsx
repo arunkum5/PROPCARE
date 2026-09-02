@@ -1210,8 +1210,10 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
             
             <div className="p-4 rounded-md flex justify-between items-center" style={{ background: "rgba(30,42,47,0.02)", border: "1px solid rgba(30,42,47,0.05)" }}>
               <div>
-                <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>NEXT RENEWAL</div>
-                <div className="tw-body font-bold text-base">{p.expiryDate ? fmtDate(p.expiryDate) : '—'}</div>
+                <div className="tw-body text-xs font-semibold mb-1 flex items-center gap-2" style={{ opacity: 0.6 }}>
+                  NEXT RENEWAL {p.expiryDate && new Date() > new Date(p.expiryDate) && <Badge tone="tomato">OVERDUE</Badge>}
+                </div>
+                <div className="tw-body font-bold text-base" style={p.expiryDate && new Date() > new Date(p.expiryDate) ? { color: "red" } : {}}>{p.expiryDate ? fmtDate(p.expiryDate) : '—'}</div>
                 <div className="tw-body text-[11px] mt-1 font-medium text-green-700">
                   Amount due: ₹{calcFee(p.plan, p.size, p.billingCycle, dbs.plans).toLocaleString('en-IN')}
                 </div>
@@ -1460,8 +1462,11 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
                     </div>
                     {p.expiryDate && (
                       <div className="text-right">
-                        <div className="tw-mono text-[9px] uppercase font-bold" style={{ opacity: 0.5, color: "var(--ink)" }}>Next Renewal</div>
-                        <div className="tw-body font-bold text-[11px]" style={{ color: "var(--brass)" }}>{fmtDate(p.expiryDate)}</div>
+                        <div className="tw-mono text-[9px] uppercase font-bold flex items-center justify-end gap-1.5" style={{ opacity: 0.5, color: "var(--ink)" }}>
+                          {new Date() > new Date(p.expiryDate) && <Badge tone="tomato">OVERDUE</Badge>}
+                          Next Renewal
+                        </div>
+                        <div className="tw-body font-bold text-[11px]" style={{ color: new Date() > new Date(p.expiryDate) ? "red" : "var(--brass)" }}>{fmtDate(p.expiryDate)}</div>
                         <div className="tw-body text-[9px] mt-0.5 font-bold" style={{ opacity: 0.5 }}>Last paid: {p.paymentDate ? fmtDate(p.paymentDate) : '—'}</div>
                       </div>
                     )}

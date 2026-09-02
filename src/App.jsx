@@ -467,6 +467,8 @@ function Landing({ onLogin, dbs }) {
   const [calcPlan, setCalcPlan] = useState('');
   const [calcCycle, setCalcCycle] = useState('1_month');
   const [calcType, setCalcType] = useState('Flat / Apartment');
+  const [checkoutModal, setCheckoutModal] = useState(false);
+  const [leadForm, setLeadForm] = useState({ name: '', phone: '', email: '' });
 
   const activeCalcPlan = calcPlan || plansList[0]?.id || '';
   const services = [
@@ -793,17 +795,26 @@ function Landing({ onLogin, dbs }) {
           </div>
 
           {calcSize > 0 && dbs?.plans?.[activeCalcPlan] ? (
-            <div className="flex items-center gap-4 bg-[var(--blueprint)] p-6 rounded-2xl text-white relative z-10 shadow-lg">
-              <div className="flex-1">
-                <div className="tw-body text-sm" style={{ opacity: 0.8 }}>Estimated {calcCycle === '1_month' ? 'Monthly' : calcCycle === '6_months' ? 'Bi-Annual' : 'Annual'} Cost</div>
-                <div className="tw-display font-black text-4xl mt-1" style={{ color: "var(--brass)" }}>
-                  ₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')}
+            <div className="flex flex-col sm:flex-row items-center gap-4 bg-[var(--blueprint)] p-4 rounded-xl text-white relative z-10 shadow-md">
+              <div className="flex-1 flex items-center gap-4 w-full">
+                <div>
+                  <div className="tw-body text-xs" style={{ opacity: 0.8 }}>Estimated {calcCycle === '1_month' ? 'Monthly' : calcCycle === '6_months' ? 'Bi-Annual' : 'Annual'} Cost</div>
+                  <div className="tw-display font-black text-2xl mt-0.5" style={{ color: "var(--brass)" }}>
+                    ₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')}
+                  </div>
+                </div>
+                <div className="hidden sm:block border-l border-white/20 pl-4">
+                  <div className="tw-body text-[10px] uppercase tracking-widest" style={{ opacity: 0.6 }}>Plan Rate</div>
+                  <div className="tw-mono text-xs">₹{dbs.plans[activeCalcPlan].ratePerSqft} / sqft</div>
                 </div>
               </div>
-              <div className="hidden sm:block text-right">
-                <div className="tw-body text-xs" style={{ opacity: 0.6 }}>Plan Rate</div>
-                <div className="tw-mono text-sm">₹{dbs.plans[activeCalcPlan].ratePerSqft} / sqft</div>
-              </div>
+              <button 
+                onClick={() => setCheckoutModal(true)}
+                className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center gap-2 whitespace-nowrap shadow-lg" 
+                style={{ background: "var(--brass)", color: "var(--blueprint)" }}
+              >
+                Secure Property Now <ChevronRight size={16} />
+              </button>
             </div>
           ) : (
             <div className="bg-gray-50 border border-gray-200 p-6 rounded-2xl tw-body text-sm text-center relative z-10" style={{ color: "var(--ink)", opacity: 0.6 }}>
@@ -844,6 +855,45 @@ function Landing({ onLogin, dbs }) {
       </div>
 
       {policyModal && <PolicyModal type={policyModal} onClose={() => setPolicyModal(null)} />}
+      {checkoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-fade-in-up">
+            <button onClick={() => setCheckoutModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={20} /></button>
+            <div className="tw-display font-bold text-xl mb-1 text-[var(--ink)]">Secure Your Property</div>
+            <p className="tw-body text-sm mb-6 text-gray-500">Provide your details to lock in your {dbs.plans[activeCalcPlan]?.name} plan for {calcSize} sqft.</p>
+            
+            <div className="flex flex-col gap-4 mb-8">
+              <div className="flex flex-col gap-1.5">
+                <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Full Name</label>
+                <input type="text" placeholder="John Doe" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.name} onChange={e => setLeadForm({...leadForm, name: e.target.value})} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Phone Number</label>
+                <input type="tel" placeholder="+91 90000 00000" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.phone} onChange={e => setLeadForm({...leadForm, phone: e.target.value})} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Email Address</label>
+                <input type="email" placeholder="john@example.com" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.email} onChange={e => setLeadForm({...leadForm, email: e.target.value})} />
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                if (!leadForm.name || !leadForm.phone) {
+                  alert("Please provide your name and phone number so we can contact you.");
+                  return;
+                }
+                alert("Thank you! Our team has received your request and will contact you shortly to complete the payment setup.");
+                setCheckoutModal(false);
+              }}
+              className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
+              style={{ background: "var(--blueprint)", color: "white" }}
+            >
+              Proceed to Payment (₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')})
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

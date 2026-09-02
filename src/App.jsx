@@ -1852,6 +1852,34 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           <MapPin size={13} /> {p.address}
         </div>
 
+        <div className="p-5 rounded-lg bg-white mb-6" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          <div className="tw-display font-bold text-lg mb-4">Property Details</div>
+          <div className="grid sm:grid-cols-2 gap-y-4 gap-x-8">
+            <div>
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Type</div>
+              <div className="tw-body font-semibold text-sm">{p.type}</div>
+            </div>
+            <div>
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Size</div>
+              <div className="tw-body font-semibold text-sm">{p.size} sq. ft</div>
+            </div>
+            <div>
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Requested Plan</div>
+              <div className="tw-body font-semibold text-sm">{dbs.plans[p.plan]?.name || p.plan}</div>
+            </div>
+            <div>
+              <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Billing Cycle</div>
+              <div className="tw-body font-semibold text-sm capitalize">{p.billingCycle?.replace('_', ' ')}</div>
+            </div>
+            {p.summary && (
+              <div className="sm:col-span-2 mt-2">
+                <div className="tw-mono text-[10px] uppercase tracking-wider mb-1" style={{ opacity: 0.5 }}>Description / Summary</div>
+                <p className="tw-body text-sm leading-relaxed">{p.summary}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         <AddVisitForm onAdd={(v) => addVisit(p.id, v)} />
 
         <div className="tw-display font-bold text-lg mt-8 mb-4">Logged visits</div>

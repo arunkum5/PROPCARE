@@ -260,8 +260,6 @@ function calcExpiry(paymentDate, cycle = '1_month') {
   return d.toISOString();
 }
 
-}
-
 async function processCheckout({ amount, description, onSuccess, onError }) {
   try {
     const orderRes = await fetch('/api/razorpay/order', {

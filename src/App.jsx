@@ -466,11 +466,11 @@ function Testimonials() {
 function Landing({ onLogin, dbs }) {
   const plansList = Object.values(dbs?.plans || {});
   const [policyModal, setPolicyModal] = useState(null);
-  const [calcSize, setCalcSize] = useState('');
-  const [calcPlan, setCalcPlan] = useState('');
+  const [calcSize, setCalcSize] = useState('1200');
+  const [calcPlan, setCalcPlan] = useState('essential');
   const [calcCycle, setCalcCycle] = useState('1_month');
   const [calcType, setCalcType] = useState('Flat / Apartment');
-  const [checkoutModal, setCheckoutModal] = useState(false);
+  const [checkoutModal, setCheckoutModal] = useState(null);
   const [leadForm, setLeadForm] = useState({ name: '', phone: '', email: '' });
   const [leadMsg, setLeadMsg] = useState(null);
 
@@ -505,7 +505,7 @@ function Landing({ onLogin, dbs }) {
     if (action === 'callback') {
       setLeadMsg({ type: 'success', text: "Thank you! Our team has received your request and will contact you shortly." });
       setTimeout(() => {
-        setCheckoutModal(false);
+        setCheckoutModal(null);
         setLeadMsg(null);
       }, 3500);
     } else {
@@ -520,7 +520,7 @@ function Landing({ onLogin, dbs }) {
           });
           setLeadMsg({ type: 'success', text: "Payment Successful! We will contact you to begin onboarding." });
           setTimeout(() => {
-            setCheckoutModal(false);
+            setCheckoutModal(null);
             setLeadMsg(null);
           }, 4000);
         },
@@ -532,7 +532,7 @@ function Landing({ onLogin, dbs }) {
           });
           setLeadMsg({ type: 'error', text: "Payment failed or was cancelled. Your details are saved, and we will contact you." });
           setTimeout(() => {
-            setCheckoutModal(false);
+            setCheckoutModal(null);
             setLeadMsg(null);
           }, 4000);
         }
@@ -839,7 +839,9 @@ function Landing({ onLogin, dbs }) {
         <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-lg border border-gray-100 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-5"><Calculator size={120} /></div>
           <h2 className="tw-display font-bold text-2xl mb-2 relative z-10">Estimate Your Cost</h2>
-          <p className="tw-body text-sm mb-8 relative z-10" style={{ opacity: 0.7 }}>Get an instant fee estimate based on your property size and selected care plan.</p>
+          <p className="tw-body text-sm mb-8 relative z-10 bg-[var(--brass)] text-[var(--blueprint)] inline-block px-4 py-2 rounded-md font-bold shadow-sm">
+            Get an instant fee estimate based on your property size and selected care plan.
+          </p>
           
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 relative z-10 mb-8">
             <div className="flex flex-col gap-2">
@@ -885,13 +887,21 @@ function Landing({ onLogin, dbs }) {
                   <div className="tw-mono text-xs">₹{dbs.plans[activeCalcPlan].ratePerSqft} / sqft</div>
                 </div>
               </div>
-              <button 
-                onClick={() => setCheckoutModal(true)}
-                className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center gap-2 whitespace-nowrap shadow-lg" 
-                style={{ background: "var(--brass)", color: "var(--blueprint)" }}
-              >
-                Secure Property Now <ChevronRight size={16} />
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-4 sm:mt-0">
+                <button 
+                  onClick={() => setCheckoutModal('callback')}
+                  className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center gap-2 whitespace-nowrap border-2 border-white/20 hover:bg-white/10"
+                >
+                  Request Call Back
+                </button>
+                <button 
+                  onClick={() => setCheckoutModal('payment')}
+                  className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center gap-2 whitespace-nowrap shadow-lg" 
+                  style={{ background: "var(--brass)", color: "var(--blueprint)" }}
+                >
+                  Secure Property Now <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           ) : (
             <div className="bg-gray-50 border border-gray-200 p-6 rounded-2xl tw-body text-sm text-center relative z-10" style={{ color: "var(--ink)", opacity: 0.6 }}>
@@ -940,9 +950,15 @@ function Landing({ onLogin, dbs }) {
       {checkoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-fade-in-up">
-            <button onClick={() => setCheckoutModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={20} /></button>
-            <div className="tw-display font-bold text-xl mb-1 text-[var(--ink)]">Secure Your Property</div>
-            <p className="tw-body text-sm mb-6 text-gray-500">Provide your details to lock in your {dbs.plans[activeCalcPlan]?.name} plan for {calcSize} sqft.</p>
+            <button onClick={() => setCheckoutModal(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={20} /></button>
+            <div className="tw-display font-bold text-xl mb-1 text-[var(--ink)]">
+              {checkoutModal === 'payment' ? 'Secure Your Property' : 'Request Call Back'}
+            </div>
+            <p className="tw-body text-sm mb-6 text-gray-500">
+              {checkoutModal === 'payment' 
+                ? `Provide your details to lock in your ${dbs.plans[activeCalcPlan]?.name} plan for ${calcSize} sqft.`
+                : 'Provide your details and we will call you back shortly.'}
+            </p>
             
             {leadMsg && (
               <div className={`p-4 mb-6 rounded-lg text-sm font-semibold flex items-center justify-center text-center ${leadMsg.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -964,20 +980,23 @@ function Landing({ onLogin, dbs }) {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <button 
-                    onClick={() => handleLeadSubmit('payment')}
-                    className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
-                    style={{ background: "var(--blueprint)", color: "white" }}
-                  >
-                    Proceed to Payment (₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')})
-                  </button>
-                  <button 
-                    onClick={() => handleLeadSubmit('callback')}
-                    className="w-full py-3.5 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors border-2 border-gray-200" 
-                    style={{ color: "var(--ink)" }}
-                  >
-                    Request a Callback
-                  </button>
+                  {checkoutModal === 'payment' ? (
+                    <button 
+                      onClick={() => handleLeadSubmit('payment')}
+                      className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
+                      style={{ background: "var(--blueprint)", color: "white" }}
+                    >
+                      Proceed to Payment (₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')})
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => handleLeadSubmit('callback')}
+                      className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
+                      style={{ background: "var(--blueprint)", color: "white" }}
+                    >
+                      Submit Request
+                    </button>
+                  )}
                 </div>
               </>
             ) : null}

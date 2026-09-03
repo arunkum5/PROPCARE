@@ -102,6 +102,21 @@ app.put('/api/leads/:id', async (c) => {
   return c.json({ success: true })
 })
 
+// DELETE /api/leads/:id - Delete single lead
+app.delete('/api/leads/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  await db.prepare('DELETE FROM leads WHERE id = ?').bind(id).run()
+  return c.json({ success: true })
+})
+
+// DELETE /api/leads - Delete all leads
+app.delete('/api/leads', async (c) => {
+  const db = c.env.DB
+  await db.prepare('DELETE FROM leads').run()
+  return c.json({ success: true })
+})
+
 // POST /api/plans - Add plan
 app.post('/api/plans', async (c) => {
   const db = c.env.DB

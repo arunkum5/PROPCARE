@@ -2042,19 +2042,61 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
 
 function AdminLeadsTab({ dbs, refresh }) {
   const leads = Object.values(dbs.leads || {}).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const [selected, setSelected] = useState(new Set());
   
+  const toggleSelect = (id) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelected(next);
+  };
+  
+  const toggleAll = () => {
+    if (selected.size === leads.length) setSelected(new Set());
+    else setSelected(new Set(leads.map(l => l.id)));
+  };
+
   const updateStatus = async (lead, status) => {
     await fetch(`/api/leads/${lead.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
     refresh();
   };
 
+  const clearSelected = async () => {
+    if (!confirm(`Are you sure you want to delete ${selected.size} leads?`)) return;
+    await Promise.all(Array.from(selected).map(id => fetch(`/api/leads/${id}`, { method: 'DELETE' })));
+    setSelected(new Set());
+    refresh();
+  };
+
+  const clearAll = async () => {
+    if (!confirm('Are you sure you want to delete ALL leads?')) return;
+    await fetch('/api/leads', { method: 'DELETE' });
+    setSelected(new Set());
+    refresh();
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-      <div className="p-4 border-b border-gray-100 tw-display font-bold text-lg">Sales Leads ({leads.length})</div>
+      <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+        <div className="tw-display font-bold text-lg">Sales Leads ({leads.length})</div>
+        <div className="flex gap-2">
+          {selected.size > 0 && (
+            <button onClick={clearSelected} className="text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-50 text-red-600 transition-colors border border-red-100">
+              Clear Selected ({selected.size})
+            </button>
+          )}
+          {leads.length > 0 && (
+            <button onClick={clearAll} className="text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-50 text-red-600 transition-colors border border-red-100">
+              Clear All
+            </button>
+          )}
+        </div>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left tw-body text-sm">
           <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500">
             <tr>
+              <th className="p-4 w-12"><input type="checkbox" checked={leads.length > 0 && selected.size === leads.length} onChange={toggleAll} className="rounded border-gray-300" /></th>
               <th className="p-4 font-bold">Date</th>
               <th className="p-4 font-bold">Contact</th>
               <th className="p-4 font-bold">Property Details</th>
@@ -2065,6 +2107,7 @@ function AdminLeadsTab({ dbs, refresh }) {
           <tbody>
             {leads.map(ld => (
               <tr key={ld.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                <td className="p-4"><input type="checkbox" checked={selected.has(ld.id)} onChange={() => toggleSelect(ld.id)} className="rounded border-gray-300" /></td>
                 <td className="p-4 tw-mono text-xs whitespace-nowrap" style={{ opacity: 0.7 }}>{new Date(ld.createdAt).toLocaleDateString()}</td>
                 <td className="p-4">
                   <div className="font-semibold" style={{ color: "var(--ink)" }}>{ld.name}</div>
@@ -2090,7 +2133,7 @@ function AdminLeadsTab({ dbs, refresh }) {
               </tr>
             ))}
             {leads.length === 0 && (
-              <tr><td colSpan="5" className="p-8 text-center text-gray-400">No leads captured yet.</td></tr>
+              <tr><td colSpan="6" className="p-8 text-center text-gray-400">No leads captured yet.</td></tr>
             )}
           </tbody>
         </table>

@@ -445,90 +445,178 @@ app.get('/api/tests/run', async (c) => {
     results.push({ name, passed, time, error });
   };
 
-  // 1. Database Connectivity
-  let start = Date.now();
-  try {
-    const { results: count } = await db.prepare('SELECT count(*) as total FROM customers').all();
-    addResult('Database Connectivity', true, Date.now() - start);
-  } catch (err) {
-    addResult('Database Connectivity', false, Date.now() - start, err.message);
-  }
+  let start;
 
-  // 2. Leads Flow
+  // 1. Admin Adds Customer Test
   start = Date.now();
-  const leadId = `test_ld_${Date.now()}`;
-  try {
-    await db.prepare('INSERT INTO leads (id, name, phone, propertyType, size, plan, cycle, amount, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .bind(leadId, 'Test Lead', '9999999999', 'Flat', '1200', 'essential', '1_month', 1000, 'pending', new Date().toISOString())
-      .run();
-    
-    const { results: leads } = await db.prepare('SELECT * FROM leads WHERE id = ?').bind(leadId).all();
-    if (leads.length !== 1) throw new Error('Lead not found after insertion');
-    
-    await db.prepare('DELETE FROM leads WHERE id = ?').bind(leadId).run();
-    const { results: leadsAfter } = await db.prepare('SELECT * FROM leads WHERE id = ?').bind(leadId).all();
-    if (leadsAfter.length > 0) throw new Error('Lead not deleted successfully');
-    
-    addResult('Leads Creation & Deletion', true, Date.now() - start);
-  } catch (err) {
-    await db.prepare('DELETE FROM leads WHERE id = ?').bind(leadId).run().catch(() => {});
-    addResult('Leads Creation & Deletion', false, Date.now() - start, err.message);
-  }
-
-  // 3. Customer Auth & Property State
-  start = Date.now();
-  const custId = `test_c_${Date.now()}`;
-  const propId = `test_p_${Date.now()}`;
+  const t1_custId = `test_c_${Date.now()}_1`;
   try {
     await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
-      .bind(custId, 'Test Customer', '8888888888', 'test@test.com', 'pwd123', new Date().toISOString())
+      .bind(t1_custId, 'Test Customer 1', '9999999991', 't1@test.com', 'pwd1', new Date().toISOString())
       .run();
-      
-    const { results: auth } = await db.prepare('SELECT * FROM customers WHERE phone = ? AND password = ?').bind('8888888888', 'pwd123').all();
-    if (auth.length !== 1) throw new Error('Customer login auth failed');
-
-    await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .bind(propId, custId, 'Flat', 'Test Prop', '123 Test', '', '1000', '', 'essential', 'pending', 0, new Date().toISOString())
-      .run();
-      
-    await db.prepare('UPDATE properties SET status = ? WHERE id = ?').bind('active', propId).run();
-    const { results: p } = await db.prepare('SELECT status FROM properties WHERE id = ?').bind(propId).all();
-    if (p[0].status !== 'active') throw new Error('Property state update failed');
-    
-    await db.prepare('DELETE FROM properties WHERE id = ?').bind(propId).run();
-    await db.prepare('DELETE FROM customers WHERE id = ?').bind(custId).run();
-    addResult('Customer Auth & Property State', true, Date.now() - start);
+    const { results: c1 } = await db.prepare('SELECT * FROM customers WHERE id = ?').bind(t1_custId).all();
+    if (c1.length !== 1) throw new Error('Customer not found after insertion');
+    addResult('1. Admin Adds Customer', true, Date.now() - start);
   } catch (err) {
-    await db.prepare('DELETE FROM properties WHERE id = ?').bind(propId).run().catch(() => {});
-    await db.prepare('DELETE FROM customers WHERE id = ?').bind(custId).run().catch(() => {});
-    addResult('Customer Auth & Property State', false, Date.now() - start, err.message);
+    addResult('1. Admin Adds Customer', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(t1_custId).run().catch(()=>{});
   }
-  
-  // 4. Coupon Engine & Payment Math
+
+  // 2. Customer Call Back Lead Test
   start = Date.now();
-  const couponId = `test_cpn_${Date.now()}`;
-  const couponCode = `TEST${Date.now()}`;
+  const t2_leadId = `test_ld_${Date.now()}_2`;
   try {
-    await db.prepare('INSERT INTO coupons (id, code, type, value, tiedToPhone, isNewCustomerOnly, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-      .bind(couponId, couponCode, 'percentage', 50, null, 0, null, new Date().toISOString())
+    await db.prepare('INSERT INTO leads (id, name, phone, propertyType, size, plan, cycle, amount, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(t2_leadId, 'Test Lead 2', '9999999992', 'Flat', '1200', 'essential', '1_month', 0, 'callback_requested', new Date().toISOString())
       .run();
-      
-    const { results: coupons } = await db.prepare('SELECT * FROM coupons WHERE code = ?').bind(couponCode).all();
-    if (coupons.length !== 1) throw new Error('Coupon not created');
-    
-    // Simulate Razorpay order discount math
-    const coupon = coupons[0];
-    let amount = 10000; // 100 INR in paise
-    if (coupon.type === 'percentage') {
-      amount = Math.round(amount - (amount * (coupon.value / 100)));
-    }
-    if (amount !== 5000) throw new Error('Discount math failed, expected 5000 paise');
-    
-    await db.prepare('DELETE FROM coupons WHERE id = ?').bind(couponId).run();
-    addResult('Coupon Engine & Payment Math', true, Date.now() - start);
+    const { results: l2 } = await db.prepare('SELECT * FROM leads WHERE id = ?').bind(t2_leadId).all();
+    if (l2.length !== 1 || l2[0].status !== 'callback_requested') throw new Error('Call back lead not saved correctly');
+    addResult('2. Customer Call Back Lead', true, Date.now() - start);
   } catch (err) {
-    await db.prepare('DELETE FROM coupons WHERE id = ?').bind(couponId).run().catch(() => {});
-    addResult('Coupon Engine & Payment Math', false, Date.now() - start, err.message);
+    addResult('2. Customer Call Back Lead', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM leads WHERE id = ?').bind(t2_leadId).run().catch(()=>{});
+  }
+
+  // 3. Payment Cancel / Lead Storage Test
+  start = Date.now();
+  const t3_leadId = `test_ld_${Date.now()}_3`;
+  try {
+    await db.prepare('INSERT INTO leads (id, name, phone, propertyType, size, plan, cycle, amount, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(t3_leadId, 'Test Lead 3', '9999999993', 'Flat', '1200', 'essential', '1_month', 1000, 'payment_pending', new Date().toISOString())
+      .run();
+    const { results: l3 } = await db.prepare('SELECT * FROM leads WHERE id = ?').bind(t3_leadId).all();
+    if (l3.length !== 1 || l3[0].status !== 'payment_pending') throw new Error('Payment pending lead not stored');
+    addResult('3. Payment Cancel / Lead Storage', true, Date.now() - start);
+  } catch (err) {
+    addResult('3. Payment Cancel / Lead Storage', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM leads WHERE id = ?').bind(t3_leadId).run().catch(()=>{});
+  }
+
+  // 4. Customer Login & PIN Change Test
+  start = Date.now();
+  const t4_custId = `test_c_${Date.now()}_4`;
+  try {
+    await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(t4_custId, 'Test Customer 4', '9999999994', 't4@test.com', 'oldpin', new Date().toISOString())
+      .run();
+    // Test login
+    const { results: auth1 } = await db.prepare('SELECT * FROM customers WHERE phone = ? AND password = ?').bind('9999999994', 'oldpin').all();
+    if (auth1.length !== 1) throw new Error('Initial login failed');
+    // Change pin
+    await db.prepare('UPDATE customers SET password = ? WHERE id = ?').bind('newpin', t4_custId).run();
+    // Test login new
+    const { results: auth2 } = await db.prepare('SELECT * FROM customers WHERE phone = ? AND password = ?').bind('9999999994', 'newpin').all();
+    if (auth2.length !== 1) throw new Error('Login with new PIN failed');
+    const { results: auth3 } = await db.prepare('SELECT * FROM customers WHERE phone = ? AND password = ?').bind('9999999994', 'oldpin').all();
+    if (auth3.length !== 0) throw new Error('Login with old PIN should have failed');
+    addResult('4. Customer Login & PIN Change', true, Date.now() - start);
+  } catch (err) {
+    addResult('4. Customer Login & PIN Change', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(t4_custId).run().catch(()=>{});
+  }
+
+  // 5. Admin Deletes Customer (Cascading Deletion) Test
+  start = Date.now();
+  const t5_custId = `test_c_${Date.now()}_5`;
+  const t5_prop1 = `test_p_${Date.now()}_5_1`;
+  const t5_prop2 = `test_p_${Date.now()}_5_2`;
+  try {
+    await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(t5_custId, 'Test Customer 5', '9999999995', 't5@test.com', 'pin', new Date().toISOString())
+      .run();
+    await db.prepare('INSERT INTO properties (id, customerId, type, title, status) VALUES (?, ?, ?, ?, ?)')
+      .bind(t5_prop1, t5_custId, 'Flat', 'Prop 1', 'pending')
+      .run();
+    await db.prepare('INSERT INTO properties (id, customerId, type, title, status) VALUES (?, ?, ?, ?, ?)')
+      .bind(t5_prop2, t5_custId, 'Flat', 'Prop 2', 'pending')
+      .run();
+    
+    // Admin deletion logic from DELETE /api/customers/:id
+    await db.prepare('DELETE FROM properties WHERE customerId = ?').bind(t5_custId).run();
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(t5_custId).run();
+
+    const { results: p5 } = await db.prepare('SELECT * FROM properties WHERE customerId = ?').bind(t5_custId).all();
+    if (p5.length > 0) throw new Error('Properties were not deleted');
+    addResult('5. Admin Deletes Customer (Cascading)', true, Date.now() - start);
+  } catch (err) {
+    addResult('5. Admin Deletes Customer (Cascading)', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(t5_prop1).run().catch(()=>{});
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(t5_prop2).run().catch(()=>{});
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(t5_custId).run().catch(()=>{});
+  }
+
+  // 6. Customer Deletes Specific Property Test
+  start = Date.now();
+  const t6_custId = `test_c_${Date.now()}_6`;
+  const t6_prop1 = `test_p_${Date.now()}_6_1`;
+  const t6_prop2 = `test_p_${Date.now()}_6_2`;
+  try {
+    await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(t6_custId, 'Test Customer 6', '9999999996', 't6@test.com', 'pin', new Date().toISOString())
+      .run();
+    await db.prepare('INSERT INTO properties (id, customerId, type, title, status) VALUES (?, ?, ?, ?, ?)')
+      .bind(t6_prop1, t6_custId, 'Flat', 'Prop 1', 'pending')
+      .run();
+    await db.prepare('INSERT INTO properties (id, customerId, type, title, status) VALUES (?, ?, ?, ?, ?)')
+      .bind(t6_prop2, t6_custId, 'Flat', 'Prop 2', 'pending')
+      .run();
+    
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(t6_prop1).run();
+
+    const { results: p6 } = await db.prepare('SELECT * FROM properties WHERE customerId = ?').bind(t6_custId).all();
+    if (p6.length !== 1 || p6[0].id !== t6_prop2) throw new Error('Wrong property deleted');
+    addResult('6. Customer Deletes Specific Property', true, Date.now() - start);
+  } catch (err) {
+    addResult('6. Customer Deletes Specific Property', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(t6_prop1).run().catch(()=>{});
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(t6_prop2).run().catch(()=>{});
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(t6_custId).run().catch(()=>{});
+  }
+
+  // 7. Cases & Visits Lifecycle Test
+  start = Date.now();
+  const t7_custId = `test_c_${Date.now()}_7`;
+  const t7_propId = `test_p_${Date.now()}_7`;
+  const t7_visitId = `test_v_${Date.now()}_7`;
+  const t7_caseId = `test_cs_${Date.now()}_7`;
+  try {
+    await db.prepare('INSERT INTO customers (id, name, phone) VALUES (?, ?, ?)')
+      .bind(t7_custId, 'Test Customer 7', '9999999997').run();
+    await db.prepare('INSERT INTO properties (id, customerId, type, title, status) VALUES (?, ?, ?, ?, ?)')
+      .bind(t7_propId, t7_custId, 'Flat', 'Prop 7', 'active').run();
+    
+    // Visit
+    await db.prepare('INSERT INTO visits (id, propertyId, kind, date, photos) VALUES (?, ?, ?, ?, ?)')
+      .bind(t7_visitId, t7_propId, 'inspection', new Date().toISOString(), '[]').run();
+    const { results: v7 } = await db.prepare('SELECT * FROM visits WHERE id = ?').bind(t7_visitId).all();
+    if (v7.length !== 1) throw new Error('Visit not created');
+
+    // Case
+    await db.prepare('INSERT INTO cases (id, customerId, propertyId, subject, message, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(t7_caseId, t7_custId, t7_propId, 'Test Case', 'Help', 'open', new Date().toISOString()).run();
+    await db.prepare('UPDATE cases SET response = ?, status = ? WHERE id = ?')
+      .bind('Fixed', 'resolved', t7_caseId).run();
+    const { results: c7 } = await db.prepare('SELECT response, status FROM cases WHERE id = ?').bind(t7_caseId).all();
+    if (c7[0].status !== 'resolved' || c7[0].response !== 'Fixed') throw new Error('Case not updated correctly');
+
+    await db.prepare('DELETE FROM cases WHERE id = ?').bind(t7_caseId).run();
+    const { results: c7after } = await db.prepare('SELECT * FROM cases WHERE id = ?').bind(t7_caseId).all();
+    if (c7after.length !== 0) throw new Error('Case not deleted');
+
+    addResult('7. Cases & Visits Lifecycle', true, Date.now() - start);
+  } catch (err) {
+    addResult('7. Cases & Visits Lifecycle', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM cases WHERE id = ?').bind(t7_caseId).run().catch(()=>{});
+    await db.prepare('DELETE FROM visits WHERE id = ?').bind(t7_visitId).run().catch(()=>{});
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(t7_propId).run().catch(()=>{});
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(t7_custId).run().catch(()=>{});
   }
 
   const allPassed = results.every(r => r.passed);

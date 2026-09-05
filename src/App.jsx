@@ -280,7 +280,7 @@ async function processCheckout({ amount, description, onSuccess, onError }) {
     }
 
     const rzp = new window.Razorpay({
-      key: 'rzp_test_TX8LUu02uZR0dl',
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TYMgMaeAtpwHNh',
       amount: order.amount,
       currency: order.currency,
       order_id: order.orderId,
@@ -1828,7 +1828,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
 
       // 3. Open Razorpay checkout
       const rzp = new window.Razorpay({
-        key: 'rzp_test_TX8LUu02uZR0dl',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TYMgMaeAtpwHNh',
         amount: order.amount,
         currency: order.currency,
         order_id: order.orderId,

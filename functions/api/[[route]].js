@@ -280,7 +280,7 @@ app.get('/api/media/:key', async (c) => {
 app.post('/api/razorpay/order', async (c) => {
   const body = await c.req.json()
   const { amount } = body // amount in paise (rupees * 100)
-  const keyId = 'rzp_test_TX8LUu02uZR0dl'
+  const keyId = c.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TYMgMaeAtpwHNh'
   const keySecret = c.env.RAZORPAY_KEY_SECRET
 
   if (!keySecret) {

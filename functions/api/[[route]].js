@@ -304,18 +304,29 @@ app.get('/api/my-coupons/:phone', async (c) => {
 app.post('/api/coupons', async (c) => {
   const db = c.env.DB
   const body = await c.req.json()
-  await db.prepare('INSERT INTO coupons (id, code, type, value, tiedToPhone, isNewCustomerOnly, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(
-      `cpn_${Date.now()}`, 
-      body.code.toUpperCase(), 
-      body.type, 
-      body.value, 
-      body.tiedToPhone || null, 
-      body.isNewCustomerOnly ? 1 : 0, 
-      body.expiresAt || null, 
-      new Date().toISOString()
-    )
-    .run()
+  try {
+    await db.prepare('INSERT INTO coupons (id, code, type, value, tiedToPhone, isNewCustomerOnly, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(
+        `cpn_${Date.now()}`, 
+        body.code.toUpperCase(), 
+        body.type, 
+        body.value, 
+        body.tiedToPhone || null, 
+        body.isNewCustomerOnly ? 1 : 0, 
+        body.expiresAt || null, 
+        new Date().toISOString()
+      )
+      .run()
+    return c.json({ success: true })
+  } catch (err) {
+    return c.json({ success: false, error: err.message }, 400)
+  }
+})
+
+app.delete('/api/coupons/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  await db.prepare('DELETE FROM coupons WHERE id = ?').bind(id).run()
   return c.json({ success: true })
 })
 

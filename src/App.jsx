@@ -2186,6 +2186,7 @@ function AdminCouponsTab({ dbs }) {
   const [coupons, setCoupons] = useState([]);
   const [form, setForm] = useState({ code: '', type: 'percentage', value: '', tiedToPhone: '', isNewCustomerOnly: false, expiresAt: '' });
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const fetchCoupons = useCallback(async () => {
     try {
@@ -2198,16 +2199,32 @@ function AdminCouponsTab({ dbs }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg('');
     if (!form.code || !form.value) return;
     setLoading(true);
-    await fetch('/api/coupons', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, value: Number(form.value) })
-    });
-    setForm({ code: '', type: 'percentage', value: '', tiedToPhone: '', isNewCustomerOnly: false, expiresAt: '' });
-    await fetchCoupons();
+    try {
+      const res = await fetch('/api/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, value: Number(form.value) })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.error || 'Failed to create coupon. Code might already exist.');
+      } else {
+        setForm({ code: '', type: 'percentage', value: '', tiedToPhone: '', isNewCustomerOnly: false, expiresAt: '' });
+        await fetchCoupons();
+      }
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
     setLoading(false);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this coupon?')) return;
+    await fetch(`/api/coupons/${id}`, { method: 'DELETE' });
+    await fetchCoupons();
   };
 
   const inputCls = "w-full rounded-md px-3 py-2.5 tw-body text-sm border focus:outline-none transition-colors";
@@ -2228,6 +2245,9 @@ function AdminCouponsTab({ dbs }) {
           <label className="flex items-center gap-2 md:col-span-2 tw-body text-sm cursor-pointer mt-2">
             <input type="checkbox" checked={form.isNewCustomerOnly} onChange={e => setForm({...form, isNewCustomerOnly: e.target.checked})} /> New Customers Only
           </label>
+          
+          {errorMsg && <div className="md:col-span-2 text-red-600 tw-body text-sm font-semibold">{errorMsg}</div>}
+          
           <button type="submit" disabled={loading} className="md:col-span-2 py-2.5 mt-2 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>{loading ? 'Creating...' : 'Create Coupon'}</button>
         </form>
       </div>
@@ -2240,6 +2260,7 @@ function AdminCouponsTab({ dbs }) {
               <th className="p-4 font-bold">Discount</th>
               <th className="p-4 font-bold">Rules</th>
               <th className="p-4 font-bold">Redemptions</th>
+              <th className="p-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -2254,9 +2275,14 @@ function AdminCouponsTab({ dbs }) {
                   {!c.tiedToPhone && !c.isNewCustomerOnly && !c.expiresAt && <span className="text-gray-400">None</span>}
                 </td>
                 <td className="p-4 tw-body text-sm font-semibold">{c.redemptionCount} times</td>
+                <td className="p-4 text-right">
+                  <button onClick={() => handleDelete(c.id)} className="text-red-500 hover:text-red-700 transition-colors p-2 rounded hover:bg-red-50" title="Delete Coupon">
+                    <Trash2 size={16} />
+                  </button>
+                </td>
               </tr>
             ))}
-            {coupons.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-gray-500 tw-body text-sm">No coupons found.</td></tr>}
+            {coupons.length === 0 && <tr><td colSpan="5" className="p-8 text-center text-gray-500 tw-body text-sm">No coupons found.</td></tr>}
           </tbody>
         </table>
       </div>

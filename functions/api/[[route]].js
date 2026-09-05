@@ -661,4 +661,35 @@ app.get('/api/tests/run', async (c) => {
   return c.json({ success: allPassed, results });
 })
 
+// --- Emergency DB Setup ---
+app.get('/api/setup', async (c) => {
+  const db = c.env.DB
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS coupons (
+        id TEXT PRIMARY KEY,
+        code TEXT UNIQUE,
+        type TEXT,
+        value REAL,
+        tiedToPhone TEXT,
+        isNewCustomerOnly INTEGER,
+        expiresAt TEXT,
+        createdAt TEXT
+      );
+    `).run()
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS coupon_redemptions (
+        id TEXT PRIMARY KEY,
+        couponCode TEXT,
+        phone TEXT,
+        orderId TEXT,
+        redeemedAt TEXT
+      );
+    `).run()
+    return c.json({ success: true, message: 'Missing tables created successfully!' })
+  } catch (err) {
+    return c.json({ success: false, error: err.message }, 500)
+  }
+})
+
 export const onRequest = handle(app)

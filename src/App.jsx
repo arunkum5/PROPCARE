@@ -1776,6 +1776,21 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       ]}
       activeTab={tab} onTabChange={setTab}
     >
+      <div className="mb-6 bg-gradient-to-r from-[var(--blueprint)] to-indigo-900 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between shadow-lg relative overflow-hidden cursor-pointer hover:shadow-xl transition-all" onClick={() => setTab('rewards')}>
+        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <Gift size={24} className="text-white animate-bounce" style={{ animationDuration: '2s' }} />
+          </div>
+          <div>
+            <h3 className="tw-display text-white font-bold text-lg leading-tight">Refer & Earn 10% OFF</h3>
+            <p className="text-white/80 tw-body text-sm mt-0.5">Share your phone number with a friend. When they join, you get 10% off your next renewal!</p>
+          </div>
+        </div>
+        <button className="mt-4 sm:mt-0 relative z-10 whitespace-nowrap bg-white text-[var(--blueprint)] px-5 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors">
+          Get My Code
+        </button>
+      </div>
 
       {tab === "profile" && (
         <div className="p-6 rounded-lg bg-white max-w-2xl" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
@@ -2258,7 +2273,15 @@ function AdminCouponsTab({ dbs }) {
             <Field label="Value" required><input type="number" className={inputCls} style={inputStyle} value={form.value} onChange={e => setForm({...form, value: e.target.value})} placeholder="e.g. 20" required /></Field>
           </div>
           <Field label="Tied to Phone Number (Optional)"><input className={inputCls} style={inputStyle} value={form.tiedToPhone} onChange={e => setForm({...form, tiedToPhone: e.target.value})} placeholder="e.g. 9448610107" /></Field>
-          <Field label="Expiry Date (Optional)"><input type="date" className={inputCls} style={inputStyle} value={form.expiresAt} onChange={e => setForm({...form, expiresAt: e.target.value})} /></Field>
+          <Field label="Expires At (Optional)">
+            <div className="flex gap-2">
+              <input type="date" className={inputCls} style={inputStyle} value={form.expiresAt} onChange={e => setForm({...form, expiresAt: e.target.value})} />
+              <button type="button" onClick={() => {
+                const d = new Date(); d.setDate(d.getDate() + 45);
+                setForm({...form, expiresAt: d.toISOString().split('T')[0]});
+              }} className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 border rounded transition-colors whitespace-nowrap text-gray-700 font-medium">+45 Days</button>
+            </div>
+          </Field>
           <label className="flex items-center gap-2 md:col-span-2 tw-body text-sm cursor-pointer mt-2">
             <input type="checkbox" checked={form.isNewCustomerOnly} onChange={e => setForm({...form, isNewCustomerOnly: e.target.checked})} /> New Customers Only
           </label>

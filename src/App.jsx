@@ -260,7 +260,7 @@ function calcExpiry(paymentDate, cycle = '1_month') {
   return d.toISOString();
 }
 
-async function processCheckout({ amount, description, onSuccess, onError }) {
+async function processCheckout({ amount, description, prefill, onSuccess, onError }) {
   try {
     const orderRes = await fetch('/api/razorpay/order', {
       method: 'POST',
@@ -286,6 +286,7 @@ async function processCheckout({ amount, description, onSuccess, onError }) {
       order_id: order.orderId,
       name: 'TrustWork Property Care',
       description,
+      prefill,
       theme: { color: '#16323F' },
       handler: async (response) => {
         const verRes = await fetch('/api/razorpay/verify', {
@@ -512,6 +513,7 @@ function Landing({ onLogin, dbs }) {
       await processCheckout({
         amount: amount,
         description: `Plan: ${dbs.plans[activeCalcPlan]?.name} for ${calcSize} sqft`,
+        prefill: { name: leadForm.name, contact: leadForm.phone, email: leadForm.email },
         onSuccess: async (paymentId) => {
           await fetch(`/api/leads/${leadId}`, {
             method: 'PUT',
@@ -1760,12 +1762,12 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
         </div>
       )}
 
-      {showAdd && <AddPropertyModal dbs={dbs} onClose={() => setShowAdd(false)} onSave={addProperty} />}
+      {showAdd && <AddPropertyModal dbs={dbs} customer={customer} onClose={() => setShowAdd(false)} onSave={addProperty} />}
     </Shell>
   );
 }
 
-function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
+function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
   const [step, setStep] = useState(1); // 1=details, 2=agreement, 3=payment
   const [form, setForm] = useState(initialData || { type: PROPERTY_TYPES[0], title: "", address: "", latlong: "", size: "", summary: "", plan: "essential", billingCycle: "1_month" });
   const [docFile, setDocFile] = useState(null);
@@ -1834,6 +1836,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs }) {
         order_id: order.orderId,
         name: 'TrustWork Property Care',
         description: `${selectedPlan?.name} — ${form.title}`,
+        prefill: customer ? { name: customer.name, contact: customer.phone, email: customer.email } : undefined,
         theme: { color: '#16323F' },
         handler: async (response) => {
           // 4. Verify payment on backend

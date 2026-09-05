@@ -1064,6 +1064,16 @@ function Landing({ onLogin, dbs }) {
                 )}
 
                 <div className="flex flex-col gap-3">
+                  {checkoutModal === 'payment' && (
+                    <div className="rounded-md p-3 text-xs tw-body flex flex-col gap-2" style={{ background: 'rgba(184,134,59,0.08)', border: '1px solid rgba(184,134,59,0.2)', color: 'var(--brass)' }}>
+                      <div className="flex items-start gap-2">
+                        <span>ℹ️</span> Secure payment powered by Razorpay.
+                      </div>
+                      <div className="text-gray-600 font-medium leading-relaxed">
+                        By proceeding with the payment, you agree to our Terms & Conditions and Property Management Agreement.
+                      </div>
+                    </div>
+                  )}
                   {checkoutModal === 'payment' ? (
                     <button 
                       onClick={() => handleLeadSubmit('payment')}

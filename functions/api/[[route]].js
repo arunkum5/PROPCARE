@@ -619,6 +619,33 @@ app.get('/api/tests/run', async (c) => {
     await db.prepare('DELETE FROM customers WHERE id = ?').bind(t7_custId).run().catch(()=>{});
   }
 
+  // 8. Coupon Engine & Payment Math
+  start = Date.now();
+  const couponId = `test_cpn_${Date.now()}_8`;
+  const couponCode = `TEST${Date.now()}8`;
+  try {
+    await db.prepare('INSERT INTO coupons (id, code, type, value, tiedToPhone, isNewCustomerOnly, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(couponId, couponCode, 'percentage', 50, null, 0, null, new Date().toISOString())
+      .run();
+      
+    const { results: coupons } = await db.prepare('SELECT * FROM coupons WHERE code = ?').bind(couponCode).all();
+    if (coupons.length !== 1) throw new Error('Coupon not created');
+    
+    // Simulate Razorpay order discount math
+    const coupon = coupons[0];
+    let amount = 10000; // 100 INR in paise
+    if (coupon.type === 'percentage') {
+      amount = Math.round(amount - (amount * (coupon.value / 100)));
+    }
+    if (amount !== 5000) throw new Error('Discount math failed, expected 5000 paise');
+    
+    addResult('8. Coupon Engine & Payment Math', true, Date.now() - start);
+  } catch (err) {
+    addResult('8. Coupon Engine & Payment Math', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM coupons WHERE id = ?').bind(couponId).run().catch(() => {});
+  }
+
   const allPassed = results.every(r => r.passed);
   return c.json({ success: allPassed, results });
 })

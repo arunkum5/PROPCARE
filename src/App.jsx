@@ -1162,7 +1162,7 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
 }
 
 /* ================= SHARED SHELL ================= */
-function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange, headerAction }) {
+function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange, headerAction, hideContact }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshDone, setRefreshDone] = useState(false);
@@ -1227,17 +1227,19 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               </button>
             )}
 
-            <div className="flex-1 flex justify-end items-center gap-5 tw-body font-semibold text-[13px] pr-2" style={{ color: "rgba(246,241,231,0.7)" }}>
-              <div className="hidden lg:flex items-center gap-1.5">
-                <Phone size={13} />
-                <a href="tel:+919353010107" className="hover:text-white transition-colors cursor-pointer">+91 9353010107</a>
-                <span style={{ opacity: 0.5 }}>,</span>
-                <a href="tel:+917676740107" className="hover:text-white transition-colors cursor-pointer">+91 7676740107</a>
+            {!hideContact && (
+              <div className="flex-1 flex justify-end items-center gap-5 tw-body font-semibold text-[13px] pr-2" style={{ color: "rgba(246,241,231,0.7)" }}>
+                <div className="hidden lg:flex items-center gap-1.5">
+                  <Phone size={13} />
+                  <a href="tel:+919353010107" className="hover:text-white transition-colors cursor-pointer">+91 9353010107</a>
+                  <span style={{ opacity: 0.5 }}>,</span>
+                  <a href="tel:+917676740107" className="hover:text-white transition-colors cursor-pointer">+91 7676740107</a>
+                </div>
+                <a href="mailto:care@trustwork.co.in" className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
+                  <Mail size={13} /> care@trustwork.co.in
+                </a>
               </div>
-              <a href="mailto:care@trustwork.co.in" className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
-                <Mail size={13} /> care@trustwork.co.in
-              </a>
-            </div>
+            )}
 
             {/* Menu (settings + logout) */}
             <div className="relative">
@@ -2311,7 +2313,14 @@ function AdminSystemTestTab() {
       {results && (
         <div className="bg-white rounded-xl overflow-hidden shadow-sm border" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
           <div className="p-5 border-b flex justify-between items-center" style={{ borderColor: 'rgba(30,42,47,0.1)', background: 'var(--paper)' }}>
-            <div className="tw-display font-bold text-lg">Test Results</div>
+            <div>
+              <div className="tw-display font-bold text-lg mb-1">Test Results</div>
+              <div className="tw-mono text-xs flex gap-4" style={{ color: "var(--ink)", opacity: 0.7 }}>
+                <span>Total: {results.results?.length || 0}</span>
+                <span className="text-green-700">Passed: {results.results?.filter(r => r.passed).length || 0}</span>
+                <span className="text-red-600">Failed: {results.results?.filter(r => !r.passed).length || 0}</span>
+              </div>
+            </div>
             <Badge tone={results.success ? 'moss' : 'tomato'}>
               {results.success ? 'All Tests Passed' : 'Some Tests Failed'}
             </Badge>
@@ -2630,6 +2639,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
   return (
     <Shell 
       title="TrustWork" subtitle="Admin console" onLogout={onLogout} onRefresh={refresh}
+      hideContact={true}
       onSettings={() => setEditCust(dbs.customers['admin'])}
       tabs={[
         { id: "customers", label: "Customers", icon: Users },

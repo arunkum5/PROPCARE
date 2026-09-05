@@ -4,7 +4,7 @@ import {
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
   UserPlus, User, Search, ArrowLeft, Sprout, Fence, Eye, EyeOff, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon, CreditCard, ChevronDown, Calculator
+  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon, CreditCard, ChevronDown, Calculator, ShieldCheck, Gift, Tag
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';

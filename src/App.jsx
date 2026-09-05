@@ -2924,7 +2924,7 @@ function AdminPlansTab({ dbs, refresh }) {
     const method = isNew ? 'POST' : 'PUT';
     const url = isNew ? '/api/plans' : `/api/plans/${editing.id}`;
     
-    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...editing, ratePerSqft: parseInt(editing.ratePerSqft, 10), numVisits: parseInt(editing.numVisits, 10), numPhotos: parseInt(editing.numPhotos, 10), numVideos: parseInt(editing.numVideos, 10) }) });
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...editing, ratePerSqft: parseFloat(editing.ratePerSqft), numVisits: parseInt(editing.numVisits, 10), numPhotos: parseInt(editing.numPhotos, 10), numVideos: parseInt(editing.numVideos, 10) }) });
     refresh();
     setEditing(null);
   };
@@ -2946,7 +2946,7 @@ function AdminPlansTab({ dbs, refresh }) {
             <Field label="Plan Name"><input required className={inputCls} value={editing.name || ''} onChange={e => setEditing({...editing, name: e.target.value})} /></Field>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Rate (₹ per sqft/month)"><input type="number" min="0" required className={inputCls} value={editing.ratePerSqft ?? ''} onChange={e => setEditing({...editing, ratePerSqft: e.target.value})} /></Field>
+            <Field label="Rate (₹ per sqft/month)"><input type="number" step="any" min="0" required className={inputCls} value={editing.ratePerSqft ?? ''} onChange={e => setEditing({...editing, ratePerSqft: e.target.value})} /></Field>
             <Field label="Number of Visits/month"><input type="number" min="0" required className={inputCls} value={editing.numVisits ?? ''} onChange={e => setEditing({...editing, numVisits: e.target.value})} /></Field>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">

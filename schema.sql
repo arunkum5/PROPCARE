@@ -73,3 +73,13 @@ CREATE TABLE IF NOT EXISTS stats (
 -- Insert default admin account
 INSERT OR IGNORE INTO customers (id, name, phone, email, password, createdAt) 
 VALUES ('admin', 'TrustWork Admin', '9448610107', 'admin@trustwork.co.in', 'admin123', '2024-01-01T00:00:00.000Z');
+
+CREATE TABLE IF NOT EXISTS plans (
+  id TEXT PRIMARY KEY,
+  name TEXT,
+  ratePerSqft REAL,
+  numVisits INTEGER,
+  numPhotos INTEGER,
+  numVideos INTEGER,
+  hasLiveCall INTEGER
+);

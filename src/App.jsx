@@ -3412,3 +3412,43 @@ function AdminPlansTab({ dbs, refresh }) {
     </div>
   );
 }
+
+function PolicyModal({ type, onClose }) {
+  const content = {
+    terms: {
+      title: "Terms & Conditions",
+      text: "We are not the owners of the property, but act exclusively as caretakers and service providers. Our services are limited to periodic monitoring, maintenance facilitation, and reporting. Any issues, damages, or occurrences that happen beyond our direct control, oversight, or between our scheduled visits are not the responsibility of TrustWork Property Care. By using our services, you acknowledge that we do not assume liability for trespassing, theft, natural disasters, or structural issues."
+    },
+    privacy: {
+      title: "Privacy Policy",
+      text: "We take your privacy incredibly seriously. We will absolutely never reveal your ownership data, contact details, or property location to any unauthorized third party. Your information is securely stored and is only used internally by TrustWork Property Care to facilitate our services to you."
+    },
+    refund: {
+      title: "Refund Policy",
+      text: "TrustWork Property Care operates on a strict No Refund policy. All payments made for property care plans and extra visits are final and non-refundable."
+    },
+    cancellation: {
+      title: "Cancellation Policy",
+      text: "If you wish to cancel your Property Care subscription, you must provide us with advance notification before your next billing cycle. Once a billing cycle has started and payment is made, the service cannot be cancelled mid-cycle and no refunds will be issued."
+    }
+  };
+
+  const data = content[type] || { title: "Policy", text: "Information not available." };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-lg shadow-2xl relative animate-fade-in-up">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={20} /></button>
+        <div className="tw-display font-bold text-2xl mb-4 text-[var(--ink)] border-b pb-4">{data.title}</div>
+        <div className="tw-body text-gray-700 leading-relaxed whitespace-pre-wrap">
+          {data.text}
+        </div>
+        <div className="mt-8 flex justify-end">
+          <button onClick={onClose} className="px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-gray-200 text-gray-800 transition-colors" style={{ background: "rgba(30,42,47,0.08)" }}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

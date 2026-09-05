@@ -2197,8 +2197,13 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
                 </div>
               )}
             </div>
-            <div className="rounded-md p-3 mb-4 text-xs tw-body flex items-start gap-2" style={{ background: 'rgba(184,134,59,0.08)', border: '1px solid rgba(184,134,59,0.2)', color: 'var(--brass)' }}>
-              <span>ℹ️</span> Secure payment powered by Razorpay. Your card details are never stored by TrustWork.
+            <div className="rounded-md p-3 mb-4 text-xs tw-body flex flex-col gap-2" style={{ background: 'rgba(184,134,59,0.08)', border: '1px solid rgba(184,134,59,0.2)', color: 'var(--brass)' }}>
+              <div className="flex items-start gap-2">
+                <span>ℹ️</span> Secure payment powered by Razorpay. Your card details are never stored by TrustWork.
+              </div>
+              <div className="text-gray-600 font-medium">
+                By clicking "Pay", you agree to our Terms & Conditions and Property Management Agreement.
+              </div>
             </div>
             <div className="flex gap-3">
               <button onClick={() => setStep(2)} className="py-2.5 px-4 rounded-md font-semibold tw-body cursor-pointer hover:opacity-80" style={{ background: 'rgba(30,42,47,0.08)', color: 'var(--ink)' }}>← Back</button>

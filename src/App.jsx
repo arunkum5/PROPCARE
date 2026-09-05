@@ -568,8 +568,7 @@ function Landing({ onLogin, dbs }) {
             });
             setTimeout(() => {
               setCheckoutModal(null);
-              // don't clear leadMsg instantly so they can read it
-            }, 5000);
+            }, 60000); // Give them 60 seconds to screenshot
           } else {
             setLeadMsg({ type: 'success', text: "Payment Successful! We will contact you to begin onboarding." });
             setTimeout(() => {
@@ -1027,7 +1026,7 @@ function Landing({ onLogin, dbs }) {
             </p>
             
             {leadMsg && (
-              <div className={`p-4 mb-6 rounded-lg text-sm font-semibold flex items-center justify-center text-center ${leadMsg.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              <div className={`p-4 mb-6 rounded-lg text-sm font-semibold flex items-center justify-center text-center whitespace-pre-wrap leading-relaxed ${leadMsg.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                 {leadMsg.text}
               </div>
             )}

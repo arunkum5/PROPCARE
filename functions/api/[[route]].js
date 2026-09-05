@@ -111,8 +111,8 @@ app.put('/api/leads/:id', async (c) => {
         
       // 4. Create Property
       const propId = `prop_${Date.now()}`
-      await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId, billingCycle, pendingExtraVisits) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .bind(propId, customerId, lead.propertyType, lead.propertyType, '', '', lead.size, 'Auto-provisioned on payment', lead.plan, 'active', 1, 1, new Date().toISOString(), null, 'paid', body.paymentId || null, lead.cycle, 0)
+      await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .bind(propId, customerId, lead.propertyType, lead.propertyType, '', '', lead.size, 'Auto-provisioned on payment', lead.plan, 'active', 1, 1, new Date().toISOString(), null, 'paid', body.paymentId || null)
         .run()
         
       // 5. Update Lead
@@ -221,8 +221,8 @@ app.delete('/api/customers/:id', async (c) => {
 app.post('/api/properties', async (c) => {
   const db = c.env.DB
   const body = await c.req.json()
-  await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId, billingCycle, pendingExtraVisits) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(body.id, body.customerId, body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null, body.billingCycle || '1_month', body.pendingExtraVisits || 0)
+  await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(body.id, body.customerId, body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null)
     .run()
   return c.json({ success: true })
 })
@@ -233,8 +233,8 @@ app.put('/api/properties/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json()
   
-  await db.prepare('UPDATE properties SET type = ?, title = ?, address = ?, latlong = ?, size = ?, summary = ?, plan = ?, status = ?, agreed = ?, agreementSigned = ?, paymentDate = ?, expiryDate = ?, paymentStatus = ?, paymentId = ?, billingCycle = ?, pendingExtraVisits = ? WHERE id = ?')
-    .bind(body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null, body.billingCycle || '1_month', body.pendingExtraVisits || 0, id)
+  await db.prepare('UPDATE properties SET type = ?, title = ?, address = ?, latlong = ?, size = ?, summary = ?, plan = ?, status = ?, agreed = ?, agreementSigned = ?, paymentDate = ?, expiryDate = ?, paymentStatus = ?, paymentId = ? WHERE id = ?')
+    .bind(body.type, body.title, body.address, body.latlong, body.size, body.summary, body.plan, body.status, body.agreed ? 1 : 0, body.agreementSigned ? 1 : 0, body.paymentDate || null, body.expiryDate || null, body.paymentStatus || null, body.paymentId || null, id)
     .run()
   
   return c.json({ success: true })
@@ -760,8 +760,8 @@ app.get('/api/tests/run', async (c) => {
         .run()
         
       t10_propId = `prop_${Date.now()}_10`
-      await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId, billingCycle, pendingExtraVisits) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .bind(t10_propId, t10_custId, lead.propertyType, lead.propertyType, '', '', lead.size, 'Auto-provisioned on payment', lead.plan, 'active', 1, 1, new Date().toISOString(), null, 'paid', 'pay_123', lead.cycle, 0)
+      await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .bind(t10_propId, t10_custId, lead.propertyType, lead.propertyType, '', '', lead.size, 'Auto-provisioned on payment', lead.plan, 'active', 1, 1, new Date().toISOString(), null, 'paid', 'pay_123')
         .run()
         
       await db.prepare('UPDATE leads SET status = ?, paymentId = ? WHERE id = ?')

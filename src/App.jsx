@@ -1063,24 +1063,19 @@ function Landing({ onLogin, dbs }) {
                 )}
 
                 <div className="flex flex-col gap-3">
-                  {checkoutModal === 'payment' && (
-                    <div className="rounded-md p-3 text-xs tw-body flex flex-col gap-2" style={{ background: 'rgba(184,134,59,0.08)', border: '1px solid rgba(184,134,59,0.2)', color: 'var(--brass)' }}>
-                      <div className="flex items-start gap-2">
-                        <span>ℹ️</span> Secure payment powered by Razorpay.
-                      </div>
-                      <div className="text-gray-600 font-medium leading-relaxed">
-                        By proceeding with the payment, you agree to our Terms & Conditions and Property Management Agreement.
+                  {checkoutModal === 'payment' ? (
+                    <div className="flex flex-col items-center">
+                      <button 
+                        onClick={() => handleLeadSubmit('payment')}
+                        className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
+                        style={{ background: "var(--blueprint)", color: "white" }}
+                      >
+                        Proceed to Payment (₹{Math.max(0, Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)) - discountAmount).toLocaleString('en-IN')})
+                      </button>
+                      <div className="text-[10px] text-gray-400 mt-2 text-center px-4">
+                        Secure payment powered by Razorpay. By paying, you agree to our Terms & Conditions.
                       </div>
                     </div>
-                  )}
-                  {checkoutModal === 'payment' ? (
-                    <button 
-                      onClick={() => handleLeadSubmit('payment')}
-                      className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
-                      style={{ background: "var(--blueprint)", color: "white" }}
-                    >
-                      Proceed to Payment (₹{Math.max(0, Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)) - discountAmount).toLocaleString('en-IN')})
-                    </button>
                   ) : (
                     <button 
                       onClick={() => handleLeadSubmit('callback')}
@@ -2206,19 +2201,16 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
                 </div>
               )}
             </div>
-            <div className="rounded-md p-3 mb-4 text-xs tw-body flex flex-col gap-2" style={{ background: 'rgba(184,134,59,0.08)', border: '1px solid rgba(184,134,59,0.2)', color: 'var(--brass)' }}>
-              <div className="flex items-start gap-2">
-                <span>ℹ️</span> Secure payment powered by Razorpay. Your card details are never stored by TrustWork.
-              </div>
-              <div className="text-gray-600 font-medium">
-                By clicking "Pay", you agree to our Terms & Conditions and Property Management Agreement.
-              </div>
-            </div>
             <div className="flex gap-3">
               <button onClick={() => setStep(2)} className="py-2.5 px-4 rounded-md font-semibold tw-body cursor-pointer hover:opacity-80" style={{ background: 'rgba(30,42,47,0.08)', color: 'var(--ink)' }}>← Back</button>
-              <button disabled={paying || !feeAmount} onClick={handlePayment} className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: paying ? 'gray' : '#2E7D32' }}>
-                {paying ? 'Processing...' : `Pay ₹${finalAmount.toLocaleString('en-IN')} via Razorpay`}
-              </button>
+              <div className="flex-1 flex flex-col items-center">
+                <button disabled={paying || !feeAmount} onClick={handlePayment} className="w-full py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: paying ? 'gray' : '#2E7D32' }}>
+                  {paying ? 'Processing...' : `Pay ₹${finalAmount.toLocaleString('en-IN')} via Razorpay`}
+                </button>
+                <div className="text-[10px] text-gray-400 mt-2 text-center">
+                  Secure payment via Razorpay. By paying, you agree to our Terms & Conditions.
+                </div>
+              </div>
             </div>
             {!feeAmount && <p className="text-xs text-red-500 mt-2 tw-body">Please go back and enter the property size to calculate fee.</p>}
           </div>

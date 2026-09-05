@@ -664,14 +664,16 @@ function Landing({ onLogin, dbs }) {
               <div className="flex items-center gap-3"><CheckCircle2 size={20} style={{ color: "var(--brass)" }} /> <span className="opacity-95">Khata, property tax & legal certificate assistance</span></div>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-2 tw-body text-[15px] text-white">
-              <span className="font-bold tracking-wide uppercase text-[11px]" style={{ color: "var(--brass)" }}>We manage:</span>
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Plot</div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Flat</div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Independent house</div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Villas</div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Commercial</div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Agriculture land</div>
+            <div className="mt-8 flex flex-col items-center lg:items-start gap-2.5">
+              <span className="font-bold tracking-widest uppercase text-[11px]" style={{ color: "rgba(255,255,255,0.6)" }}>Properties we manage:</span>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2.5 tw-display font-bold text-lg sm:text-xl" style={{ color: "#E8D5B5" }}>
+                <div className="flex items-center gap-1.5"><CheckCircle2 size={18} style={{ color: "var(--brass)" }} /> Plot</div>
+                <div className="flex items-center gap-1.5"><CheckCircle2 size={18} style={{ color: "var(--brass)" }} /> Flat</div>
+                <div className="flex items-center gap-1.5"><CheckCircle2 size={18} style={{ color: "var(--brass)" }} /> Independent House</div>
+                <div className="flex items-center gap-1.5"><CheckCircle2 size={18} style={{ color: "var(--brass)" }} /> Villas</div>
+                <div className="flex items-center gap-1.5"><CheckCircle2 size={18} style={{ color: "var(--brass)" }} /> Commercial Land</div>
+                <div className="flex items-center gap-1.5"><CheckCircle2 size={18} style={{ color: "var(--brass)" }} /> Agriculture Land</div>
+              </div>
             </div>
 
             <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">

@@ -202,11 +202,11 @@ function FloatingControls() {
           </button>
         )}
         <Chatbot />
-        <a href="tel:+919353010107" className="p-3.5 rounded-full shadow-[0_4px_14px_rgba(0,102,255,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#0066FF" }}>
-          <Phone size={24} />
+        <a href="tel:+919353010107" className="p-2.5 rounded-full shadow-[0_4px_14px_rgba(0,102,255,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#0066FF" }}>
+          <Phone size={19} />
         </a>
-        <a href="https://wa.me/919353010107" target="_blank" rel="noreferrer" className="p-3.5 rounded-full shadow-[0_4px_14px_rgba(37,211,102,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#25D366" }}>
-          <WhatsAppIcon size={26} />
+        <a href="https://wa.me/919353010107" target="_blank" rel="noreferrer" className="p-2.5 rounded-full shadow-[0_4px_14px_rgba(37,211,102,0.4)] hover:scale-105 transition-transform flex items-center justify-center text-white" style={{ background: "#25D366" }}>
+          <WhatsAppIcon size={21} />
         </a>
       </div>
     </>

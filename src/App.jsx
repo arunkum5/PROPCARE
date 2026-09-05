@@ -640,7 +640,7 @@ function Landing({ onLogin, dbs }) {
             </div>
             <div className="grid">
               <div className="col-start-1 row-start-1" style={{ animation: "bgFade1 12s infinite" }}>
-                <h1 className="tw-display font-bold text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.1]">
+                <h1 className="tw-display font-bold text-white text-4xl sm:text-5xl lg:text-6xl leading-[1.1]">
                   Your Property,<br />Our Priority.
                 </h1>
                 <p className="tw-body mt-6 text-base sm:text-lg max-w-xl mx-auto lg:mx-0" style={{ color: "rgba(246,241,231,0.78)" }}>
@@ -648,7 +648,7 @@ function Landing({ onLogin, dbs }) {
                 </p>
               </div>
               <div className="col-start-1 row-start-1 pointer-events-none" style={{ opacity: 0, animation: "bgFade2 12s infinite" }}>
-                <h1 className="tw-display font-bold text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.1]">
+                <h1 className="tw-display font-bold text-white text-4xl sm:text-5xl lg:text-6xl leading-[1.1]">
                   Stay away.<br />Stay relaxed.
                 </h1>
                 <p className="tw-body mt-6 text-base sm:text-lg max-w-xl mx-auto lg:mx-0" style={{ color: "rgba(246,241,231,0.78)" }}>

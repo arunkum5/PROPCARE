@@ -474,7 +474,7 @@ function Landing({ onLogin, dbs }) {
   const [calcCycle, setCalcCycle] = useState('1_month');
   const [calcType, setCalcType] = useState('Flat / Apartment');
   const [checkoutModal, setCheckoutModal] = useState(null);
-  const [leadForm, setLeadForm] = useState({ name: '', phone: '', email: '' });
+  const [leadForm, setLeadForm] = useState({ name: '', phone: '', email: '', referredBy: '' });
   const [leadMsg, setLeadMsg] = useState(null);
   const [couponCode, setCouponCode] = useState("");
   const [couponMsg, setCouponMsg] = useState(null);
@@ -537,6 +537,7 @@ function Landing({ onLogin, dbs }) {
         cycle: calcCycle,
         amount: finalAmount,
         status: 'pending',
+        referredBy: leadForm.referredBy || null,
         createdAt: new Date().toISOString()
       })
     });
@@ -1029,6 +1030,10 @@ function Landing({ onLogin, dbs }) {
                   <div className="flex flex-col gap-1.5">
                     <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Phone Number</label>
                     <input type="tel" placeholder="+91 90000 00000" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.phone} onChange={e => setLeadForm({...leadForm, phone: e.target.value})} />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="tw-body text-xs font-bold uppercase tracking-wider text-gray-500">Referral Code (Optional)</label>
+                    <input type="tel" placeholder="Friend's Phone Number" className="px-4 py-2.5 rounded-lg border border-gray-200 tw-body text-sm bg-gray-50 outline-none focus:border-[var(--brass)] transition-colors" value={leadForm.referredBy} onChange={e => setLeadForm({...leadForm, referredBy: e.target.value})} />
                   </div>
                 </div>
 
@@ -2444,6 +2449,7 @@ function AdminLeadsTab({ dbs, refresh }) {
               <th className="p-4 w-12"><input type="checkbox" checked={leads.length > 0 && selected.size === leads.length} onChange={toggleAll} className="rounded border-gray-300" /></th>
               <th className="p-4 font-bold">Date</th>
               <th className="p-4 font-bold">Contact</th>
+              <th className="p-4 font-bold">Referred By</th>
               <th className="p-4 font-bold">Property Details</th>
               <th className="p-4 font-bold">Status</th>
               <th className="p-4 font-bold">Action</th>
@@ -2457,6 +2463,13 @@ function AdminLeadsTab({ dbs, refresh }) {
                 <td className="p-4">
                   <div className="font-semibold" style={{ color: "var(--ink)" }}>{ld.name}</div>
                   <div className="text-xs text-gray-500">{ld.phone}</div>
+                </td>
+                <td className="p-4">
+                  {ld.referredBy ? (
+                    <Badge tone="brass">{ld.referredBy}</Badge>
+                  ) : (
+                    <span className="text-gray-400 text-xs">—</span>
+                  )}
                 </td>
                 <td className="p-4">
                   <div>{ld.propertyType} — {ld.size} sqft</div>

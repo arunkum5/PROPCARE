@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS leads (
   amount REAL,
   status TEXT,
   paymentId TEXT,
+  referredBy TEXT,
   createdAt TEXT
 );
 

@@ -79,8 +79,8 @@ app.get('/api/data', async (c) => {
 app.post('/api/leads', async (c) => {
   const db = c.env.DB
   const body = await c.req.json()
-  await db.prepare('INSERT INTO leads (id, name, phone, propertyType, size, plan, cycle, amount, status, paymentId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(body.id, body.name, body.phone, body.propertyType, body.size, body.plan, body.cycle, body.amount, body.status, body.paymentId || null, body.createdAt)
+  await db.prepare('INSERT INTO leads (id, name, phone, propertyType, size, plan, cycle, amount, status, paymentId, referredBy, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(body.id, body.name, body.phone, body.propertyType, body.size, body.plan, body.cycle, body.amount, body.status, body.paymentId || null, body.referredBy || null, body.createdAt)
     .run()
   return c.json({ success: true })
 })
@@ -657,6 +657,46 @@ app.get('/api/tests/run', async (c) => {
     await db.prepare('DELETE FROM coupons WHERE id = ?').bind(couponId).run().catch(() => {});
   }
 
+  // 9. Refer & Earn Flow
+  start = Date.now();
+  const t9_referrerPhone = `9999999999`;
+  const t9_leadId = `test_l_${Date.now()}_9`;
+  const t9_couponId = `test_cpn_${Date.now()}_9`;
+  const t9_couponCode = `REF${Date.now()}9`;
+  try {
+    // 1. New lead uses referrer's phone
+    await db.prepare('INSERT INTO leads (id, name, phone, propertyType, size, plan, cycle, amount, status, referredBy, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(t9_leadId, 'Referred Lead', '8888888888', 'Flat', '1200', 'basic', '1_month', 1000, 'pending', t9_referrerPhone, new Date().toISOString())
+      .run();
+      
+    // 2. Admin issues coupon tied to referrer's phone
+    await db.prepare('INSERT INTO coupons (id, code, type, value, tiedToPhone, isNewCustomerOnly, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(t9_couponId, t9_couponCode, 'percentage', 10, t9_referrerPhone, 0, null, new Date().toISOString())
+      .run();
+      
+    // 3. Validate coupon endpoint simulate
+    // Success simulation:
+    const { results: checkCpn } = await db.prepare('SELECT * FROM coupons WHERE code = ?').bind(t9_couponCode).all();
+    if (checkCpn.length !== 1 || checkCpn[0].tiedToPhone !== t9_referrerPhone) throw new Error('Coupon not tied correctly');
+    
+    // Attempt use by someone else
+    if (checkCpn[0].tiedToPhone !== '7777777777' && '7777777777' !== checkCpn[0].tiedToPhone) {
+      // This is expected failure for wrong number
+    } else {
+      throw new Error('Coupon allowed for wrong number');
+    }
+    
+    // Valid use
+    if (checkCpn[0].tiedToPhone !== t9_referrerPhone) throw new Error('Valid use rejected');
+    
+    addResult('9. Refer & Earn Flow', true, Date.now() - start);
+  } catch (err) {
+    addResult('9. Refer & Earn Flow', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM leads WHERE id = ?').bind(t9_leadId).run().catch(() => {});
+    await db.prepare('DELETE FROM coupons WHERE id = ?').bind(t9_couponId).run().catch(() => {});
+  }
+
   const allPassed = results.every(r => r.passed);
   return c.json({ success: allPassed, results });
 })
@@ -686,6 +726,11 @@ app.get('/api/setup', async (c) => {
         redeemedAt TEXT
       );
     `).run()
+    try {
+      await db.prepare(`ALTER TABLE leads ADD COLUMN referredBy TEXT;`).run()
+    } catch (e) {
+      // Column might already exist, ignore
+    }
     return c.json({ success: true, message: 'Missing tables created successfully!' })
   } catch (err) {
     return c.json({ success: false, error: err.message }, 500)

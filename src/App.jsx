@@ -664,6 +664,16 @@ function Landing({ onLogin, dbs }) {
               <div className="flex items-center gap-3"><CheckCircle2 size={20} style={{ color: "var(--brass)" }} /> <span className="opacity-95">Khata, property tax & legal certificate assistance</span></div>
             </div>
 
+            <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-2 tw-body text-[15px] text-white">
+              <span className="font-bold tracking-wide uppercase text-[11px]" style={{ color: "var(--brass)" }}>We manage:</span>
+              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Plot</div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Flat</div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Independent house</div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Villas</div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Commercial</div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 size={14} style={{ color: "var(--brass)" }} /> Agriculture land</div>
+            </div>
+
             <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
               <button onClick={() => document.getElementById('care-plans').scrollIntoView({ behavior: 'smooth' })} className="tw-body flex items-center justify-center px-8 py-3.5 rounded-md font-bold text-[17px] shadow-lg transform hover:-translate-y-1 hover:shadow-2xl hover:scale-105 transition-all duration-300 active:scale-95 cursor-pointer" style={{ background: "var(--brass)", color: "var(--blueprint)", textDecoration: "none", border: "none" }}>
                 Get your property watched

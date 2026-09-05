@@ -260,12 +260,12 @@ function calcExpiry(paymentDate, cycle = '1_month') {
   return d.toISOString();
 }
 
-async function processCheckout({ amount, description, prefill, onSuccess, onError }) {
+async function processCheckout({ amount, description, prefill, couponCode, onSuccess, onError }) {
   try {
     const orderRes = await fetch('/api/razorpay/order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: Math.round(amount * 100) }), // paise
+      body: JSON.stringify({ amount: Math.round(amount * 100), couponCode, phone: prefill?.contact }), // paise
     });
     const order = await orderRes.json();
     if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
@@ -296,6 +296,8 @@ async function processCheckout({ amount, description, prefill, onSuccess, onErro
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
+            couponCode,
+            phone: prefill?.contact
           }),
         });
         const verData = await verRes.json();
@@ -474,8 +476,43 @@ function Landing({ onLogin, dbs }) {
   const [checkoutModal, setCheckoutModal] = useState(null);
   const [leadForm, setLeadForm] = useState({ name: '', phone: '', email: '' });
   const [leadMsg, setLeadMsg] = useState(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponMsg, setCouponMsg] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   const activeCalcPlan = calcPlan || plansList[0]?.id || '';
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode || !leadForm.phone) {
+      setCouponMsg({ type: 'error', text: 'Please enter phone number and code.' });
+      return;
+    }
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, phone: leadForm.phone }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setCouponMsg({ type: 'error', text: data.error });
+        setDiscountAmount(0);
+      } else {
+        const c = data.coupon;
+        let amt = 0;
+        const baseAmount = Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans));
+        if (c.type === 'percentage') {
+          amt = baseAmount * (c.value / 100);
+        } else {
+          amt = c.value;
+        }
+        setDiscountAmount(amt);
+        setCouponMsg({ type: 'success', text: `Coupon applied! You saved ₹${amt.toLocaleString('en-IN')}` });
+      }
+    } catch (err) {
+      setCouponMsg({ type: 'error', text: 'Error verifying coupon' });
+    }
+  };
 
   const handleLeadSubmit = async (action) => {
     setLeadMsg(null);
@@ -484,7 +521,8 @@ function Landing({ onLogin, dbs }) {
       return;
     }
     const leadId = `ld_${Date.now()}`;
-    const amount = Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans));
+    const baseAmount = Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans));
+    const finalAmount = Math.max(0, baseAmount - discountAmount);
     
     await fetch('/api/leads', {
       method: 'POST',
@@ -497,7 +535,7 @@ function Landing({ onLogin, dbs }) {
         size: calcSize,
         plan: activeCalcPlan,
         cycle: calcCycle,
-        amount: amount,
+        amount: finalAmount,
         status: 'pending',
         createdAt: new Date().toISOString()
       })
@@ -511,9 +549,10 @@ function Landing({ onLogin, dbs }) {
       }, 3500);
     } else {
       await processCheckout({
-        amount: amount,
+        amount: finalAmount,
         description: `Plan: ${dbs.plans[activeCalcPlan]?.name} for ${calcSize} sqft`,
         prefill: { name: leadForm.name, contact: leadForm.phone, email: leadForm.email },
+        couponCode: discountAmount > 0 ? couponCode : undefined,
         onSuccess: async (paymentId) => {
           await fetch(`/api/leads/${leadId}`, {
             method: 'PUT',
@@ -993,6 +1032,20 @@ function Landing({ onLogin, dbs }) {
                   </div>
                 </div>
 
+                {checkoutModal === 'payment' && (
+                  <div className="mb-4">
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Promo Code" value={couponCode} onChange={e => {setCouponCode(e.target.value.toUpperCase()); setDiscountAmount(0); setCouponMsg(null)}} className="flex-1 px-3 py-2 border rounded-md tw-body text-sm uppercase bg-gray-50 outline-none focus:border-[var(--brass)]" />
+                      <button onClick={handleApplyCoupon} className="px-4 py-2 rounded-md font-semibold text-white tw-body text-sm" style={{ background: "var(--blueprint)" }}>Apply</button>
+                    </div>
+                    {couponMsg && (
+                      <div className={`mt-2 text-xs font-medium ${couponMsg.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+                        {couponMsg.text}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-3">
                   {checkoutModal === 'payment' ? (
                     <button 
@@ -1000,7 +1053,7 @@ function Landing({ onLogin, dbs }) {
                       className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg" 
                       style={{ background: "var(--blueprint)", color: "white" }}
                     >
-                      Proceed to Payment (₹{Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)).toLocaleString('en-IN')})
+                      Proceed to Payment (₹{Math.max(0, Math.round(calcFee(activeCalcPlan, calcSize, calcCycle, dbs.plans)) - discountAmount).toLocaleString('en-IN')})
                     </button>
                   ) : (
                     <button 
@@ -1545,6 +1598,73 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
   );
 }
 
+/* ================= CUSTOMER REWARDS ================= */
+function CustomerRewardsTab({ customer }) {
+  const [coupons, setCoupons] = useState([]);
+
+  const fetchCoupons = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/my-coupons/${customer.phone}`);
+      if (res.ok) setCoupons(await res.json());
+    } catch (e) { console.error(e); }
+  }, [customer.phone]);
+
+  useEffect(() => { fetchCoupons(); }, [fetchCoupons]);
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-xl p-8 shadow-sm border" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+        <div className="flex flex-col md:flex-row gap-6 items-center">
+          <div className="w-24 h-24 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--blueprint)' }}>
+            <Gift size={40} className="text-white" />
+          </div>
+          <div>
+            <h2 className="tw-display font-bold text-2xl text-gray-900">Refer & Earn Rewards</h2>
+            <p className="tw-body text-gray-600 mt-2 leading-relaxed">
+              Share TrustWork Property Care with your friends and family. For every new property registered using your phone number as a referral code, you will earn exclusive discount coupons that you can use for your next renewals or new properties.
+            </p>
+            <div className="mt-4 flex gap-4">
+              <div className="p-3 bg-green-50 text-green-800 rounded-lg border border-green-100 flex-1">
+                <div className="text-xs font-bold uppercase tracking-wider mb-1">Your Referral Code</div>
+                <div className="text-xl font-mono font-bold tracking-widest">{customer.phone}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 className="tw-display font-bold text-xl mt-8">My Coupons</h3>
+      {coupons.length === 0 ? (
+        <div className="text-center p-12 bg-white rounded-lg border" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+          <Tag size={32} className="mx-auto text-gray-300 mb-3" />
+          <p className="text-gray-500 tw-body">You don't have any available coupons right now.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {coupons.map(c => (
+            <div key={c.id} className="relative overflow-hidden rounded-xl bg-white border flex shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'rgba(184,134,59,0.3)' }}>
+              <div className="w-24 flex-shrink-0 flex items-center justify-center text-white p-4" style={{ background: 'var(--brass)' }}>
+                <span className="font-bold text-2xl -rotate-90 tracking-widest uppercase">COUPON</span>
+              </div>
+              <div className="p-5 flex-1 flex flex-col justify-center">
+                <div className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-1">Promo Code</div>
+                <div className="text-2xl font-mono font-bold text-gray-900 mb-2">{c.code}</div>
+                <div className="text-gray-600 font-medium">
+                  {c.type === 'percentage' ? `${c.value}% OFF` : `₹${c.value} OFF`} on your next payment
+                </div>
+                {c.expiresAt && <div className="text-xs text-red-500 mt-2 font-semibold">Valid until: {new Date(c.expiresAt).toLocaleDateString()}</div>}
+              </div>
+              <div className="absolute top-0 right-0 p-3 opacity-10">
+                <Gift size={80} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ================= CUSTOMER DASHBOARD ================= */
 function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   const [tab, setTab] = useState("properties");
@@ -1633,6 +1753,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
         { id: "profile", label: "Profile", icon: User },
         { id: "properties", label: "My properties", icon: Landmark },
         { id: "cases", label: "My cases", icon: MessageSquare },
+        { id: "rewards", label: "Rewards", icon: Gift },
       ]}
       activeTab={tab} onTabChange={setTab}
     >
@@ -1774,6 +1895,10 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
         </div>
       )}
 
+      {tab === "rewards" && (
+        <CustomerRewardsTab customer={customer} />
+      )}
+
       {showAdd && <AddPropertyModal dbs={dbs} customer={customer} onClose={() => setShowAdd(false)} onSave={addProperty} />}
     </Shell>
   );
@@ -1785,6 +1910,9 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
   const [docFile, setDocFile] = useState(null);
   const [agreed, setAgreed] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponMsg, setCouponMsg] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   const selectedPlan = dbs.plans[form.plan];
   const isLocked = initialData && initialData.status === 'active';
@@ -1817,68 +1945,55 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
     setStep(2);
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, phone: customer?.phone }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setCouponMsg({ type: 'error', text: data.error });
+        setDiscountAmount(0);
+      } else {
+        const c = data.coupon;
+        let amt = 0;
+        if (c.type === 'percentage') {
+          amt = feeAmount * (c.value / 100);
+        } else {
+          amt = c.value;
+        }
+        setDiscountAmount(amt);
+        setCouponMsg({ type: 'success', text: `Coupon applied! You saved ₹${amt.toLocaleString('en-IN')}` });
+      }
+    } catch (err) {
+      setCouponMsg({ type: 'error', text: 'Error verifying coupon' });
+    }
+  };
+
+  const finalAmount = Math.max(0, feeAmount - discountAmount);
+
   const handlePayment = async () => {
     if (!feeAmount) return;
     setPaying(true);
-    try {
-      // 1. Create order on backend
-      const orderRes = await fetch('/api/razorpay/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: feeAmount * 100 }), // paise
-      });
-      const order = await orderRes.json();
-      if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
-
-      // 2. Load Razorpay script if not already loaded
-      if (!window.Razorpay) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-          s.onload = resolve; s.onerror = reject;
-          document.head.appendChild(s);
-        });
+    await processCheckout({
+      amount: finalAmount,
+      description: `${selectedPlan?.name} — ${form.title}`,
+      prefill: customer ? { name: customer.name, contact: customer.phone, email: customer.email } : undefined,
+      couponCode: discountAmount > 0 ? couponCode : undefined,
+      onSuccess: (paymentId) => {
+        const paymentDate = new Date().toISOString();
+        const expiryDate = calcExpiry(paymentDate, form.billingCycle);
+        onSave({ ...form, agreementSigned: true, paymentDate, expiryDate, paymentStatus: 'paid', paymentId });
+        setPaying(false);
+      },
+      onError: (err) => {
+        alert(err.message || 'Payment failed.');
+        setPaying(false);
       }
-
-      // 3. Open Razorpay checkout
-      const rzp = new window.Razorpay({
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TYMgMaeAtpwHNh',
-        amount: order.amount,
-        currency: order.currency,
-        order_id: order.orderId,
-        name: 'TrustWork Property Care',
-        description: `${selectedPlan?.name} — ${form.title}`,
-        prefill: customer ? { name: customer.name, contact: customer.phone, email: customer.email } : undefined,
-        theme: { color: '#16323F' },
-        handler: async (response) => {
-          // 4. Verify payment on backend
-          const verRes = await fetch('/api/razorpay/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            }),
-          });
-          const verData = await verRes.json();
-          if (verData.success) {
-            const paymentDate = new Date().toISOString();
-            const expiryDate = calcExpiry(paymentDate, form.billingCycle);
-            onSave({ ...form, agreementSigned: true, paymentDate, expiryDate, paymentStatus: 'paid', paymentId: response.razorpay_payment_id });
-          } else {
-            alert('Payment verification failed. Please contact support.');
-          }
-          setPaying(false);
-        },
-        modal: { ondismiss: () => setPaying(false) },
-      });
-      rzp.open();
-    } catch (err) {
-      console.error(err);
-      alert('Payment failed: ' + err.message);
-      setPaying(false);
-    }
+    });
   };
 
   const STEP_LABELS = ['Property Details', 'Agreement', 'Payment'];
@@ -2024,10 +2139,29 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
                 </div>
               </div>
 
-              <div className="border-t mt-4 pt-3 flex justify-between tw-body font-bold" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+              <div className="border-t mt-4 pt-3 mb-4 flex justify-between tw-body font-bold" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
                 <span>Total Amount</span>
                 <span style={{ color: 'var(--blueprint)' }}>₹{feeAmount ? feeAmount.toLocaleString('en-IN') : '—'}</span>
               </div>
+
+              <div className="mb-2">
+                <div className="flex gap-2">
+                  <input type="text" placeholder="Promo Code" value={couponCode} onChange={e => {setCouponCode(e.target.value.toUpperCase()); setDiscountAmount(0); setCouponMsg(null)}} className="flex-1 px-3 py-2 border rounded-md tw-body text-sm uppercase" />
+                  <button onClick={handleApplyCoupon} className="px-4 py-2 rounded-md font-semibold text-white tw-body text-sm" style={{ background: "var(--blueprint)" }}>Apply</button>
+                </div>
+                {couponMsg && (
+                  <div className={`mt-2 text-xs font-medium ${couponMsg.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+                    {couponMsg.text}
+                  </div>
+                )}
+              </div>
+
+              {discountAmount > 0 && (
+                <div className="border-t mt-3 pt-3 flex justify-between tw-body font-bold text-lg" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+                  <span>Final Amount</span>
+                  <span className="text-green-700">₹{finalAmount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
             </div>
             <div className="rounded-md p-3 mb-4 text-xs tw-body flex items-start gap-2" style={{ background: 'rgba(184,134,59,0.08)', border: '1px solid rgba(184,134,59,0.2)', color: 'var(--brass)' }}>
               <span>ℹ️</span> Secure payment powered by Razorpay. Your card details are never stored by TrustWork.
@@ -2035,13 +2169,183 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
             <div className="flex gap-3">
               <button onClick={() => setStep(2)} className="py-2.5 px-4 rounded-md font-semibold tw-body cursor-pointer hover:opacity-80" style={{ background: 'rgba(30,42,47,0.08)', color: 'var(--ink)' }}>← Back</button>
               <button disabled={paying || !feeAmount} onClick={handlePayment} className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: paying ? 'gray' : '#2E7D32' }}>
-                {paying ? 'Processing...' : `Pay ₹${feeAmount ? feeAmount.toLocaleString('en-IN') : '—'} via Razorpay`}
+                {paying ? 'Processing...' : `Pay ₹${finalAmount.toLocaleString('en-IN')} via Razorpay`}
               </button>
             </div>
             {!feeAmount && <p className="text-xs text-red-500 mt-2 tw-body">Please go back and enter the property size to calculate fee.</p>}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function AdminCouponsTab({ dbs }) {
+  const [coupons, setCoupons] = useState([]);
+  const [form, setForm] = useState({ code: '', type: 'percentage', value: '', tiedToPhone: '', isNewCustomerOnly: false, expiresAt: '' });
+  const [loading, setLoading] = useState(false);
+
+  const fetchCoupons = useCallback(async () => {
+    try {
+      const res = await fetch('/api/coupons');
+      if (res.ok) setCoupons(await res.json());
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { fetchCoupons(); }, [fetchCoupons]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.code || !form.value) return;
+    setLoading(true);
+    await fetch('/api/coupons', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, value: Number(form.value) })
+    });
+    setForm({ code: '', type: 'percentage', value: '', tiedToPhone: '', isNewCustomerOnly: false, expiresAt: '' });
+    await fetchCoupons();
+    setLoading(false);
+  };
+
+  const inputCls = "w-full rounded-md px-3 py-2.5 tw-body text-sm border focus:outline-none transition-colors";
+  const inputStyle = { borderColor: "rgba(30,42,47,0.15)", background: "var(--paper)" };
+
+  return (
+    <div>
+      <div className="bg-white rounded-lg p-5 mb-6 shadow-sm" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+        <div className="tw-display font-bold text-lg mb-4">Create New Coupon</div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Coupon Code" required><input className={inputCls} style={inputStyle} value={form.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase()})} placeholder="e.g. SUMMER20" required /></Field>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Type"><select className={inputCls} style={inputStyle} value={form.type} onChange={e => setForm({...form, type: e.target.value})}><option value="percentage">% Off</option><option value="fixed">Flat ₹ Off</option></select></Field>
+            <Field label="Value" required><input type="number" className={inputCls} style={inputStyle} value={form.value} onChange={e => setForm({...form, value: e.target.value})} placeholder="e.g. 20" required /></Field>
+          </div>
+          <Field label="Tied to Phone Number (Optional)"><input className={inputCls} style={inputStyle} value={form.tiedToPhone} onChange={e => setForm({...form, tiedToPhone: e.target.value})} placeholder="e.g. 9448610107" /></Field>
+          <Field label="Expiry Date (Optional)"><input type="date" className={inputCls} style={inputStyle} value={form.expiresAt} onChange={e => setForm({...form, expiresAt: e.target.value})} /></Field>
+          <label className="flex items-center gap-2 md:col-span-2 tw-body text-sm cursor-pointer mt-2">
+            <input type="checkbox" checked={form.isNewCustomerOnly} onChange={e => setForm({...form, isNewCustomerOnly: e.target.checked})} /> New Customers Only
+          </label>
+          <button type="submit" disabled={loading} className="md:col-span-2 py-2.5 mt-2 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>{loading ? 'Creating...' : 'Create Coupon'}</button>
+        </form>
+      </div>
+
+      <div className="bg-white rounded-lg overflow-hidden shadow-sm" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="tw-body text-xs uppercase tracking-wide bg-gray-50 border-b" style={{ color: "var(--ink)", borderColor: "rgba(30,42,47,0.1)" }}>
+              <th className="p-4 font-bold">Code</th>
+              <th className="p-4 font-bold">Discount</th>
+              <th className="p-4 font-bold">Rules</th>
+              <th className="p-4 font-bold">Redemptions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {coupons.map(c => (
+              <tr key={c.id} className="border-b last:border-0" style={{ borderColor: "rgba(30,42,47,0.05)" }}>
+                <td className="p-4 tw-mono font-bold text-sm">{c.code}</td>
+                <td className="p-4 tw-body text-sm font-semibold">{c.type === 'percentage' ? `${c.value}%` : `₹${c.value}`}</td>
+                <td className="p-4 tw-body text-xs space-y-1">
+                  {c.tiedToPhone && <div><Badge tone="brass">Tied to {c.tiedToPhone}</Badge></div>}
+                  {c.isNewCustomerOnly === 1 && <div><Badge tone="moss">New Customers Only</Badge></div>}
+                  {c.expiresAt && <div>Expires: {new Date(c.expiresAt).toLocaleDateString()}</div>}
+                  {!c.tiedToPhone && !c.isNewCustomerOnly && !c.expiresAt && <span className="text-gray-400">None</span>}
+                </td>
+                <td className="p-4 tw-body text-sm font-semibold">{c.redemptionCount} times</td>
+              </tr>
+            ))}
+            {coupons.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-gray-500 tw-body text-sm">No coupons found.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AdminSystemTestTab() {
+  const [running, setRunning] = useState(false);
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState(null);
+
+  const runTests = async () => {
+    setRunning(true);
+    setResults(null);
+    setError(null);
+    try {
+      const res = await fetch('/api/tests/run');
+      const data = await res.json();
+      setResults(data);
+    } catch (err) {
+      setError(err.message || 'Failed to connect to test engine');
+    }
+    setRunning(false);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-xl p-8 shadow-sm border" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+        <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
+          <div>
+            <h2 className="tw-display font-bold text-2xl text-gray-900">System Testing Engine</h2>
+            <p className="tw-body text-gray-600 mt-2 leading-relaxed max-w-xl">
+              Run automated integration tests against the live backend to verify database connectivity, lead flows, customer authentication, property state transitions, and the coupon/payment math engine. Dummy records are automatically created and cleaned up.
+            </p>
+          </div>
+          <button 
+            onClick={runTests} 
+            disabled={running}
+            className="flex-shrink-0 px-6 py-3 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all disabled:opacity-70 flex items-center gap-2" 
+            style={{ background: running ? 'gray' : 'var(--blueprint)' }}
+          >
+            {running ? <><span className="animate-spin inline-block">↻</span> Running Tests...</> : <><CheckCircle2 size={18} /> Run All Tests</>}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 tw-body text-sm font-medium">
+          {error}
+        </div>
+      )}
+
+      {results && (
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm border" style={{ borderColor: 'rgba(30,42,47,0.1)' }}>
+          <div className="p-5 border-b flex justify-between items-center" style={{ borderColor: 'rgba(30,42,47,0.1)', background: 'var(--paper)' }}>
+            <div className="tw-display font-bold text-lg">Test Results</div>
+            <Badge tone={results.success ? 'moss' : 'tomato'}>
+              {results.success ? 'All Tests Passed' : 'Some Tests Failed'}
+            </Badge>
+          </div>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="tw-body text-xs uppercase tracking-wide bg-gray-50 border-b" style={{ color: "var(--ink)", borderColor: "rgba(30,42,47,0.1)" }}>
+                <th className="p-4 font-bold">Test Suite</th>
+                <th className="p-4 font-bold">Status</th>
+                <th className="p-4 font-bold">Duration</th>
+                <th className="p-4 font-bold">Logs</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.results?.map((r, i) => (
+                <tr key={i} className="border-b last:border-0" style={{ borderColor: "rgba(30,42,47,0.05)" }}>
+                  <td className="p-4 tw-body font-bold text-sm">{r.name}</td>
+                  <td className="p-4">
+                    {r.passed ? (
+                      <span className="inline-flex items-center gap-1 text-green-700 text-sm font-semibold"><CheckCircle2 size={16} /> Passed</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-red-600 text-sm font-semibold"><AlertCircle size={16} /> Failed</span>
+                    )}
+                  </td>
+                  <td className="p-4 tw-mono text-xs text-gray-500">{r.time}ms</td>
+                  <td className="p-4 tw-mono text-xs max-w-xs truncate text-red-600">
+                    {r.error || '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -2332,6 +2636,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
         { id: "properties", label: "Properties", icon: Landmark },
         { id: "leads", label: "Leads", icon: UserPlus },
         { id: "plans", label: "Plans", icon: ClipboardList },
+        { id: "coupons", label: "Coupons", icon: CheckCircle2 },
+        { id: "tests", label: "System Tests", icon: ShieldCheck },
         { id: "billing", label: "Billing & Visits", icon: CreditCard },
         { id: "cases", label: "Cases", icon: MessageSquare },
       ]}
@@ -2487,7 +2793,9 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
 
       {tab === "billing" && <AdminBillingTab dbs={dbs} refresh={refresh} />}
       {tab === "plans" && <AdminPlansTab dbs={dbs} refresh={refresh} />}
+      {tab === "coupons" && <AdminCouponsTab dbs={dbs} />}
       {tab === "leads" && <AdminLeadsTab dbs={dbs} refresh={refresh} />}
+      {tab === "tests" && <AdminSystemTestTab />}
 
 
       {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} dbs={dbs} />}

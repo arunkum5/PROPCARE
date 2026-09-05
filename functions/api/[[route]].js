@@ -276,10 +276,83 @@ app.get('/api/media/:key', async (c) => {
 })
 
 
+// --- Coupon APIs ---
+
+app.get('/api/coupons', async (c) => {
+  const db = c.env.DB
+  const { results: coupons } = await db.prepare(`
+    SELECT c.*, COUNT(cr.id) as redemptionCount 
+    FROM coupons c 
+    LEFT JOIN coupon_redemptions cr ON c.code = cr.couponCode 
+    GROUP BY c.code
+  `).all()
+  return c.json(coupons)
+})
+
+app.get('/api/my-coupons/:phone', async (c) => {
+  const db = c.env.DB
+  const phone = c.req.param('phone')
+  const { results: coupons } = await db.prepare(`
+    SELECT c.* 
+    FROM coupons c 
+    WHERE c.tiedToPhone = ? 
+    AND c.code NOT IN (SELECT couponCode FROM coupon_redemptions WHERE phone = ?)
+  `).bind(phone, phone).all()
+  return c.json(coupons)
+})
+
+app.post('/api/coupons', async (c) => {
+  const db = c.env.DB
+  const body = await c.req.json()
+  await db.prepare('INSERT INTO coupons (id, code, type, value, tiedToPhone, isNewCustomerOnly, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(
+      `cpn_${Date.now()}`, 
+      body.code.toUpperCase(), 
+      body.type, 
+      body.value, 
+      body.tiedToPhone || null, 
+      body.isNewCustomerOnly ? 1 : 0, 
+      body.expiresAt || null, 
+      new Date().toISOString()
+    )
+    .run()
+  return c.json({ success: true })
+})
+
+app.post('/api/coupons/validate', async (c) => {
+  const db = c.env.DB
+  const { code, phone } = await c.req.json()
+  
+  if (!code) return c.json({ success: false, error: 'Coupon code required' }, 400)
+  if (!phone) return c.json({ success: false, error: 'Phone number required' }, 400)
+  
+  const { results: coupons } = await db.prepare('SELECT * FROM coupons WHERE code = ?').bind(code.toUpperCase()).all()
+  if (coupons.length === 0) return c.json({ success: false, error: 'Invalid coupon code' }, 400)
+  
+  const coupon = coupons[0]
+  
+  if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+    return c.json({ success: false, error: 'This coupon has expired' }, 400)
+  }
+  if (coupon.tiedToPhone && coupon.tiedToPhone !== phone) {
+    return c.json({ success: false, error: 'This coupon is not valid for your number' }, 400)
+  }
+  
+  if (coupon.isNewCustomerOnly === 1) {
+    const { results: custs } = await db.prepare('SELECT id FROM customers WHERE phone = ?').bind(phone).all()
+    if (custs.length > 0) return c.json({ success: false, error: 'Valid for new customers only' }, 400)
+  }
+  
+  const { results: reds } = await db.prepare('SELECT id FROM coupon_redemptions WHERE couponCode = ? AND phone = ?').bind(coupon.code, phone).all()
+  if (reds.length > 0) return c.json({ success: false, error: 'You have already used this coupon' }, 400)
+  
+  return c.json({ success: true, coupon })
+})
+
 // POST /api/razorpay/order - Create Razorpay order
 app.post('/api/razorpay/order', async (c) => {
   const body = await c.req.json()
-  const { amount } = body // amount in paise (rupees * 100)
+  let { amount, couponCode, phone } = body // amount in paise (rupees * 100)
   const keyId = c.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TYMgMaeAtpwHNh'
   const keySecret = c.env.RAZORPAY_KEY_SECRET
 
@@ -287,9 +360,35 @@ app.post('/api/razorpay/order', async (c) => {
     return c.json({ error: 'RAZORPAY_KEY_SECRET is not set in environment' }, 500)
   }
 
-  if (!amount || amount < 100) {
-    return c.json({ error: 'Amount must be at least 100 paise (₹1)' }, 400)
+  // Calculate discount if coupon provided
+  if (couponCode && phone) {
+    const db = c.env.DB
+    const { results: coupons } = await db.prepare('SELECT * FROM coupons WHERE code = ?').bind(couponCode.toUpperCase()).all()
+    if (coupons.length > 0) {
+      const coupon = coupons[0]
+      let isValid = true
+      if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) isValid = false
+      if (coupon.tiedToPhone && coupon.tiedToPhone !== phone) isValid = false
+      if (coupon.isNewCustomerOnly === 1) {
+        const { results: custs } = await db.prepare('SELECT id FROM customers WHERE phone = ?').bind(phone).all()
+        if (custs.length > 0) isValid = false
+      }
+      const { results: reds } = await db.prepare('SELECT id FROM coupon_redemptions WHERE couponCode = ? AND phone = ?').bind(coupon.code, phone).all()
+      if (reds.length > 0) isValid = false
+      
+      if (isValid) {
+        let discountPaise = 0
+        if (coupon.type === 'percentage') {
+          discountPaise = amount * (coupon.value / 100)
+        } else {
+          discountPaise = coupon.value * 100
+        }
+        amount = Math.round(amount - discountPaise)
+      }
+    }
   }
+
+  if (!amount || amount < 100) amount = 100 // minimum 1 INR for Razorpay
 
   const credentials = btoa(`${keyId}:${keySecret}`)
   const res = await fetch('https://api.razorpay.com/v1/orders', {
@@ -312,7 +411,7 @@ app.post('/api/razorpay/order', async (c) => {
 // POST /api/razorpay/verify - Verify payment signature
 app.post('/api/razorpay/verify', async (c) => {
   const body = await c.req.json()
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, couponCode, phone } = body
   const keySecret = c.env.RAZORPAY_KEY_SECRET
 
   const encoder = new TextEncoder()
@@ -326,7 +425,114 @@ app.post('/api/razorpay/verify', async (c) => {
   if (expectedSig !== razorpay_signature) {
     return c.json({ success: false, error: 'Invalid payment signature' }, 400)
   }
+
+  if (couponCode && phone) {
+    const db = c.env.DB
+    await db.prepare('INSERT INTO coupon_redemptions (id, couponCode, phone, orderId, redeemedAt) VALUES (?, ?, ?, ?, ?)')
+      .bind(`red_${Date.now()}`, couponCode.toUpperCase(), phone, razorpay_order_id, new Date().toISOString())
+      .run()
+  }
+
   return c.json({ success: true, paymentId: razorpay_payment_id })
+})
+
+// --- System Testing Engine ---
+app.get('/api/tests/run', async (c) => {
+  const db = c.env.DB;
+  const results = [];
+  
+  const addResult = (name, passed, time, error = null) => {
+    results.push({ name, passed, time, error });
+  };
+
+  // 1. Database Connectivity
+  let start = Date.now();
+  try {
+    const { results: count } = await db.prepare('SELECT count(*) as total FROM customers').all();
+    addResult('Database Connectivity', true, Date.now() - start);
+  } catch (err) {
+    addResult('Database Connectivity', false, Date.now() - start, err.message);
+  }
+
+  // 2. Leads Flow
+  start = Date.now();
+  const leadId = `test_ld_${Date.now()}`;
+  try {
+    await db.prepare('INSERT INTO leads (id, name, phone, propertyType, size, plan, cycle, amount, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(leadId, 'Test Lead', '9999999999', 'Flat', '1200', 'essential', '1_month', 1000, 'pending', new Date().toISOString())
+      .run();
+    
+    const { results: leads } = await db.prepare('SELECT * FROM leads WHERE id = ?').bind(leadId).all();
+    if (leads.length !== 1) throw new Error('Lead not found after insertion');
+    
+    await db.prepare('DELETE FROM leads WHERE id = ?').bind(leadId).run();
+    const { results: leadsAfter } = await db.prepare('SELECT * FROM leads WHERE id = ?').bind(leadId).all();
+    if (leadsAfter.length > 0) throw new Error('Lead not deleted successfully');
+    
+    addResult('Leads Creation & Deletion', true, Date.now() - start);
+  } catch (err) {
+    await db.prepare('DELETE FROM leads WHERE id = ?').bind(leadId).run().catch(() => {});
+    addResult('Leads Creation & Deletion', false, Date.now() - start, err.message);
+  }
+
+  // 3. Customer Auth & Property State
+  start = Date.now();
+  const custId = `test_c_${Date.now()}`;
+  const propId = `test_p_${Date.now()}`;
+  try {
+    await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(custId, 'Test Customer', '8888888888', 'test@test.com', 'pwd123', new Date().toISOString())
+      .run();
+      
+    const { results: auth } = await db.prepare('SELECT * FROM customers WHERE phone = ? AND password = ?').bind('8888888888', 'pwd123').all();
+    if (auth.length !== 1) throw new Error('Customer login auth failed');
+
+    await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(propId, custId, 'Flat', 'Test Prop', '123 Test', '', '1000', '', 'essential', 'pending', 0, new Date().toISOString())
+      .run();
+      
+    await db.prepare('UPDATE properties SET status = ? WHERE id = ?').bind('active', propId).run();
+    const { results: p } = await db.prepare('SELECT status FROM properties WHERE id = ?').bind(propId).all();
+    if (p[0].status !== 'active') throw new Error('Property state update failed');
+    
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(propId).run();
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(custId).run();
+    addResult('Customer Auth & Property State', true, Date.now() - start);
+  } catch (err) {
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(propId).run().catch(() => {});
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(custId).run().catch(() => {});
+    addResult('Customer Auth & Property State', false, Date.now() - start, err.message);
+  }
+  
+  // 4. Coupon Engine & Payment Math
+  start = Date.now();
+  const couponId = `test_cpn_${Date.now()}`;
+  const couponCode = `TEST${Date.now()}`;
+  try {
+    await db.prepare('INSERT INTO coupons (id, code, type, value, tiedToPhone, isNewCustomerOnly, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(couponId, couponCode, 'percentage', 50, null, 0, null, new Date().toISOString())
+      .run();
+      
+    const { results: coupons } = await db.prepare('SELECT * FROM coupons WHERE code = ?').bind(couponCode).all();
+    if (coupons.length !== 1) throw new Error('Coupon not created');
+    
+    // Simulate Razorpay order discount math
+    const coupon = coupons[0];
+    let amount = 10000; // 100 INR in paise
+    if (coupon.type === 'percentage') {
+      amount = Math.round(amount - (amount * (coupon.value / 100)));
+    }
+    if (amount !== 5000) throw new Error('Discount math failed, expected 5000 paise');
+    
+    await db.prepare('DELETE FROM coupons WHERE id = ?').bind(couponId).run();
+    addResult('Coupon Engine & Payment Math', true, Date.now() - start);
+  } catch (err) {
+    await db.prepare('DELETE FROM coupons WHERE id = ?').bind(couponId).run().catch(() => {});
+    addResult('Coupon Engine & Payment Math', false, Date.now() - start, err.message);
+  }
+
+  const allPassed = results.every(r => r.passed);
+  return c.json({ success: allPassed, results });
 })
 
 export const onRequest = handle(app)

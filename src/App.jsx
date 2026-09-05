@@ -555,16 +555,28 @@ function Landing({ onLogin, dbs }) {
         prefill: { name: leadForm.name, contact: leadForm.phone, email: leadForm.email },
         couponCode: discountAmount > 0 ? couponCode : undefined,
         onSuccess: async (paymentId) => {
-          await fetch(`/api/leads/${leadId}`, {
+          const res = await fetch(`/api/leads/${leadId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'paid', paymentId })
           });
-          setLeadMsg({ type: 'success', text: "Payment Successful! We will contact you to begin onboarding." });
-          setTimeout(() => {
-            setCheckoutModal(null);
-            setLeadMsg(null);
-          }, 4000);
+          const data = await res.json();
+          if (data.credentials) {
+            setLeadMsg({ 
+              type: 'success', 
+              text: `Payment Successful! 🎉 Welcome to TrustWork.\n\nYour Customer ID: ${data.credentials.id}\nYour Password: ${data.credentials.password}\n\nPlease take a screenshot, then click "Login" at the top right to access your dashboard!` 
+            });
+            setTimeout(() => {
+              setCheckoutModal(null);
+              // don't clear leadMsg instantly so they can read it
+            }, 5000);
+          } else {
+            setLeadMsg({ type: 'success', text: "Payment Successful! We will contact you to begin onboarding." });
+            setTimeout(() => {
+              setCheckoutModal(null);
+              setLeadMsg(null);
+            }, 4000);
+          }
         },
         onError: async () => {
           await fetch(`/api/leads/${leadId}`, {

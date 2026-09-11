@@ -2069,12 +2069,12 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
             </Field>
             <div className="sm:col-span-2">
               <Field label="Address" required>
-                <input disabled={isLocked} className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
+                <input className={inputCls} style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
               </Field>
             </div>
             <div className="sm:col-span-2">
               <Field label="Google map location link">
-                <input disabled={isLocked} className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
+                <input className={inputCls} style={inputStyle} placeholder="e.g. https://maps.app.goo.gl/..." value={form.latlong} onChange={(e) => setForm({ ...form, latlong: e.target.value })} />
               </Field>
             </div>
             <Field label="Property Size (sq ft)" required>
@@ -2085,7 +2085,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
                 <div className="mb-4 p-3 rounded-md bg-orange-50 border border-orange-100 flex items-start gap-2">
                   <AlertCircle size={16} className="text-orange-500 mt-0.5 flex-shrink-0" />
                   <p className="tw-body text-xs text-orange-800 leading-relaxed">
-                    Core property details (address, location, size, and type) are locked because this property is currently active. To update these details, please contact support.
+                    Core property details (size and type) are locked because this property is currently active. To update these details, please contact support.
                   </p>
                 </div>
               )}

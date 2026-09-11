@@ -2865,8 +2865,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                 </div>
                 <div className="tw-mono text-[10px] mt-3 uppercase tracking-wider" style={{ opacity: 0.5 }}>{p.id}</div>
                 <div className="tw-display font-bold text-lg mt-0.5">{p.title}</div>
-                <div className="tw-body text-sm mt-1" style={{ opacity: 0.6 }}>{owner ? owner.name : p.customerId}</div>
-
+                <div className="tw-body text-sm mt-1 flex items-center gap-1" style={{ opacity: 0.6 }}><MapPin size={12} />{p.address}</div>
+                <div className="tw-body text-sm mt-1 font-semibold" style={{ opacity: 0.8 }}>Owner: {owner ? owner.name : p.customerId}</div>
               </button>
             );
           })}

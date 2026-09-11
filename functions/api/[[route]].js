@@ -516,6 +516,24 @@ app.get('/api/tests/run', async (c) => {
     results.push({ name, passed, time, error });
   };
 
+  const cleanupAllTestResidue = async () => {
+    try {
+      await db.prepare("DELETE FROM visits WHERE id LIKE 'test_%' OR propertyId LIKE 'test_%'").run();
+      await db.prepare("DELETE FROM cases WHERE id LIKE 'test_%' OR customerId LIKE 'test_%' OR propertyId LIKE 'test_%'").run();
+      await db.prepare("DELETE FROM properties WHERE id LIKE 'test_%' OR customerId LIKE 'test_%'").run();
+      await db.prepare("DELETE FROM customers WHERE id LIKE 'test_%'").run();
+      await db.prepare("DELETE FROM leads WHERE id LIKE 'test_%'").run();
+      await db.prepare("DELETE FROM coupons WHERE id LIKE 'test_%'").run();
+      
+      const listed = await c.env.MEDIA_BUCKET.list({ prefix: 'test_' });
+      for (const object of listed.objects) {
+        await c.env.MEDIA_BUCKET.delete(object.key);
+      }
+    } catch(e) {}
+  };
+
+  await cleanupAllTestResidue();
+
   let start;
 
   // 1. Admin Adds Customer Test
@@ -845,6 +863,8 @@ app.get('/api/tests/run', async (c) => {
     await db.prepare('DELETE FROM properties WHERE id = ?').bind(t11_propId).run().catch(() => {});
     await db.prepare('DELETE FROM customers WHERE id = ?').bind(t11_custId).run().catch(() => {});
   }
+
+  await cleanupAllTestResidue();
 
   const allPassed = results.every(r => r.passed);
   return c.json({ success: allPassed, results });

@@ -1980,6 +1980,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
       try {
         const formData = new FormData();
         formData.append('file', docFile);
+        if (customer && customer.id) formData.append('customerId', customer.id);
         const res = await fetch('/api/upload', { method: 'POST', body: formData });
         const data = await res.json();
         updatedForm = { ...updatedForm, docName: docFile.name, docLink: data.url };
@@ -2703,7 +2704,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           </div>
         </details>
 
-        <AddVisitForm onAdd={(v) => addVisit(p.id, v)} />
+        <AddVisitForm customerId={p.customerId} onAdd={(v) => addVisit(p.id, v)} />
 
         <div className="tw-display font-bold text-lg mt-8 mb-4">Logged visits</div>
         {(!p.visits || p.visits.length === 0) ? (
@@ -2908,7 +2909,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
   );
 }
 
-function AddVisitForm({ onAdd }) {
+function AddVisitForm({ onAdd, customerId }) {
   const [form, setForm] = useState({ kind: "inspection", date: todayISO(), notes: "" });
   // Each slot is either null (empty) or a File object
   const [photoSlots, setPhotoSlots] = useState([null]);
@@ -2921,6 +2922,7 @@ function AddVisitForm({ onAdd }) {
   const uploadFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
+    if (customerId) formData.append('customerId', customerId);
     const res = await fetch('/api/upload', { method: 'POST', body: formData });
     const data = await res.json();
     return data.url;

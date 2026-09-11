@@ -309,10 +309,12 @@ app.post('/api/upload', async (c) => {
   const bucket = c.env.MEDIA_BUCKET
   const body = await c.req.parseBody()
   const file = body['file']
+  const customerId = body['customerId']
   
   if (!file) return c.json({ error: 'No file provided' }, 400)
   
-  const key = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+  const prefix = customerId ? `${customerId}-` : '';
+  const key = `${prefix}${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
   
   await bucket.put(key, await file.arrayBuffer(), {
     httpMetadata: { contentType: file.type }

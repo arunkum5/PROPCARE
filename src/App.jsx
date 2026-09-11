@@ -1976,6 +1976,10 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
 
     let updatedForm = { ...form };
     if (docFile) {
+      if (docFile.size > 50 * 1024 * 1024) {
+        alert(`Document ${docFile.name} is too large. Maximum allowed size is 50MB.`);
+        return;
+      }
       setPaying(true); // use paying state to show loading button
       try {
         const file = await compressImage(docFile);
@@ -2963,6 +2967,10 @@ function AddVisitForm({ onAdd, customerId }) {
   const videos = videoSlots.filter(Boolean);
 
   const uploadFile = async (rawFile) => {
+    if (rawFile.size > 50 * 1024 * 1024) {
+      alert(`File ${rawFile.name} is too large. Maximum allowed size is 50MB.`);
+      throw new Error("File too large");
+    }
     const file = await compressImage(rawFile);
     const formData = new FormData();
     formData.append('file', file);

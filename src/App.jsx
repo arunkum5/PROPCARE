@@ -1336,6 +1336,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
   const [agreed, setAgreed] = useState(p.agreed || false);
   const [showEdit, setShowEdit] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [showChangePlan, setShowChangePlan] = useState(false);
 
 
 
@@ -1552,7 +1553,10 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
               <div className="tw-body font-semibold text-sm">Need an extra visit this month?</div>
               <div className="tw-body text-xs mt-0.5" style={{ opacity: 0.7 }}>Purchase an on-demand visit for ₹{calcFee(p.plan, p.size, '1_month', dbs.plans) * 0.90} (10% off)</div>
             </div>
-            <button disabled={paying} onClick={handleBuyExtraVisit} className="px-3 py-1.5 rounded text-sm font-semibold tw-body cursor-pointer transition-colors disabled:opacity-50" style={{ background: 'var(--brass)', color: 'var(--blueprint)' }}>{paying ? '...' : 'Buy Extra Visit'}</button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowChangePlan(true)} className="px-3 py-1.5 rounded text-sm font-semibold tw-body cursor-pointer transition-colors hover:bg-gray-200" style={{ background: 'rgba(30,42,47,0.1)', color: 'var(--ink)' }}>Change Plan</button>
+              <button disabled={paying} onClick={handleBuyExtraVisit} className="px-3 py-1.5 rounded text-sm font-semibold tw-body cursor-pointer transition-colors disabled:opacity-50" style={{ background: 'var(--brass)', color: 'var(--blueprint)' }}>{paying ? '...' : 'Buy Extra Visit'}</button>
+            </div>
           </div>
           {p.pendingExtraVisits > 0 && (
             <div className="mt-3 tw-body text-xs font-semibold px-3 py-2 rounded-md" style={{ background: 'rgba(75,93,69,0.1)', color: 'var(--moss)' }}>
@@ -1615,6 +1619,15 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
              onUpdate(updatedForm);
              setShowEdit(false);
           }} 
+        />
+      )}
+      {showChangePlan && (
+        <ChangePlanModal
+          dbs={dbs}
+          p={p}
+          customer={customer}
+          onClose={() => setShowChangePlan(false)}
+          onUpdate={onUpdate}
         />
       )}
     </Shell>
@@ -3408,6 +3421,103 @@ function AdminPlansTab({ dbs, refresh }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ChangePlanModal({ dbs, p, customer, onClose, onUpdate }) {
+  const [paying, setPaying] = useState(false);
+  
+  const currentPlan = dbs.plans[p.plan];
+  const otherPlans = Object.values(dbs.plans).filter(pl => pl.id !== p.plan);
+  
+  const totalDaysInCycle = p.billingCycle === '12_months' ? 365 : p.billingCycle === '6_months' ? 180 : 30;
+  const daysRemaining = p.expiryDate ? Math.max(0, Math.ceil((new Date(p.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))) : 0;
+  
+  const oldFee = calcFee(p.plan, p.size, p.billingCycle, dbs.plans);
+  const oldDailyRate = oldFee / totalDaysInCycle;
+
+  const handleSelectPlan = async (newPlan) => {
+    const newFee = calcFee(newPlan.id, p.size, p.billingCycle, dbs.plans);
+    const newDailyRate = newFee / totalDaysInCycle;
+    
+    if (newFee <= oldFee) {
+      if (!window.confirm(`Downgrade to ${newPlan.name}? This takes effect immediately. No refunds are provided for the current cycle. Next renewal will be ₹${newFee.toLocaleString('en-IN')}.`)) return;
+      
+      setPaying(true);
+      await onUpdate({ ...p, plan: newPlan.id });
+      setPaying(false);
+      onClose();
+      alert("Plan downgraded successfully!");
+    } else {
+      const dailyDiff = newDailyRate - oldDailyRate;
+      let upgradeCharge = Math.round(dailyDiff * daysRemaining);
+      if (upgradeCharge < 1) upgradeCharge = 1;
+      
+      if (!window.confirm(`Upgrade to ${newPlan.name}? You have ${daysRemaining} days left in your current cycle. The prorated upgrade charge is ₹${upgradeCharge.toLocaleString('en-IN')}.`)) return;
+      
+      setPaying(true);
+      processCheckout({
+        amount: upgradeCharge,
+        description: `Upgrade to ${newPlan.name} (Prorated)`,
+        prefill: { name: customer.name, contact: customer.phone, email: customer.email },
+        onSuccess: async (paymentId) => {
+          await onUpdate({ ...p, plan: newPlan.id });
+          setPaying(false);
+          onClose();
+          alert("Plan upgraded successfully!");
+        },
+        onError: (err) => {
+          setPaying(false);
+          alert(err.message || "Payment failed");
+        }
+      });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative animate-fade-in-up">
+        <button disabled={paying} onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 disabled:opacity-50"><X size={20} /></button>
+        <div className="tw-display font-bold text-2xl mb-2 text-[var(--ink)] border-b pb-4">Change Care Plan</div>
+        
+        <div className="mb-6 mt-4">
+          <div className="tw-body text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>CURRENT PLAN</div>
+          <div className="tw-body font-bold text-lg text-gray-800">{currentPlan?.name} (₹{oldFee.toLocaleString('en-IN')} / cycle)</div>
+          <div className="tw-body text-xs mt-1 text-gray-500">Days remaining in cycle: {daysRemaining}</div>
+        </div>
+
+        <div className="tw-body text-sm font-semibold mb-3">Available Plans:</div>
+        <div className="grid gap-3">
+          {otherPlans.map((pl) => {
+            const newFee = calcFee(pl.id, p.size, p.billingCycle, dbs.plans);
+            const isUpgrade = newFee > oldFee;
+            const dailyDiff = (newFee / totalDaysInCycle) - oldDailyRate;
+            let charge = isUpgrade ? Math.round(dailyDiff * daysRemaining) : 0;
+            if (isUpgrade && charge < 1) charge = 1;
+            
+            return (
+              <div key={pl.id} className="p-4 rounded-xl border flex items-center justify-between" style={{ borderColor: "rgba(30,42,47,0.15)", background: "rgba(30,42,47,0.02)" }}>
+                <div>
+                  <div className="tw-display font-bold text-lg">{pl.name}</div>
+                  <div className="tw-body text-sm mt-0.5" style={{ opacity: 0.7 }}>Full cycle: ₹{newFee.toLocaleString('en-IN')}</div>
+                  <div className="tw-body text-xs mt-2 font-medium" style={{ color: isUpgrade ? 'var(--blueprint)' : 'var(--moss)' }}>
+                    {isUpgrade ? `Upgrade Charge: ₹${charge.toLocaleString('en-IN')}` : `Downgrade (Free, takes effect immediately)`}
+                  </div>
+                </div>
+                <button 
+                  disabled={paying}
+                  onClick={() => handleSelectPlan(pl)}
+                  className="px-4 py-2 rounded-lg font-bold text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  style={{ background: isUpgrade ? 'var(--blueprint)' : 'var(--moss)' }}
+                >
+                  {isUpgrade ? 'Pay to Upgrade' : 'Downgrade'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

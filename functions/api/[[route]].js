@@ -809,6 +809,43 @@ app.get('/api/tests/run', async (c) => {
     if (t10_propId) await db.prepare('DELETE FROM properties WHERE id = ?').bind(t10_propId).run().catch(() => {});
   }
 
+  // 11. Customer Deletion Cascade & Media Purge Test
+  start = Date.now();
+  const t11_custId = `test_c_${Date.now()}_11`;
+  const t11_propId = `test_p_${Date.now()}_11`;
+  try {
+    await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(t11_custId, 'Test 11', '1111111111', '', 'pwd', new Date().toISOString()).run();
+    await db.prepare('INSERT INTO properties (id, customerId, type, title, address, latlong, size, summary, plan, status, agreed, agreementSigned, paymentDate, expiryDate, paymentStatus, paymentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(t11_propId, t11_custId, 'Flat', 'Flat', '', '', '1000', '', 'basic', 'active', 1, 1, new Date().toISOString(), null, 'paid', 'pay_123').run();
+    
+    const fakeKey = `test_purge_${Date.now()}.jpg`;
+    await c.env.MEDIA_BUCKET.put(fakeKey, "fake-data");
+    const fakePhotoUrl = `/api/media/${fakeKey}`;
+    
+    await db.prepare('INSERT INTO visits (id, propertyId, kind, date, notes, photos, video) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(`test_v_${Date.now()}_11`, t11_propId, 'inspection', new Date().toISOString(), 'Test visit', JSON.stringify([fakePhotoUrl]), JSON.stringify([])).run();
+      
+    await deletePropertyMedia(db, c.env.MEDIA_BUCKET, t11_propId);
+    await db.prepare('DELETE FROM visits WHERE propertyId = ?').bind(t11_propId).run();
+    await db.prepare('DELETE FROM properties WHERE customerId = ?').bind(t11_custId).run();
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(t11_custId).run();
+    
+    const checkFile = await c.env.MEDIA_BUCKET.head(fakeKey);
+    if (checkFile !== null) throw new Error("R2 media file was not purged");
+    
+    const checkCust = await db.prepare('SELECT id FROM customers WHERE id = ?').bind(t11_custId).all();
+    if (checkCust.results.length > 0) throw new Error("Customer not deleted from DB");
+    
+    addResult('11. Customer Deletion & Media Purge', true, Date.now() - start);
+  } catch(err) {
+    addResult('11. Customer Deletion & Media Purge', false, Date.now() - start, err.message);
+  } finally {
+    await db.prepare('DELETE FROM visits WHERE propertyId = ?').bind(t11_propId).run().catch(() => {});
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(t11_propId).run().catch(() => {});
+    await db.prepare('DELETE FROM customers WHERE id = ?').bind(t11_custId).run().catch(() => {});
+  }
+
   const allPassed = results.every(r => r.passed);
   return c.json({ success: allPassed, results });
 })

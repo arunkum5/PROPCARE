@@ -3451,16 +3451,15 @@ function ChangePlanModal({ dbs, p, customer, onClose, onUpdate }) {
       onClose();
       alert("Plan downgraded successfully!");
     } else {
-      const dailyDiff = newDailyRate - oldDailyRate;
-      let upgradeCharge = Math.round(dailyDiff * daysRemaining);
+      let upgradeCharge = newFee - oldFee;
       if (upgradeCharge < 1) upgradeCharge = 1;
       
-      if (!window.confirm(`Upgrade to ${newPlan.name}? You have ${daysRemaining} days left in your current cycle. The prorated upgrade charge is ₹${upgradeCharge.toLocaleString('en-IN')}.`)) return;
+      if (!window.confirm(`Upgrade to ${newPlan.name}? You will be charged the full price difference of ₹${upgradeCharge.toLocaleString('en-IN')} to unlock the new benefits for your current cycle.`)) return;
       
       setPaying(true);
       processCheckout({
         amount: upgradeCharge,
-        description: `Upgrade to ${newPlan.name} (Prorated)`,
+        description: `Upgrade to ${newPlan.name} (Price difference)`,
         prefill: { name: customer.name, contact: customer.phone, email: customer.email },
         onSuccess: async (paymentId) => {
           await onUpdate({ ...p, plan: newPlan.id });
@@ -3493,8 +3492,7 @@ function ChangePlanModal({ dbs, p, customer, onClose, onUpdate }) {
           {otherPlans.map((pl) => {
             const newFee = calcFee(pl.id, p.size, p.billingCycle, dbs.plans);
             const isUpgrade = newFee > oldFee;
-            const dailyDiff = (newFee / totalDaysInCycle) - oldDailyRate;
-            let charge = isUpgrade ? Math.round(dailyDiff * daysRemaining) : 0;
+            let charge = isUpgrade ? (newFee - oldFee) : 0;
             if (isUpgrade && charge < 1) charge = 1;
             
             return (
@@ -3503,7 +3501,7 @@ function ChangePlanModal({ dbs, p, customer, onClose, onUpdate }) {
                   <div className="tw-display font-bold text-lg">{pl.name}</div>
                   <div className="tw-body text-sm mt-0.5" style={{ opacity: 0.7 }}>Full cycle: ₹{newFee.toLocaleString('en-IN')}</div>
                   <div className="tw-body text-xs mt-2 font-medium" style={{ color: isUpgrade ? 'var(--blueprint)' : 'var(--moss)' }}>
-                    {isUpgrade ? `Upgrade Charge: ₹${charge.toLocaleString('en-IN')}` : `Downgrade (Free, takes effect immediately)`}
+                    {isUpgrade ? `Upgrade Charge: ₹${charge.toLocaleString('en-IN')} (Full difference)` : `Downgrade (Free, takes effect immediately)`}
                   </div>
                 </div>
                 <button 

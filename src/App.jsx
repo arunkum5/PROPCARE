@@ -2939,12 +2939,12 @@ const compressImage = (file, maxWidth = 1920, maxHeight = 1080, quality = 0.82) 
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (!blob) return resolve(file);
-          const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
-            type: 'image/jpeg',
+          const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+            type: 'image/webp',
             lastModified: Date.now(),
           });
           resolve(newFile);
-        }, 'image/jpeg', quality);
+        }, 'image/webp', quality);
       };
       img.onerror = () => resolve(file);
     };

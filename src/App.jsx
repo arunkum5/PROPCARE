@@ -1978,8 +1978,9 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
     if (docFile) {
       setPaying(true); // use paying state to show loading button
       try {
+        const file = await compressImage(docFile);
         const formData = new FormData();
-        formData.append('file', docFile);
+        formData.append('file', file);
         if (customer && customer.id) formData.append('customerId', customer.id);
         const res = await fetch('/api/upload', { method: 'POST', body: formData });
         const data = await res.json();
@@ -2909,6 +2910,48 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
   );
 }
 
+const compressImage = (file, maxWidth = 1920, maxHeight = 1080, quality = 0.82) => {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) return resolve(file);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (!blob) return resolve(file);
+          const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          resolve(newFile);
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+
 function AddVisitForm({ onAdd, customerId }) {
   const [form, setForm] = useState({ kind: "inspection", date: todayISO(), notes: "" });
   // Each slot is either null (empty) or a File object
@@ -2919,7 +2962,8 @@ function AddVisitForm({ onAdd, customerId }) {
   const photos = photoSlots.filter(Boolean);
   const videos = videoSlots.filter(Boolean);
 
-  const uploadFile = async (file) => {
+  const uploadFile = async (rawFile) => {
+    const file = await compressImage(rawFile);
     const formData = new FormData();
     formData.append('file', file);
     if (customerId) formData.append('customerId', customerId);

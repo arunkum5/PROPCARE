@@ -1173,7 +1173,7 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
             <p className="tw-mono text-[11px] mt-4 text-center" style={{ opacity: 0.5 }}>Demo admin — admin / admin123</p>
           ) : (
             <p className="tw-body text-[13px] mt-4 text-center">
-              New here? <button type="button" onClick={() => { onClose(); setTimeout(() => document.getElementById('price-calculator')?.scrollIntoView({behavior: 'smooth'}), 100); }} className="font-bold hover:underline cursor-pointer" style={{ color: "var(--brass)" }}>Get a cost estimate & sign up</button>
+              New here? <button type="button" onClick={() => { onBack(); setTimeout(() => document.getElementById('price-calculator')?.scrollIntoView({behavior: 'smooth'}), 100); }} className="font-bold hover:underline cursor-pointer" style={{ color: "var(--brass)" }}>Get a cost estimate & sign up</button>
             </p>
           )}
         </form>

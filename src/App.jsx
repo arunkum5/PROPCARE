@@ -2085,7 +2085,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
                 <div className="mb-4 p-3 rounded-md bg-orange-50 border border-orange-100 flex items-start gap-2">
                   <AlertCircle size={16} className="text-orange-500 mt-0.5 flex-shrink-0" />
                   <p className="tw-body text-xs text-orange-800 leading-relaxed">
-                    Core property details (size and type) are locked because this property is currently active. To update these details, please contact support.
+                    Core property details (size, type, and care plan) are locked because this property is currently active. To update these details, please contact support.
                   </p>
                 </div>
               )}
@@ -2105,7 +2105,7 @@ function AddPropertyModal({ onClose, onSave, initialData, dbs, customer }) {
             </div>
             <div className="sm:col-span-2">
               <Field label="Care plan" required>
-                <select className={inputCls} style={inputStyle} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
+                <select disabled={isLocked} className={inputCls} style={inputStyle} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
                   {Object.values(dbs.plans || {}).map((p) => <option key={p.id} value={p.id}>{p.name} — ₹{p.ratePerSqft}/sqft/month — {p.numVisits} visit(s)</option>)}
                 </select>
               </Field>

@@ -3281,7 +3281,7 @@ export default function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/data');
+      const res = await fetch('/api/data', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setDbs({ 

@@ -202,13 +202,34 @@ app.put('/api/customers/:id', async (c) => {
   return c.json({ success: true })
 })
 
+async function deletePropertyMedia(db, bucket, propertyId) {
+  const { results: visits } = await db.prepare('SELECT photos, video FROM visits WHERE propertyId = ?').bind(propertyId).all()
+  for (const v of visits) {
+    let mediaUrls = [];
+    if (v.photos) {
+      try { mediaUrls.push(...JSON.parse(v.photos)); } catch(e){}
+    }
+    if (v.video) {
+      try { mediaUrls.push(...JSON.parse(v.video)); } catch(e){}
+    }
+    for (const url of mediaUrls) {
+      if (typeof url === 'string' && url.includes('/api/media/')) {
+        const key = url.split('/api/media/')[1];
+        if (key) await bucket.delete(key);
+      }
+    }
+  }
+}
+
 // DELETE /api/customers/:id - Delete customer and all related data
 app.delete('/api/customers/:id', async (c) => {
   const db = c.env.DB
+  const bucket = c.env.MEDIA_BUCKET
   const id = c.req.param('id')
   // Cascade delete logic (SQLite foreign keys might not have ON DELETE CASCADE set, so we do it manually)
   const { results: props } = await db.prepare('SELECT id FROM properties WHERE customerId = ?').bind(id).all()
   for (const p of props) {
+    await deletePropertyMedia(db, bucket, p.id)
     await db.prepare('DELETE FROM visits WHERE propertyId = ?').bind(p.id).run()
   }
   await db.prepare('DELETE FROM cases WHERE customerId = ?').bind(id).run()
@@ -243,7 +264,9 @@ app.put('/api/properties/:id', async (c) => {
 // DELETE /api/properties/:id - Delete property and related data
 app.delete('/api/properties/:id', async (c) => {
   const db = c.env.DB
+  const bucket = c.env.MEDIA_BUCKET
   const id = c.req.param('id')
+  await deletePropertyMedia(db, bucket, id)
   await db.prepare('DELETE FROM visits WHERE propertyId = ?').bind(id).run()
   await db.prepare('DELETE FROM cases WHERE propertyId = ?').bind(id).run()
   await db.prepare('DELETE FROM properties WHERE id = ?').bind(id).run()

@@ -900,7 +900,7 @@ function Landing({ onLogin, dbs }) {
       </div>
 
       {/* PRICE CALCULATOR */}
-      <div className="px-6 sm:px-10 py-12 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+      <div id="price-calculator" className="px-6 sm:px-10 py-12 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
         <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-lg border border-gray-100 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-5"><Calculator size={120} /></div>
           <h2 className="tw-display font-bold text-2xl mb-2 relative z-10">Estimate Your Cost</h2>
@@ -1172,8 +1172,8 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
           {role === "admin" ? (
             <p className="tw-mono text-[11px] mt-4 text-center" style={{ opacity: 0.5 }}>Demo admin — admin / admin123</p>
           ) : (
-            <p className="tw-body text-[12px] mt-4 text-center" style={{ opacity: 0.55 }}>
-              New here? Ask TrustWork admin to create your customer ID.
+            <p className="tw-body text-[13px] mt-4 text-center">
+              New here? <button type="button" onClick={() => { onClose(); document.getElementById('price-calculator')?.scrollIntoView({behavior: 'smooth'}) }} className="font-bold hover:underline cursor-pointer" style={{ color: "var(--brass)" }}>Get a cost estimate & sign up</button>
             </p>
           )}
         </form>

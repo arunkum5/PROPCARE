@@ -206,13 +206,15 @@ app.delete('/api/customers/:id', async (c) => {
   const db = c.env.DB
   const id = c.req.param('id')
   
+  // Cases reference properties and customers, so delete them first
+  await db.prepare('DELETE FROM cases WHERE customerId = ?').bind(id).run()
+  
   // Clean up all related properties, visits, etc.
   const { results: properties } = await db.prepare('SELECT id FROM properties WHERE customerId = ?').bind(id).all()
   for (const p of properties) {
     await db.prepare('DELETE FROM visits WHERE propertyId = ?').bind(p.id).run()
     await db.prepare('DELETE FROM properties WHERE id = ?').bind(p.id).run()
   }
-  await db.prepare('DELETE FROM cases WHERE customerId = ?').bind(id).run()
   await db.prepare('DELETE FROM customers WHERE id = ?').bind(id).run()
   
   return c.json({ success: true })

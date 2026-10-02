@@ -2378,7 +2378,7 @@ function AdminCouponsTab({ dbs }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this coupon?')) return;
+    if (!window.confirm('Are you sure you want to delete this coupon?')) return;
     await fetch(`/api/coupons/${id}`, { method: 'DELETE' });
     await fetchCoupons();
   };
@@ -2571,14 +2571,14 @@ function AdminLeadsTab({ dbs, refresh }) {
   };
 
   const clearSelected = async () => {
-    if (!confirm(`Are you sure you want to delete ${selected.size} leads?`)) return;
+    if (!window.confirm(`Are you sure you want to delete ${selected.size} leads?`)) return;
     await Promise.all(Array.from(selected).map(id => fetch(`/api/leads/${id}`, { method: 'DELETE' })));
     setSelected(new Set());
     refresh();
   };
 
   const clearAll = async () => {
-    if (!confirm('Are you sure you want to delete ALL leads?')) return;
+    if (!window.confirm('Are you sure you want to delete ALL leads?')) return;
     await fetch('/api/leads', { method: 'DELETE' });
     setSelected(new Set());
     refresh();

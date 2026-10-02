@@ -1707,6 +1707,8 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   const [showAdd, setShowAdd] = useState(false);
   const [openProp, setOpenProp] = useState(null);
   const [caseForm, setCaseForm] = useState({ subject: "", message: "", propertyId: "" });
+  const [profileForm, setProfileForm] = useState({ ...customer, password: customer.password || "" });
+  const [savingProfile, setSavingProfile] = useState(false);
 
   const myProps = Object.values(dbs.properties || {}).filter((p) => p.customerId === customer.id);
   const myCases = Object.values(dbs.cases || {}).filter((c) => c.customerId === customer.id)
@@ -1790,6 +1792,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
         { id: "properties", label: "My properties", icon: Landmark },
         { id: "cases", label: "My cases", icon: MessageSquare },
         { id: "rewards", label: "Rewards", icon: Gift },
+        { id: "profile", label: "Profile & Security", icon: User },
       ]}
       activeTab={tab} onTabChange={setTab}
     >
@@ -1810,26 +1813,40 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       </div>
 
       {tab === "profile" && (
-        <div className="p-6 rounded-lg bg-white max-w-2xl" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          setSavingProfile(true);
+          try {
+            await fetch(`/api/customers/${customer.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(profileForm)
+            });
+            await refresh();
+            alert("Profile updated successfully!");
+          } catch (e) {
+            alert("Failed to update profile.");
+          } finally {
+            setSavingProfile(false);
+          }
+        }} className="p-6 rounded-lg bg-white max-w-2xl" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
           <div className="tw-display font-bold text-xl mb-6">Identity Details</div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Full name"><input className={inputCls} style={inputStyle} defaultValue={customer.name} required /></Field>
-            <Field label="Phone"><input className={inputCls} style={inputStyle} defaultValue={customer.phone} required /></Field>
-            <Field label="Email"><input className={inputCls} style={inputStyle} defaultValue={customer.email} /></Field>
-            <Field label="Relationship to property"><input className={inputCls} style={inputStyle} defaultValue="Owner" /></Field>
-            <Field label="Aadhaar"><input className={inputCls} style={inputStyle} placeholder="xxxx xxxx xxxx" /></Field>
-            <Field label="PAN"><input className={inputCls} style={inputStyle} placeholder="ABCDE1234F" /></Field>
+            <Field label="Full name"><input className={inputCls} style={inputStyle} value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} required /></Field>
+            <Field label="Phone"><input className={inputCls} style={inputStyle} value={profileForm.phone} onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})} required /></Field>
+            <Field label="Email"><input className={inputCls} style={inputStyle} value={profileForm.email || ""} onChange={(e) => setProfileForm({...profileForm, email: e.target.value})} /></Field>
+            <Field label="Change Password"><input className={inputCls} style={inputStyle} value={profileForm.password} onChange={(e) => setProfileForm({...profileForm, password: e.target.value})} placeholder="New password" required /></Field>
+            <Field label="Relationship to property"><input className={inputCls} style={inputStyle} defaultValue="Owner" disabled /></Field>
+            <Field label="Aadhaar"><input className={inputCls} style={inputStyle} placeholder="xxxx xxxx xxxx" disabled /></Field>
+            <Field label="PAN"><input className={inputCls} style={inputStyle} placeholder="ABCDE1234F" disabled /></Field>
             <div className="sm:col-span-2">
-              <Field label="Current residential address"><textarea className={inputCls} style={inputStyle} rows={3} placeholder="Full address..." /></Field>
-            </div>
-            <div className="sm:col-span-2">
-              <Field label="Emergency/alternate contact"><input className={inputCls} style={inputStyle} placeholder="Name & Phone" /></Field>
+              <Field label="Current residential address"><textarea className={inputCls} style={inputStyle} rows={3} placeholder="Full address..." disabled /></Field>
             </div>
           </div>
-          <button className="mt-4 py-2.5 px-6 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>
-            Save Profile
+          <button type="submit" disabled={savingProfile} className="mt-4 py-2.5 px-6 rounded-md font-semibold text-white tw-body disabled:opacity-50" style={{ background: "var(--blueprint)" }}>
+            {savingProfile ? "Saving..." : "Save Profile"}
           </button>
-        </div>
+        </form>
       )}
 
       {tab === "properties" && (

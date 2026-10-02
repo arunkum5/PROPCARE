@@ -2736,14 +2736,31 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
     setOpenProp(null);
   };
 
+  const adminTabsConfig = [
+    { id: "customers", label: "Customers", icon: Users },
+    { id: "properties", label: "Properties", icon: Landmark },
+    { id: "leads", label: "Leads", icon: UserPlus },
+    { id: "plans", label: "Plans", icon: ClipboardList },
+    { id: "coupons", label: "Coupons", icon: CheckCircle2 },
+    { id: "tests", label: "System Tests", icon: ShieldCheck },
+    { id: "billing", label: "Billing & Visits", icon: CreditCard },
+    { id: "cases", label: "Cases", icon: MessageSquare },
+  ];
+
+  const headerAction = (
+    <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold opacity-80 hover:opacity-100 transition-opacity" style={{ color: "#F6F1E7" }}>
+      <Plus size={16} /> New Customer
+    </button>
+  );
+
   if (openProp) {
     const p = dbs.properties[openProp];
     const owner = dbs.customers[p.customerId];
     return (
-      <Shell title="TrustWork" subtitle="Admin console" onLogout={onLogout} onRefresh={refresh}>
-        <button onClick={() => setOpenProp(null)} className="tw-body text-sm flex items-center gap-1 mb-5" style={{ opacity: 0.6 }}>
-          <ArrowLeft size={14} /> All properties
-        </button>
+      <Shell title="TrustWork" subtitle="Admin console" onLogout={onLogout} onRefresh={refresh}
+        hideContact={true} onSettings={() => setEditCust(dbs.customers['admin'])}
+        tabs={adminTabsConfig} activeTab={tab} onTabChange={(t) => { setTab(t); setOpenProp(null); }}
+        headerAction={headerAction}>
         <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
           <div>
             <div className="tw-display font-bold text-2xl">{p.title}</div>
@@ -2845,22 +2862,9 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
       title="TrustWork" subtitle="Admin console" onLogout={onLogout} onRefresh={refresh}
       hideContact={true}
       onSettings={() => setEditCust(dbs.customers['admin'])}
-      tabs={[
-        { id: "customers", label: "Customers", icon: Users },
-        { id: "properties", label: "Properties", icon: Landmark },
-        { id: "leads", label: "Leads", icon: UserPlus },
-        { id: "plans", label: "Plans", icon: ClipboardList },
-        { id: "coupons", label: "Coupons", icon: CheckCircle2 },
-        { id: "tests", label: "System Tests", icon: ShieldCheck },
-        { id: "billing", label: "Billing & Visits", icon: CreditCard },
-        { id: "cases", label: "Cases", icon: MessageSquare },
-      ]}
+      tabs={adminTabsConfig}
       activeTab={tab} onTabChange={setTab}
-      headerAction={
-        <button onClick={() => setShowAddCustomer(true)} className="tw-body flex items-center gap-1.5 text-sm font-semibold opacity-80 hover:opacity-100 transition-opacity" style={{ color: "#F6F1E7" }}>
-          <Plus size={16} /> New Customer
-        </button>
-      }
+      headerAction={headerAction}
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
         {[

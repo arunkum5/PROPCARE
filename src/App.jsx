@@ -1389,7 +1389,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
 }
 
 
-function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, onUpdate, onLogout, dbs }) {
+function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, onUpdate, onLogout, dbs, tabs, activeTab, onTabChange }) {
   const [agreed, setAgreed] = useState(p.agreed || false);
   const [showEdit, setShowEdit] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -1462,11 +1462,9 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
 
   return (
     <Shell 
-      title="TrustWork" subtitle={`${customer.name} · ${dbs.plans[p.plan]?.name || p.plan}`} onLogout={onLogout}>
-      <div className="flex items-center justify-between mb-5">
-        <button onClick={onBack} className="tw-body text-sm flex items-center gap-1" style={{ opacity: 0.6 }}>
-          <ArrowLeft size={14} /> All properties
-        </button>
+      title="TrustWork" subtitle={`${customer.name} · ${dbs.plans[p.plan]?.name || p.plan}`} onLogout={onLogout}
+      tabs={tabs} activeTab={activeTab} onTabChange={onTabChange}>
+      <div className="flex items-center justify-end mb-5">
         <div className="flex items-center gap-4">
           <button onClick={() => setShowEdit(true)} className="tw-body text-sm flex items-center gap-1.5 font-semibold transition-opacity hover:opacity-100" style={{ color: "var(--blueprint)", opacity: 0.8 }}>
             <Pencil size={14} /> Edit property
@@ -1841,19 +1839,21 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
     setCaseForm({ subject: "", message: "", propertyId: "" });
   };
 
+  const tabsConfig = [
+    { id: "properties", label: "My properties", icon: Landmark },
+    { id: "cases", label: "My cases", icon: MessageSquare },
+    { id: "rewards", label: "Rewards", icon: Gift },
+    { id: "profile", label: "Profile & Security", icon: User },
+  ];
+
   if (openProp) {
     const p = dbs.properties[openProp];
-    return <CustomerPropertyDetail p={p} customer={customer} onBack={() => setOpenProp(null)} onChangePlan={(planId) => changePlan(p.id, planId)} onAgree={() => handleAgree(p.id)} onUpdate={updateProperty} onLogout={onLogout} dbs={dbs} />;
+    return <CustomerPropertyDetail p={p} customer={customer} onBack={() => setOpenProp(null)} onChangePlan={(planId) => changePlan(p.id, planId)} onAgree={() => handleAgree(p.id)} onUpdate={updateProperty} onLogout={onLogout} dbs={dbs} tabs={tabsConfig} activeTab={tab} onTabChange={(t) => { setTab(t); setOpenProp(null); }} />;
   }
   return (
     <Shell 
       title="TrustWork" subtitle={customer.name} onLogout={onLogout} onRefresh={refresh}
-      tabs={[
-        { id: "properties", label: "My properties", icon: Landmark },
-        { id: "cases", label: "My cases", icon: MessageSquare },
-        { id: "rewards", label: "Rewards", icon: Gift },
-        { id: "profile", label: "Profile & Security", icon: User },
-      ]}
+      tabs={tabsConfig}
       activeTab={tab} onTabChange={setTab}
     >
       <div className="mb-6 bg-gradient-to-r from-[var(--blueprint)] to-indigo-900 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between shadow-lg relative overflow-hidden cursor-pointer hover:shadow-xl transition-all" onClick={() => setTab('rewards')}>

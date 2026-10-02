@@ -1653,14 +1653,14 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {(v.photos || []).map((url, idx) => (
                     <a key={idx} href={url} target="_blank" rel="noreferrer" className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border hover:opacity-80 relative group flex items-center justify-center">
-                      <img src={url} className="w-full h-full object-cover" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+                      <img src={url} loading="lazy" className="w-full h-full object-cover" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
                       <div className="hidden text-xs text-gray-500 tw-mono text-center p-2 break-all">{url}</div>
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 text-white"><Camera size={24} /></div>
                     </a>
                   ))}
                   {(v.videos || []).map((url, idx) => (
                     <div key={`vid-${idx}`} className="block aspect-square bg-black rounded-lg overflow-hidden border relative group">
-                      <video src={url} controls controlsList="nodownload" className="w-full h-full object-contain" />
+                      <video src={url} preload="none" controls controlsList="nodownload" className="w-full h-full object-contain" />
                     </div>
                   ))}
                 </div>
@@ -2869,7 +2869,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
                       {(v.photos || []).map((url, idx) => (
                         <div key={idx} className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border relative group flex items-center justify-center">
-                          <img src={url} className="w-full h-full object-cover" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+                          <img src={url} loading="lazy" className="w-full h-full object-cover" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
                           <div className="hidden text-xs text-gray-500 tw-mono text-center p-2 break-all">{url}</div>
                           <button onClick={async () => {
                             if (!window.confirm("Delete this photo?")) return;
@@ -2887,7 +2887,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                       ))}
                       {(v.videos || []).map((url, idx) => (
                         <div key={`vid-${idx}`} className="block aspect-square bg-black rounded-lg overflow-hidden border relative group">
-                          <video src={url} controls controlsList="nodownload" className="w-full h-full object-contain" />
+                          <video src={url} preload="none" controls controlsList="nodownload" className="w-full h-full object-contain" />
                           <button onClick={async () => {
                             if (!window.confirm("Delete this video?")) return;
                             const newVideos = v.videos.filter((_, j) => j !== idx);

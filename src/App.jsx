@@ -1135,18 +1135,6 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
         <h1 className="tw-display font-bold text-2xl text-center mb-1">Welcome back</h1>
         <p className="tw-body text-sm text-center mb-6" style={{ opacity: 0.65 }}>Log in to your property care dashboard.</p>
 
-        <div className="flex rounded-md p-1 mb-6" style={{ background: "rgba(30,42,47,0.06)" }}>
-          {["customer", "admin"].map((r) => (
-            <button
-              key={r}
-              onClick={() => { setRole(r); setError(""); }}
-              className="flex-1 py-2 rounded-md text-sm font-semibold tw-body capitalize transition-colors"
-              style={role === r ? { background: "var(--blueprint)", color: "white" } : { color: "var(--ink)", opacity: 0.6 }}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
 
         <form onSubmit={submit} className="p-6 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
           <Field label={role === "admin" ? "Admin username" : "Customer ID"}>
@@ -1170,11 +1158,17 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
             Log in
           </button>
           {role === "admin" ? (
-            <p className="tw-mono text-[11px] mt-4 text-center" style={{ opacity: 0.5 }}>Demo admin — admin / admin123</p>
+            <div className="mt-4 text-center flex flex-col gap-2">
+              <p className="tw-mono text-[11px]" style={{ opacity: 0.5 }}>Demo admin — admin / admin123</p>
+              <button type="button" onClick={() => { setRole("customer"); setError(""); setId(""); setPassword(""); }} className="tw-body text-xs hover:underline cursor-pointer" style={{ color: "var(--blueprint)" }}>← Back to Customer Login</button>
+            </div>
           ) : (
-            <p className="tw-body text-[13px] mt-4 text-center">
-              New here? <button type="button" onClick={() => { onBack(); setTimeout(() => document.getElementById('price-calculator')?.scrollIntoView({behavior: 'smooth'}), 100); }} className="font-bold hover:underline cursor-pointer" style={{ color: "var(--brass)" }}>Get a cost estimate & sign up</button>
-            </p>
+            <div className="mt-4 text-center flex flex-col gap-4">
+              <p className="tw-body text-[13px]">
+                New here? <button type="button" onClick={() => { onBack(); setTimeout(() => document.getElementById('price-calculator')?.scrollIntoView({behavior: 'smooth'}), 100); }} className="font-bold hover:underline cursor-pointer" style={{ color: "var(--brass)" }}>Get a cost estimate & sign up</button>
+              </p>
+              <button type="button" onClick={() => { setRole("admin"); setError(""); setId(""); setPassword(""); }} className="tw-body text-xs hover:underline cursor-pointer" style={{ color: "var(--ink)", opacity: 0.5 }}>Admin Login</button>
+            </div>
           )}
         </form>
       </div>
@@ -1268,7 +1262,9 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                 <User size={14} /> Menu
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
                   {onSettings && (
                     <button onClick={() => { setMenuOpen(false); onSettings(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
                       <User size={14} /> Admin settings
@@ -1278,6 +1274,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                     <LogOut size={14} /> Log out
                   </button>
                 </div>
+                </>
               )}
             </div>
           </div>
@@ -1288,7 +1285,9 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               <Menu size={18} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
                 {/* headerAction (New Customer) in mobile menu */}
                 {headerAction && (
                   <div className="px-3 py-2 border-b border-gray-100 [&>button]:!text-[var(--ink)] [&>button]:w-full [&>button]:justify-start [&>button]:!px-1">
@@ -1321,6 +1320,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                   <LogOut size={14} /> Log out
                 </button>
               </div>
+              </>
             )}
           </div>
 
@@ -3328,8 +3328,27 @@ function AdminBillingTab({ dbs, refresh }) {
 }
 
 export default function App() {
-  const [view, setView] = useState("landing"); // landing | login | customer | admin
-  const [session, setSession] = useState(null); // { role, customerId }
+  const [view, setView] = useState(() => localStorage.getItem("tw_view") || "landing"); // landing | login | customer | admin
+  const [session, setSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tw_session");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }); // { role, customerId }
+
+  useEffect(() => {
+    localStorage.setItem("tw_view", view);
+  }, [view]);
+
+  useEffect(() => {
+    if (session) {
+      localStorage.setItem("tw_session", JSON.stringify(session));
+    } else {
+      localStorage.removeItem("tw_session");
+    }
+  }, [session]);
   const [dbs, setDbs] = useState({ admin: null, customers: {}, properties: {}, cases: {}, plans: {}, leads: {}, stats: {} });
   const [loading, setLoading] = useState(true);
 

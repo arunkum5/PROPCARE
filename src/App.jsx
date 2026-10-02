@@ -1175,6 +1175,58 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
 }
 
 /* ================= SHARED SHELL ================= */
+/* ================= FORCE PASSWORD CHANGE ================= */
+function ForcePasswordChange({ customer, onDone }) {
+  const [pw, setPw] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (pw.length < 4) return setError("Password must be at least 4 characters.");
+    if (pw !== confirm) return setError("Passwords do not match.");
+    setSaving(true);
+    try {
+      await fetch(`/api/customers/${customer.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...customer, password: pw, isFirstLogin: 0 })
+      });
+      onDone();
+    } catch {
+      setError("Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="min-h-full flex items-center justify-center px-6 py-16" style={{ background: "var(--paper)" }}>
+      <style>{`.tw-display { font-family: 'Zilla Slab', serif; } .tw-body { font-family: 'Source Sans 3', sans-serif; } .tw-mono { font-family: 'IBM Plex Mono', monospace; }`}</style>
+      <div className="w-full max-w-sm">
+        <div className="flex justify-center mb-5"><KeyRound size={48} style={{ color: "var(--brass)" }} /></div>
+        <h1 className="tw-display font-bold text-2xl text-center mb-1">Set Your Password</h1>
+        <p className="tw-body text-sm text-center mb-6" style={{ opacity: 0.65 }}>Welcome! Please set your own secure password before continuing.</p>
+        <form onSubmit={submit} className="p-6 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+          <Field label="New Password">
+            <input type="password" className={inputCls} style={inputStyle} value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Min. 4 characters" required />
+          </Field>
+          <Field label="Confirm Password">
+            <input type="password" className={inputCls} style={inputStyle} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Re-enter password" required />
+          </Field>
+          {error && <div className="flex items-center gap-2 text-sm mb-4" style={{ color: "var(--clay)" }}><AlertCircle size={15} /> {error}</div>}
+          <button type="submit" disabled={saving} className="w-full py-2.5 rounded-md font-semibold text-white tw-body disabled:opacity-50 cursor-pointer" style={{ background: "var(--blueprint)" }}>
+            {saving ? "Saving..." : "Set Password & Continue"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ================= SHARED SHELL ================= */
 function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, children, tabs, activeTab, onTabChange, headerAction, hideContact }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);

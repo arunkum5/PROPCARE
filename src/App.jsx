@@ -1658,11 +1658,11 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 text-white"><Camera size={24} /></div>
                     </a>
                   ))}
-                  {v.video && (
-                    <a href={v.video} target="_blank" rel="noreferrer" className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border flex items-center justify-center hover:opacity-80">
-                      <div className="text-center p-2"><Video size={24} className="mx-auto mb-1 text-gray-500" /><div className="text-xs text-gray-500 tw-body">Play Video</div></div>
-                    </a>
-                  )}
+                  {(v.videos || []).map((url, idx) => (
+                    <div key={`vid-${idx}`} className="block aspect-square bg-black rounded-lg overflow-hidden border relative group">
+                      <video src={url} controls controlsList="nodownload" className="w-full h-full object-contain" />
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

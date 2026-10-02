@@ -2868,15 +2868,19 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
         {[
-          { label: "Customers", value: customers.length, icon: Users },
-          { label: "Properties", value: properties.length, icon: Landmark },
-          { label: "Open cases", value: cases.filter((c) => c.status !== "resolved").length, icon: MessageSquare },
+          { label: "Customers", value: customers.length, icon: Users, tabId: "customers" },
+          { label: "Properties", value: properties.length, icon: Landmark, tabId: "properties" },
+          { label: "Open cases", value: cases.filter((c) => c.status !== "resolved").length, icon: MessageSquare, tabId: "cases" },
         ].map((s) => (
-          <div key={s.label} className="p-4 rounded-lg bg-white transition-all hover:shadow-lg hover:-translate-y-1" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-            <s.icon size={16} style={{ color: "var(--brass)" }} />
-            <div className="tw-display font-bold text-2xl mt-2">{s.value}</div>
-            <div className="tw-body text-sm font-bold uppercase tracking-wide mt-0.5" style={{ color: "var(--ink)" }}>{s.label}</div>
-          </div>
+          <button key={s.label} onClick={() => setTab(s.tabId)} className="p-4 rounded-lg bg-white flex items-center justify-between cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 w-full text-left" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full" style={{ background: "rgba(184,134,59,0.1)" }}>
+                <s.icon size={16} style={{ color: "var(--brass)" }} />
+              </div>
+              <div className="tw-body text-sm font-bold uppercase tracking-wide" style={{ color: "var(--ink)" }}>{s.label}</div>
+            </div>
+            <div className="tw-display font-bold text-2xl">{s.value}</div>
+          </button>
         ))}
       </div>
 

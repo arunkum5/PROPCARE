@@ -345,12 +345,26 @@ app.post('/api/upload', async (c) => {
 app.get('/api/media/:key', async (c) => {
   const bucket = c.env.MEDIA_BUCKET
   const key = c.req.param('key')
-  const object = await bucket.get(key)
+  
+  const headers = new Headers()
+  const range = c.req.header('range')
+  
+  const object = await bucket.get(key, range ? { range: c.req.header('range') } : {})
   
   if (!object) return c.text('Not found', 404)
   
-  c.header('Content-Type', object.httpMetadata?.contentType || 'application/octet-stream')
-  return c.body(object.body)
+  object.writeHttpMetadata(headers)
+  headers.set('etag', object.httpEtag)
+  headers.set('Accept-Ranges', 'bytes')
+  
+  if (object.range) {
+    headers.set('content-range', `bytes ${object.range.offset}-${object.range.offset + object.range.length - 1}/${object.size}`)
+    headers.set('content-length', object.range.length.toString())
+    return new Response(object.body, { status: 206, headers })
+  }
+  
+  headers.set('content-length', object.size.toString())
+  return new Response(object.body, { status: 200, headers })
 })
 
 

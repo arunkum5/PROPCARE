@@ -325,8 +325,34 @@ app.post('/api/visits', async (c) => {
 // PUT /api/visits/:id - Update visit (e.g. photos/videos)
 app.put('/api/visits/:id', async (c) => {
   const db = c.env.DB
+  const bucket = c.env.MEDIA_BUCKET
   const id = c.req.param('id')
   const body = await c.req.json()
+  
+  // Fetch existing to find which media files were removed
+  const { results: existing } = await db.prepare('SELECT photos, video FROM visits WHERE id = ?').bind(id).all()
+  if (existing.length > 0) {
+    const oldV = existing[0];
+    let oldPhotos = [], oldVideos = [];
+    try { oldPhotos = JSON.parse(oldV.photos || '[]'); } catch(e){}
+    try { oldVideos = JSON.parse(oldV.video || '[]'); } catch(e){}
+    
+    const newPhotos = body.photos || [];
+    const newVideos = body.videos || [];
+    
+    // Find missing ones
+    const removedPhotos = oldPhotos.filter(url => !newPhotos.includes(url));
+    const removedVideos = oldVideos.filter(url => !newVideos.includes(url));
+    const toDelete = [...removedPhotos, ...removedVideos];
+    
+    for (const url of toDelete) {
+      if (typeof url === 'string' && url.includes('/api/media/')) {
+        const key = url.split('/api/media/')[1];
+        if (key) await bucket.delete(key);
+      }
+    }
+  }
+
   await db.prepare('UPDATE visits SET photos = ?, video = ? WHERE id = ?')
     .bind(JSON.stringify(body.photos || []), JSON.stringify(body.videos || []), id)
     .run()

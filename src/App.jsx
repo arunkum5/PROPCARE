@@ -1707,7 +1707,9 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   const [showAdd, setShowAdd] = useState(false);
   const [openProp, setOpenProp] = useState(null);
   const [caseForm, setCaseForm] = useState({ subject: "", message: "", propertyId: "" });
-  const [profileForm, setProfileForm] = useState({ ...customer, password: customer.password || "" });
+  const [profileForm, setProfileForm] = useState({ ...customer });
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
 
   const myProps = Object.values(dbs.properties || {}).filter((p) => p.customerId === customer.id);
@@ -1815,6 +1817,15 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       {tab === "profile" && (
         <form onSubmit={async (e) => {
           e.preventDefault();
+          if (newPassword) {
+            if (oldPassword !== customer.password) {
+              return alert("Old password is incorrect!");
+            }
+            profileForm.password = newPassword;
+          } else {
+            profileForm.password = customer.password;
+          }
+          
           setSavingProfile(true);
           try {
             await fetch(`/api/customers/${customer.id}`, {
@@ -1835,8 +1846,13 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
             <Field label="Full name"><input className={inputCls} style={inputStyle} value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} required /></Field>
             <Field label="Phone"><input className={inputCls} style={inputStyle} value={profileForm.phone} onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})} required /></Field>
             <Field label="Email"><input className={inputCls} style={inputStyle} value={profileForm.email || ""} onChange={(e) => setProfileForm({...profileForm, email: e.target.value})} /></Field>
-            <Field label="Change Password"><input className={inputCls} style={inputStyle} value={profileForm.password} onChange={(e) => setProfileForm({...profileForm, password: e.target.value})} placeholder="New password" required /></Field>
             <Field label="Relationship to property"><input className={inputCls} style={inputStyle} defaultValue="Owner" disabled /></Field>
+            
+            <div className="sm:col-span-2 mt-4 tw-display font-bold text-lg border-b pb-2" style={{ borderColor: "rgba(30,42,47,0.1)" }}>Change Password (Optional)</div>
+            <Field label="Old Password"><input type="password" className={inputCls} style={inputStyle} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="Current password" /></Field>
+            <Field label="New Password"><input type="password" className={inputCls} style={inputStyle} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password" /></Field>
+            
+            <div className="sm:col-span-2 mt-4 tw-display font-bold text-lg border-b pb-2" style={{ borderColor: "rgba(30,42,47,0.1)" }}>Other Details</div>
             <Field label="Aadhaar"><input className={inputCls} style={inputStyle} placeholder="xxxx xxxx xxxx" disabled /></Field>
             <Field label="PAN"><input className={inputCls} style={inputStyle} placeholder="ABCDE1234F" disabled /></Field>
             <div className="sm:col-span-2">

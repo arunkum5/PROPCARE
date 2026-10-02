@@ -1711,6 +1711,8 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
 
   const myProps = Object.values(dbs.properties || {}).filter((p) => p.customerId === customer.id);
   const myCases = Object.values(dbs.cases || {}).filter((c) => c.customerId === customer.id)
@@ -1817,9 +1819,11 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       {tab === "profile" && (
         <form onSubmit={async (e) => {
           e.preventDefault();
+          setProfileError("");
+          setProfileSuccess("");
           if (newPassword) {
             if (oldPassword !== customer.password) {
-              return alert("Old password is incorrect!");
+              return setProfileError("Old password is incorrect!");
             }
             profileForm.password = newPassword;
           } else {
@@ -1834,9 +1838,11 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
               body: JSON.stringify(profileForm)
             });
             await refresh();
-            alert("Profile updated successfully!");
+            setProfileSuccess("Profile updated successfully!");
+            setOldPassword("");
+            setNewPassword("");
           } catch (e) {
-            alert("Failed to update profile.");
+            setProfileError("Failed to update profile.");
           } finally {
             setSavingProfile(false);
           }
@@ -1859,7 +1865,11 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
               <Field label="Current residential address"><textarea className={inputCls} style={inputStyle} rows={3} placeholder="Full address..." disabled /></Field>
             </div>
           </div>
-          <button type="submit" disabled={savingProfile} className="mt-4 py-2.5 px-6 rounded-md font-semibold text-white tw-body disabled:opacity-50" style={{ background: "var(--blueprint)" }}>
+          
+          {profileError && <div className="mt-4 flex items-center gap-2 text-sm text-red-600"><AlertCircle size={15} /> {profileError}</div>}
+          {profileSuccess && <div className="mt-4 flex items-center gap-2 text-sm text-green-600"><CheckCircle2 size={15} /> {profileSuccess}</div>}
+          
+          <button type="submit" disabled={savingProfile} className="mt-4 py-2.5 px-6 rounded-md font-semibold text-white tw-body disabled:opacity-50 cursor-pointer" style={{ background: "var(--blueprint)" }}>
             {savingProfile ? "Saving..." : "Save Profile"}
           </button>
         </form>

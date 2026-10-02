@@ -2844,15 +2844,65 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
           <p className="tw-body text-sm" style={{ opacity: 0.55 }}>Nothing logged yet.</p>
         ) : (
           <div className="space-y-3">
-            {[...p.visits].reverse().map((v, i) => (
-              <div key={i} className="p-4 rounded-lg bg-white flex gap-3" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-                <Seal size={32} />
-                <div>
-                  <div className="tw-body text-sm font-semibold">{v.kind === "development" ? "Development update" : "Inspection visit"} <span className="tw-mono text-[11px] font-normal" style={{ opacity: 0.5 }}>· {fmtDate(v.date)}</span></div>
-                  <p className="tw-body text-sm mt-1" style={{ opacity: 0.72 }}>{v.notes}</p>
+            {[...p.visits].reverse().map((v, i) => {
+              const origIndex = p.visits.length - 1 - i;
+              return (
+                <div key={origIndex} className="p-4 rounded-lg bg-white flex flex-col gap-3" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex gap-3">
+                      <Seal size={32} />
+                      <div>
+                        <div className="tw-body text-sm font-semibold">{v.kind === "development" ? "Development update" : "Inspection visit"} <span className="tw-mono text-[11px] font-normal" style={{ opacity: 0.5 }}>· {fmtDate(v.date)}</span></div>
+                        <p className="tw-body text-sm mt-1" style={{ opacity: 0.72 }}>{v.notes}</p>
+                      </div>
+                    </div>
+                    <button onClick={async () => {
+                      if (!window.confirm("Are you sure you want to delete this visit?")) return;
+                      const newVisits = [...p.visits];
+                      newVisits.splice(origIndex, 1);
+                      await fetch(`/api/properties/${p.id}`, { method: 'PUT', body: JSON.stringify({ ...p, visits: newVisits }) });
+                      refresh();
+                    }} className="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors flex-shrink-0" title="Delete visit">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                  
+                  {(v.photos?.length > 0 || v.videos?.length > 0) && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+                      {(v.photos || []).map((url, idx) => (
+                        <div key={idx} className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border relative group flex items-center justify-center">
+                          <img src={url} className="w-full h-full object-cover" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+                          <div className="hidden text-xs text-gray-500 tw-mono text-center p-2 break-all">{url}</div>
+                          <button onClick={async () => {
+                            if (!window.confirm("Delete this photo?")) return;
+                            const newVisits = [...p.visits];
+                            newVisits[origIndex].photos = newVisits[origIndex].photos.filter((_, j) => j !== idx);
+                            await fetch(`/api/properties/${p.id}`, { method: 'PUT', body: JSON.stringify({ ...p, visits: newVisits }) });
+                            refresh();
+                          }} className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-md hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      {(v.videos || []).map((url, idx) => (
+                        <div key={`vid-${idx}`} className="block aspect-square bg-black rounded-lg overflow-hidden border relative group">
+                          <video src={url} controls controlsList="nodownload" className="w-full h-full object-contain" />
+                          <button onClick={async () => {
+                            if (!window.confirm("Delete this video?")) return;
+                            const newVisits = [...p.visits];
+                            newVisits[origIndex].videos = newVisits[origIndex].videos.filter((_, j) => j !== idx);
+                            await fetch(`/api/properties/${p.id}`, { method: 'PUT', body: JSON.stringify({ ...p, visits: newVisits }) });
+                            refresh();
+                          }} className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-md hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Shell>
@@ -3165,7 +3215,12 @@ function AddVisitForm({ onAdd, customerId }) {
                     }}
                   />
                   {file ? (
-                    <span className="tw-body text-xs font-medium truncate flex-1" style={{ color: "var(--moss)" }}>✓ {file.name}</span>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-sm overflow-hidden flex-shrink-0 bg-gray-100">
+                        <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="preview" />
+                      </div>
+                      <span className="tw-body text-xs font-medium truncate" style={{ color: "var(--moss)" }}>{file.name}</span>
+                    </div>
                   ) : (
                     <span className="tw-body text-xs" style={{ opacity: 0.45 }}>Choose photo…</span>
                   )}
@@ -3209,7 +3264,12 @@ function AddVisitForm({ onAdd, customerId }) {
                     }}
                   />
                   {file ? (
-                    <span className="tw-body text-xs font-medium truncate flex-1" style={{ color: "var(--moss)" }}>✓ {file.name}</span>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-sm overflow-hidden flex-shrink-0 bg-black">
+                        <video src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                      </div>
+                      <span className="tw-body text-xs font-medium truncate" style={{ color: "var(--moss)" }}>{file.name}</span>
+                    </div>
                   ) : (
                     <span className="tw-body text-xs" style={{ opacity: 0.45 }}>Choose video…</span>
                   )}

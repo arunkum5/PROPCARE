@@ -334,8 +334,19 @@ app.post('/api/upload', async (c) => {
   const prefix = customerId ? `${customerId}-` : '';
   const key = `${prefix}${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
   
+  let cType = file.type;
+  if (!cType || cType === 'application/octet-stream' || cType === '') {
+    const ext = key.toLowerCase();
+    if (ext.endsWith('.mp4')) cType = 'video/mp4';
+    else if (ext.endsWith('.mov')) cType = 'video/quicktime';
+    else if (ext.endsWith('.webm')) cType = 'video/webm';
+    else if (ext.endsWith('.jpg') || ext.endsWith('.jpeg')) cType = 'image/jpeg';
+    else if (ext.endsWith('.png')) cType = 'image/png';
+    else cType = 'application/octet-stream';
+  }
+  
   await bucket.put(key, await file.arrayBuffer(), {
-    httpMetadata: { contentType: file.type }
+    httpMetadata: { contentType: cType }
   })
   
   return c.json({ url: `/api/media/${key}` })
@@ -354,6 +365,19 @@ app.get('/api/media/:key', async (c) => {
   if (!object) return c.text('Not found', 404)
   
   object.writeHttpMetadata(headers)
+  
+  // Fallback if R2 metadata doesn't have a specific content type
+  const currentType = headers.get('content-type');
+  if (!currentType || currentType === 'application/octet-stream' || currentType === '') {
+    const ext = key.toLowerCase();
+    if (ext.endsWith('.mp4')) headers.set('content-type', 'video/mp4');
+    else if (ext.endsWith('.mov')) headers.set('content-type', 'video/quicktime');
+    else if (ext.endsWith('.webm')) headers.set('content-type', 'video/webm');
+    else if (ext.endsWith('.jpg') || ext.endsWith('.jpeg')) headers.set('content-type', 'image/jpeg');
+    else if (ext.endsWith('.png')) headers.set('content-type', 'image/png');
+    else headers.set('content-type', 'application/octet-stream');
+  }
+  
   headers.set('etag', object.httpEtag)
   headers.set('Accept-Ranges', 'bytes')
   

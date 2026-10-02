@@ -7,7 +7,8 @@ const app = new Hono()
 app.get('/api/data', async (c) => {
   const db = c.env.DB
   
-  // Track page visit
+  // Auto-migrate: add isFirstLogin column if missing
+  try { await db.prepare('ALTER TABLE customers ADD COLUMN isFirstLogin INTEGER DEFAULT 1').run() } catch(e) {}
   await db.prepare('INSERT INTO stats (key, value) VALUES (?, 1) ON CONFLICT(key) DO UPDATE SET value = value + 1').bind('page_visits').run()
   const { results: statsData } = await db.prepare('SELECT value FROM stats WHERE key = ?').bind('page_visits').all()
   const page_visits = statsData[0]?.value || 1;
@@ -96,16 +97,14 @@ app.put('/api/leads/:id', async (c) => {
     const lead = leads[0]
     
     if (lead && lead.status !== 'paid') {
-      // 1. Generate ID (TW + padded count)
-      const { results: counts } = await db.prepare('SELECT COUNT(*) as count FROM customers').all()
-      const cCount = counts[0].count + 1
-      const customerId = `TW${cCount.toString().padStart(2, '0')}` // TW01, TW02, etc.
+      // 1. Use phone as customer ID
+      const customerId = lead.phone
       
-      // 2. Generate 4 digit PIN
+      // 2. Generate 4-digit PIN
       const password = Math.floor(1000 + Math.random() * 9000).toString()
       
-      // 3. Create Customer
-      await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+      // 3. Create Customer (isFirstLogin = 1 so they must set password)
+      await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt, isFirstLogin) VALUES (?, ?, ?, ?, ?, ?, 1)')
         .bind(customerId, lead.name, lead.phone, '', password, new Date().toISOString())
         .run()
         
@@ -185,8 +184,8 @@ app.delete('/api/plans/:id', async (c) => {
 app.post('/api/customers', async (c) => {
   const db = c.env.DB
   const body = await c.req.json()
-  await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind(body.id, body.name, body.phone, body.email, body.password, body.createdAt)
+  await db.prepare('INSERT INTO customers (id, name, phone, email, password, createdAt, isFirstLogin) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(body.id, body.name, body.phone, body.email || '', body.password, body.createdAt, body.isFirstLogin ?? 1)
     .run()
   return c.json({ success: true })
 })
@@ -196,8 +195,8 @@ app.put('/api/customers/:id', async (c) => {
   const db = c.env.DB
   const id = c.req.param('id')
   const body = await c.req.json()
-  await db.prepare('UPDATE customers SET name = ?, phone = ?, email = ?, password = ? WHERE id = ?')
-    .bind(body.name, body.phone, body.email, body.password, id)
+  await db.prepare('UPDATE customers SET name = ?, phone = ?, email = ?, password = ?, isFirstLogin = ? WHERE id = ?')
+    .bind(body.name, body.phone, body.email || '', body.password, body.isFirstLogin ?? 0, id)
     .run()
   return c.json({ success: true })
 })

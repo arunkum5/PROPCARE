@@ -360,7 +360,23 @@ app.get('/api/media/:key', async (c) => {
   const headers = new Headers()
   const range = c.req.header('range')
   
-  const object = await bucket.get(key, range ? { range: c.req.header('range') } : {})
+  let rangeConfig = {};
+  if (range) {
+    const match = range.match(/bytes=(\d*)-(\d*)/);
+    if (match) {
+      const start = match[1] ? parseInt(match[1], 10) : undefined;
+      const end = match[2] ? parseInt(match[2], 10) : undefined;
+      if (start !== undefined && end !== undefined) {
+        rangeConfig = { range: { offset: start, length: end - start + 1 } };
+      } else if (start !== undefined) {
+        rangeConfig = { range: { offset: start } };
+      } else if (end !== undefined) {
+        rangeConfig = { range: { suffix: end } };
+      }
+    }
+  }
+  
+  const object = await bucket.get(key, rangeConfig)
   
   if (!object) return c.text('Not found', 404)
   
@@ -375,6 +391,7 @@ app.get('/api/media/:key', async (c) => {
     else if (ext.endsWith('.webm')) headers.set('content-type', 'video/webm');
     else if (ext.endsWith('.jpg') || ext.endsWith('.jpeg')) headers.set('content-type', 'image/jpeg');
     else if (ext.endsWith('.png')) headers.set('content-type', 'image/png');
+    else if (ext.endsWith('.webp')) headers.set('content-type', 'image/webp');
     else headers.set('content-type', 'application/octet-stream');
   }
   

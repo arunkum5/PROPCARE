@@ -565,10 +565,11 @@ function Landing({ onLogin, dbs, refresh }) {
             await refresh(); // Refresh dbs so login works immediately
             setLeadMsg({ 
               type: 'success', 
-              text: `Payment Successful! 🎉 Welcome to TrustWork.\n\nLogin with your Phone: ${data.credentials.id}\nTemp Password: ${data.credentials.password}\n\nPlease take a screenshot, then click "Login" at the top right!` 
+              text: `Payment Successful! 🎉 Welcome to TrustWork.\n\nLogin with your Phone: ${data.credentials.id}\nTemp Password: ${data.credentials.password}\n\nPlease take a screenshot or write this down, then click below to login.` 
             });
             setTimeout(() => {
               setCheckoutModal(null);
+              setLeadMsg(null);
             }, 60000); // Give them 60 seconds to screenshot
           } else {
             setLeadMsg({ type: 'success', text: "Payment Successful! We will contact you to begin onboarding." });
@@ -953,13 +954,13 @@ function Landing({ onLogin, dbs, refresh }) {
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-4 sm:mt-0">
                 <button 
-                  onClick={() => setCheckoutModal('callback')}
+                  onClick={() => { setLeadMsg(null); setCheckoutModal('callback'); }}
                   className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center gap-2 whitespace-nowrap border-2 border-white/20 hover:bg-white/10"
                 >
                   Request Call Back
                 </button>
                 <button 
-                  onClick={() => setCheckoutModal('payment')}
+                  onClick={() => { setLeadMsg(null); setCheckoutModal('payment'); }}
                   className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center gap-2 whitespace-nowrap shadow-lg" 
                   style={{ background: "var(--brass)", color: "var(--blueprint)" }}
                 >
@@ -1014,7 +1015,7 @@ function Landing({ onLogin, dbs, refresh }) {
       {checkoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-fade-in-up">
-            <button onClick={() => setCheckoutModal(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={20} /></button>
+            <button onClick={() => { setCheckoutModal(null); setLeadMsg(null); }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={20} /></button>
             <div className="tw-display font-bold text-xl mb-1 text-[var(--ink)]">
               {checkoutModal === 'payment' ? 'Secure Your Property' : 'Request Call Back'}
             </div>
@@ -1025,8 +1026,15 @@ function Landing({ onLogin, dbs, refresh }) {
             </p>
             
             {leadMsg && (
-              <div className={`p-4 mb-6 rounded-lg text-sm font-semibold flex items-center justify-center text-center whitespace-pre-wrap leading-relaxed ${leadMsg.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                {leadMsg.text}
+              <div className="flex flex-col items-center">
+                <div className={`p-4 w-full mb-6 rounded-lg text-sm font-semibold flex items-center justify-center text-center whitespace-pre-wrap leading-relaxed ${leadMsg.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {leadMsg.text}
+                </div>
+                {leadMsg.type === 'success' && leadMsg.text.includes("Temp Password") && (
+                  <button onClick={() => { setCheckoutModal(null); setLeadMsg(null); onLogin(); }} className="w-full py-3.5 rounded-lg font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center shadow-lg mb-4" style={{ background: "var(--blueprint)", color: "white" }}>
+                    Proceed to Login
+                  </button>
+                )}
               </div>
             )}
 

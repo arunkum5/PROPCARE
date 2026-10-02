@@ -1307,25 +1307,31 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
               </div>
             )}
 
-            {/* Menu (settings + logout) */}
+            {/* Menu (settings + logout) — show plain logout if no settings */}
             <div className="relative">
-              <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "#F6F1E7" }}>
-                <User size={14} /> Menu
-              </button>
-              {menuOpen && (
+              {onSettings ? (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
-                  {onSettings && (
-                    <button onClick={() => { setMenuOpen(false); onSettings(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
-                      <User size={14} /> Admin settings
-                    </button>
-                  )}
-                  <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
-                    <LogOut size={14} /> Log out
+                  <button onClick={() => setMenuOpen(!menuOpen)} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "#F6F1E7" }}>
+                    <User size={14} /> Menu
                   </button>
-                </div>
+                  {menuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl py-1 z-50 border border-gray-100">
+                        <button onClick={() => { setMenuOpen(false); onSettings(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                          <User size={14} /> Admin settings
+                        </button>
+                        <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer transition-colors" style={{ color: "var(--ink)" }}>
+                          <LogOut size={14} /> Log out
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </>
+              ) : (
+                <button onClick={onLogout} className="tw-body flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "#F6F1E7" }}>
+                  <LogOut size={14} /> Log out
+                </button>
               )}
             </div>
           </div>
@@ -1843,7 +1849,6 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
     <Shell 
       title="TrustWork" subtitle={customer.name} onLogout={onLogout} onRefresh={refresh}
       tabs={[
-        { id: "profile", label: "Profile", icon: User },
         { id: "properties", label: "My properties", icon: Landmark },
         { id: "cases", label: "My cases", icon: MessageSquare },
         { id: "rewards", label: "Rewards", icon: Gift },

@@ -1114,11 +1114,10 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
         setError("Incorrect admin username or password.");
       }
     } else {
-      const cust = Object.values(dbs.customers || {}).find(
-        (c) => c.id.toLowerCase() === id.trim().toLowerCase() && c.password === password
-      );
-      if (cust) onCustomerLogin(cust);
-      else setError("We couldn't match that customer ID and password.");
+      // Phone is now the ID — look up directly
+      const cust = dbs.customers[id.trim()];
+      if (cust && cust.password === password) onCustomerLogin(cust);
+      else setError("We couldn't match that phone number and password.");
     }
   };
 
@@ -1137,9 +1136,9 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
 
 
         <form onSubmit={submit} className="p-6 rounded-lg bg-white" style={{ border: "1px solid rgba(30,42,47,0.1)" }}>
-          <Field label={role === "admin" ? "Admin username" : "Customer ID"}>
+          <Field label={role === "admin" ? "Admin username" : "Phone Number"}>
             <input className={inputCls} style={inputStyle} value={id} onChange={(e) => setId(e.target.value)}
-              placeholder={role === "admin" ? "admin" : "TW01"} required />
+              placeholder={role === "admin" ? "admin" : "9353010107"} required />
           </Field>
           <Field label="Password">
             <div className="relative flex items-center">
@@ -2300,6 +2299,10 @@ function AdminCouponsTab({ dbs }) {
     e.preventDefault();
     setErrorMsg('');
     if (!form.code || !form.value) return;
+    if (form.type === 'percentage' && (Number(form.value) > 100 || Number(form.value) <= 0)) {
+      setErrorMsg('Percentage discount must be between 1 and 100.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/coupons', {
@@ -2337,7 +2340,7 @@ function AdminCouponsTab({ dbs }) {
           <Field label="Coupon Code" required><input className={inputCls} style={inputStyle} value={form.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase()})} placeholder="e.g. SUMMER20" required /></Field>
           <div className="grid grid-cols-2 gap-2">
             <Field label="Type"><select className={inputCls} style={inputStyle} value={form.type} onChange={e => setForm({...form, type: e.target.value})}><option value="percentage">% Off</option><option value="fixed">Flat ₹ Off</option></select></Field>
-            <Field label="Value" required><input type="number" className={inputCls} style={inputStyle} value={form.value} onChange={e => setForm({...form, value: e.target.value})} placeholder="e.g. 20" required /></Field>
+            <Field label="Value" required><input type="number" className={inputCls} style={inputStyle} value={form.value} onChange={e => setForm({...form, value: e.target.value})} placeholder={form.type === 'percentage' ? 'e.g. 20 (max 100)' : 'e.g. 500'} min="1" max={form.type === 'percentage' ? 100 : undefined} required /></Field>
           </div>
           <Field label="Tied to Phone Number (Optional)"><input className={inputCls} style={inputStyle} value={form.tiedToPhone} onChange={e => setForm({...form, tiedToPhone: e.target.value})} placeholder="e.g. 9448610107" /></Field>
           <Field label="Expires At (Optional)">
@@ -2622,12 +2625,14 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
   );
 
   const addCustomer = async (form) => {
-    const tempPassword = form.password || Math.random().toString(36).slice(2, 8);
-    const newCust = { id: form.id, name: form.name, phone: form.phone, email: form.email, password: tempPassword, createdAt: todayISO() };
-    await fetch('/api/customers', { method: 'POST', body: JSON.stringify(newCust) });
+    // Phone is the ID now
+    const custId = form.phone.trim();
+    const tempPassword = form.password || Math.floor(1000 + Math.random() * 9000).toString();
+    const newCust = { id: custId, name: form.name, phone: form.phone, email: form.email || '', password: tempPassword, createdAt: todayISO(), isFirstLogin: 1 };
+    await fetch('/api/customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newCust) });
     refresh();
     setShowAddCustomer(false);
-    setNewCreds({ id: form.id, password: tempPassword, name: form.name });
+    setNewCreds({ id: custId, password: tempPassword, name: form.name });
   };
 
   const updateCustomer = async (form) => {
@@ -3182,15 +3187,9 @@ function CaseRow({ c, customer, onRespond }) {
   );
 }
 
-function AddCustomerModal({ onClose, onSave, dbs }) {
-  const twIds = Object.keys(dbs?.customers || {})
-    .filter(id => id.startsWith('TW'))
-    .map(id => parseInt(id.replace('TW', ''), 10))
-    .filter(n => !isNaN(n));
-  const maxN = twIds.length > 0 ? Math.max(...twIds) : 0;
-  const defaultId = `TW${pad(maxN + 1, 2)}`;
-  const [form, setForm] = useState({ id: defaultId, name: "", phone: "", email: "", password: "" });
-  const submit = (e) => { e.preventDefault(); if (!form.name.trim() || !form.id.trim()) return; onSave(form); };
+function AddCustomerModal({ onClose, onSave }) {
+  const [form, setForm] = useState({ name: "", phone: "", email: "" });
+  const submit = (e) => { e.preventDefault(); if (!form.name.trim() || !form.phone.trim()) return; onSave(form); };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(22,50,63,0.5)" }}>
       <div className="w-full max-w-md rounded-lg p-6 max-h-screen overflow-y-auto" style={{ background: "var(--paper)" }}>
@@ -3199,11 +3198,10 @@ function AddCustomerModal({ onClose, onSave, dbs }) {
           <button onClick={onClose} className="cursor-pointer hover:opacity-70 transition-opacity"><X size={18} /></button>
         </div>
         <form onSubmit={submit}>
-          <Field label="Customer ID" required><input className={inputCls} style={inputStyle} value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} required /></Field>
           <Field label="Full name" required><input className={inputCls} style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></Field>
-          <Field label="Phone" required><input className={inputCls} style={inputStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required /></Field>
-          <Field label="Email"><input className={inputCls} style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
-          <Field label="Password (leave blank for random)"><input className={inputCls} style={inputStyle} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Auto-generate" /></Field>
+          <Field label="Phone Number (used as login ID)" required><input className={inputCls} style={inputStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="9353010107" required /></Field>
+          <Field label="Email (optional)"><input className={inputCls} style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
+          <p className="tw-mono text-xs mb-4" style={{ opacity: 0.5 }}>A 4-digit temp password will be auto-generated. Customer must set their own on first login.</p>
           <button type="submit" className="w-full mt-2 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "var(--blueprint)" }}>
             Create account
           </button>
@@ -3249,11 +3247,12 @@ function CredsModal({ creds, onClose }) {
       <div className="w-full max-w-sm rounded-lg p-6 text-center" style={{ background: "var(--paper)" }}>
         <div className="flex justify-center mb-3"><Seal size={44} /></div>
         <div className="tw-display font-bold text-lg mb-1">Account created</div>
-        <p className="tw-body text-sm mb-5" style={{ opacity: 0.65 }}>Share these credentials with {creds.name}.</p>
+        <p className="tw-body text-sm mb-5" style={{ opacity: 0.65 }}>Share these details with {creds.name} via WhatsApp.</p>
         <div className="p-4 rounded-md space-y-2 text-left" style={{ background: "white", border: "1px solid rgba(30,42,47,0.1)" }}>
-          <div className="flex items-center gap-2 tw-mono text-sm"><KeyRound size={14} style={{ color: "var(--brass)" }} /> ID: <b>{creds.id}</b></div>
-          <div className="flex items-center gap-2 tw-mono text-sm"><KeyRound size={14} style={{ color: "var(--brass)" }} /> Password: <b>{creds.password}</b></div>
+          <div className="flex items-center gap-2 tw-mono text-sm"><KeyRound size={14} style={{ color: "var(--brass)" }} /> Login: <b>{creds.id}</b> (phone number)</div>
+          <div className="flex items-center gap-2 tw-mono text-sm"><KeyRound size={14} style={{ color: "var(--brass)" }} /> Temp Password: <b>{creds.password}</b></div>
         </div>
+        <p className="tw-body text-xs mt-3 text-center" style={{ opacity: 0.55 }}>They will be asked to set their own password on first login.</p>
         <button onClick={onClose} className="w-full mt-5 py-2.5 rounded-md font-semibold text-white tw-body" style={{ background: "var(--blueprint)" }}>Done</button>
       </div>
     </div>
@@ -3437,7 +3436,21 @@ export default function App() {
           onBack={() => setView("landing")}
           dbs={dbs}
           onAdminLogin={() => { setSession({ role: "admin" }); setView("admin"); }}
-          onCustomerLogin={(cust) => { setSession({ role: "customer", customerId: cust.id }); setView("customer"); }}
+          onCustomerLogin={(cust) => {
+            if (cust.isFirstLogin) {
+              setSession({ role: "customer", customerId: cust.id });
+              setView("force_password");
+            } else {
+              setSession({ role: "customer", customerId: cust.id });
+              setView("customer");
+            }
+          }}
+        />
+      )}
+      {view === "force_password" && session && dbs.customers[session.customerId] && (
+        <ForcePasswordChange
+          customer={dbs.customers[session.customerId]}
+          onDone={async () => { await refresh(); setView("customer"); }}
         />
       )}
       {view === "customer" && session && dbs.customers[session.customerId] && (

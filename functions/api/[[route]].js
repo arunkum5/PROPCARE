@@ -201,6 +201,23 @@ app.put('/api/customers/:id', async (c) => {
   return c.json({ success: true })
 })
 
+// DELETE /api/customers/:id - Delete customer and their properties/visits/cases
+app.delete('/api/customers/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  
+  // Clean up all related properties, visits, etc.
+  const { results: properties } = await db.prepare('SELECT id FROM properties WHERE customerId = ?').bind(id).all()
+  for (const p of properties) {
+    await db.prepare('DELETE FROM visits WHERE propertyId = ?').bind(p.id).run()
+    await db.prepare('DELETE FROM properties WHERE id = ?').bind(p.id).run()
+  }
+  await db.prepare('DELETE FROM cases WHERE customerId = ?').bind(id).run()
+  await db.prepare('DELETE FROM customers WHERE id = ?').bind(id).run()
+  
+  return c.json({ success: true })
+})
+
 async function deletePropertyMedia(db, bucket, propertyId) {
   const { results: visits } = await db.prepare('SELECT photos, video FROM visits WHERE propertyId = ?').bind(propertyId).all()
   for (const v of visits) {

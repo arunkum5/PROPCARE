@@ -92,7 +92,7 @@ function Chatbot() {
     { label: 'What we do?', response: 'We act as a highly professional proxy for NRI or out-of-town property owners. We provide absolute peace of mind by acting as your trusted eyes and ears on the ground.' },
     { label: 'Our Experience', response: 'We have 10+ Years of experience, with 28+ properties currently handling, and a dedicated team of 20+ field crew members.' },
     { label: 'Plans & Pricing', response: 'Our comprehensive property care plans start from just ₹1 / Sq.ft / Month.' },
-    { label: 'How to register?', response: 'To register your property, simply Contact or WhatsApp us at +91 9353010107 or +91 7676740107 and our team will get you onboarded instantly!' },
+    { label: 'How to register?', response: 'To register your property, simply Contact or WhatsApp us at +91 9353010107 and our team will get you onboarded instantly!' },
     { label: 'Is my property secure?', response: 'Yes! We log all visits and provide time-stamped photos and videos of your property, which you can view anytime in your secure customer dashboard.' },
     { label: 'Can I request an extra visit?', response: 'Absolutely. You can request an on-demand visit directly from your dashboard at any time at a discounted rate.' },
     { label: 'How do payments work?', response: 'We support secure online payments via Razorpay. You can track your monthly or annual billing cycles and view past payments in your dashboard.' }
@@ -665,8 +665,6 @@ function Landing({ onLogin, dbs, refresh }) {
           </div>
           <div className="hidden sm:flex items-center gap-3 tw-body font-semibold text-sm" style={{ color: "var(--ink)" }}>
             <a href="tel:+919353010107" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"><Phone size={15} /> +91 9353010107</a>
-            <span style={{ opacity: 0.3 }}>|</span>
-            <a href="tel:+917676740107" className="hover:opacity-70 transition-opacity">+91 7676740107</a>
           </div>
           <button
             onClick={onLogin}
@@ -984,7 +982,7 @@ function Landing({ onLogin, dbs, refresh }) {
           </div>
           
           <div className="tw-mono text-xs flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3" style={{ opacity: 0.75 }}>
-             <div className="flex items-center gap-1.5"><Phone size={11} /> +91 9353010107, +91 7676740107</div>
+             <div className="flex items-center gap-1.5"><Phone size={11} /> +91 9353010107</div>
              <div className="hidden sm:block" style={{ opacity: 0.3 }}>|</div>
              <div className="flex items-center gap-1.5"><Mail size={11} /> <a href="mailto:care@trustwork.co.in" className="hover:underline">care@trustwork.co.in</a></div>
           </div>
@@ -1298,8 +1296,6 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
                 <div className="hidden lg:flex items-center gap-1.5">
                   <Phone size={13} />
                   <a href="tel:+919353010107" className="hover:text-white transition-colors cursor-pointer">+91 9353010107</a>
-                  <span style={{ opacity: 0.5 }}>,</span>
-                  <a href="tel:+917676740107" className="hover:text-white transition-colors cursor-pointer">+91 7676740107</a>
                 </div>
                 <a href="mailto:care@trustwork.co.in" className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
                   <Mail size={13} /> care@trustwork.co.in
@@ -2704,6 +2700,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
     setEditCust(null);
   };
 
+
+
   const approveProperty = async (propId) => {
     const p = dbs.properties[propId];
     await fetch(`/api/properties/${propId}`, { method: 'PUT', body: JSON.stringify({ ...p, status: "active" }) });
@@ -3021,7 +3019,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
 
 
       {showAddCustomer && <AddCustomerModal onClose={() => setShowAddCustomer(false)} onSave={addCustomer} dbs={dbs} />}
-      {editCust && <EditCustomerModal customer={editCust} onClose={() => setEditCust(null)} onSave={updateCustomer} />}
+      {editCust && <EditCustomerModal customer={editCust} onClose={() => setEditCust(null)} onSave={updateCustomer} onDelete={deleteCustomer} />}
       {newCreds && <CredsModal creds={newCreds} onClose={() => setNewCreds(null)} />}
     </Shell>
   );
@@ -3297,6 +3295,11 @@ function EditCustomerModal({ customer, onClose, onSave, onDelete }) {
             </Field>
           </div>
           <div className="flex gap-2 mt-4">
+            {onDelete && customer.id !== 'admin' && (
+              <button type="button" onClick={() => onDelete(customer.id)} className="px-4 py-2.5 rounded-md font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors" title="Delete Customer">
+                <Trash2 size={18} />
+              </button>
+            )}
             <button type="submit" className="flex-1 py-2.5 rounded-md font-semibold text-white tw-body cursor-pointer hover:opacity-90 transition-opacity" style={{ background: "var(--blueprint)" }}>
               Save changes
             </button>

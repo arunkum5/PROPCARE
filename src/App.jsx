@@ -1159,7 +1159,6 @@ function LoginScreen({ onBack, onCustomerLogin, onAdminLogin, dbs }) {
           </button>
           {role === "admin" ? (
             <div className="mt-4 text-center flex flex-col gap-2">
-              <p className="tw-mono text-[11px]" style={{ opacity: 0.5 }}>Demo admin — admin / admin123</p>
               <button type="button" onClick={() => { setRole("customer"); setError(""); setId(""); setPassword(""); }} className="tw-body text-xs hover:underline cursor-pointer" style={{ color: "var(--blueprint)" }}>← Back to Customer Login</button>
             </div>
           ) : (

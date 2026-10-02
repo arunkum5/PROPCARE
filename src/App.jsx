@@ -466,7 +466,7 @@ function Testimonials() {
 }
 
 /* ================= LANDING ================= */
-function Landing({ onLogin, dbs }) {
+function Landing({ onLogin, dbs, refresh }) {
   const plansList = Object.values(dbs?.plans || {});
   const [policyModal, setPolicyModal] = useState(null);
   const [calcSize, setCalcSize] = useState('1200');
@@ -562,9 +562,10 @@ function Landing({ onLogin, dbs }) {
           });
           const data = await res.json();
           if (data.credentials) {
+            await refresh(); // Refresh dbs so login works immediately
             setLeadMsg({ 
               type: 'success', 
-              text: `Payment Successful! 🎉 Welcome to TrustWork.\n\nYour Customer ID: ${data.credentials.id}\nYour Password: ${data.credentials.password}\n\nPlease take a screenshot, then click "Login" at the top right to access your dashboard!` 
+              text: `Payment Successful! 🎉 Welcome to TrustWork.\n\nLogin with your Phone: ${data.credentials.id}\nTemp Password: ${data.credentials.password}\n\nPlease take a screenshot, then click "Login" at the top right!` 
             });
             setTimeout(() => {
               setCheckoutModal(null);
@@ -3482,7 +3483,7 @@ export default function App() {
 
   return (
     <div style={{ ...cssVars, minHeight: "100vh" }}>
-      {view === "landing" && <Landing onLogin={() => setView("login")} dbs={dbs} />}
+      {view === "landing" && <Landing onLogin={() => setView("login")} dbs={dbs} refresh={refresh} />}
       {view === "login" && (
         <LoginScreen
           onBack={() => setView("landing")}

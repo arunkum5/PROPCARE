@@ -4,7 +4,7 @@ import {
   FileCheck, Users, ClipboardList, Stamp, ChevronRight, LogIn, LogOut,
   Plus, X, CheckCircle2, Clock, MessageSquare, Send, ExternalLink,
   UserPlus, User, Search, ArrowLeft, Sprout, Fence, Eye, EyeOff, Phone, Mail,
-  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon, CreditCard, ChevronDown, Calculator, ShieldCheck, Gift, Tag
+  KeyRound, AlertCircle, ArrowUp, MessageCircle, Pencil, Trash2, RefreshCw, Menu, ImageIcon, CreditCard, ChevronDown, Calculator, ShieldCheck, Gift, Tag, Download
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -3534,6 +3534,26 @@ export default function App() {
   const [dbs, setDbs] = useState({ admin: null, customers: {}, properties: {}, cases: {}, plans: {}, leads: {}, stats: {} });
   const [loading, setLoading] = useState(true);
 
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   const refresh = useCallback(async () => {
     try {
       const res = await fetch('/api/data', { cache: 'no-store' });
@@ -3604,6 +3624,20 @@ export default function App() {
       )}
       {view === "admin" && session && (
         <AdminDashboard dbs={dbs} refresh={refresh} onLogout={() => { setSession(null); setView("landing"); }} />
+      )}
+      
+      {deferredPrompt && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[9999] bg-white border border-gray-200 shadow-xl rounded-full px-4 py-3 flex items-center space-x-4 w-[90%] max-w-sm">
+          <div className="bg-[var(--blueprint)] w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+            <Download size={16} className="text-white" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-bold text-[var(--ink)]">Install TrustWork</div>
+            <div className="text-xs text-gray-500">Add to your home screen</div>
+          </div>
+          <button onClick={handleInstallClick} className="bg-[var(--blueprint)] text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-opacity-90 flex-shrink-0">Install</button>
+          <button onClick={() => setDeferredPrompt(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0"><X size={16} /></button>
+        </div>
       )}
     </div>
   );

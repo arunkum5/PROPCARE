@@ -322,6 +322,45 @@ app.post('/api/visits', async (c) => {
   return c.json({ success: true })
 })
 
+// PUT /api/visits/:id - Update visit (e.g. photos/videos)
+app.put('/api/visits/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  await db.prepare('UPDATE visits SET photos = ?, video = ? WHERE id = ?')
+    .bind(JSON.stringify(body.photos || []), JSON.stringify(body.videos || []), id)
+    .run()
+  return c.json({ success: true })
+})
+
+// DELETE /api/visits/:id - Delete visit
+app.delete('/api/visits/:id', async (c) => {
+  const db = c.env.DB
+  const bucket = c.env.MEDIA_BUCKET
+  const id = c.req.param('id')
+  
+  const { results: visits } = await db.prepare('SELECT photos, video FROM visits WHERE id = ?').bind(id).all()
+  if (visits.length > 0) {
+    const v = visits[0];
+    let mediaUrls = [];
+    if (v.photos) {
+      try { mediaUrls.push(...JSON.parse(v.photos)); } catch(e){}
+    }
+    if (v.video) {
+      try { mediaUrls.push(...JSON.parse(v.video)); } catch(e){}
+    }
+    for (const url of mediaUrls) {
+      if (typeof url === 'string' && url.includes('/api/media/')) {
+        const key = url.split('/api/media/')[1];
+        if (key) await bucket.delete(key);
+      }
+    }
+  }
+  
+  await db.prepare('DELETE FROM visits WHERE id = ?').bind(id).run()
+  return c.json({ success: true })
+})
+
 // POST /api/upload - Upload file to R2
 app.post('/api/upload', async (c) => {
   const bucket = c.env.MEDIA_BUCKET

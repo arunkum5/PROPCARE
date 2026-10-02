@@ -2858,9 +2858,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                     </div>
                     <button onClick={async () => {
                       if (!window.confirm("Are you sure you want to delete this visit?")) return;
-                      const newVisits = [...p.visits];
-                      newVisits.splice(origIndex, 1);
-                      await fetch(`/api/properties/${p.id}`, { method: 'PUT', body: JSON.stringify({ ...p, visits: newVisits }) });
+                      await fetch(`/api/visits/${v.id}`, { method: 'DELETE' });
                       refresh();
                     }} className="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors flex-shrink-0" title="Delete visit">
                       <Trash2 size={16} />
@@ -2875,9 +2873,12 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                           <div className="hidden text-xs text-gray-500 tw-mono text-center p-2 break-all">{url}</div>
                           <button onClick={async () => {
                             if (!window.confirm("Delete this photo?")) return;
-                            const newVisits = [...p.visits];
-                            newVisits[origIndex].photos = newVisits[origIndex].photos.filter((_, j) => j !== idx);
-                            await fetch(`/api/properties/${p.id}`, { method: 'PUT', body: JSON.stringify({ ...p, visits: newVisits }) });
+                            const newPhotos = v.photos.filter((_, j) => j !== idx);
+                            await fetch(`/api/visits/${v.id}`, { 
+                              method: 'PUT', 
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ photos: newPhotos, videos: v.videos }) 
+                            });
                             refresh();
                           }} className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-md hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
                             <X size={14} />
@@ -2889,9 +2890,12 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                           <video src={url} controls controlsList="nodownload" className="w-full h-full object-contain" />
                           <button onClick={async () => {
                             if (!window.confirm("Delete this video?")) return;
-                            const newVisits = [...p.visits];
-                            newVisits[origIndex].videos = newVisits[origIndex].videos.filter((_, j) => j !== idx);
-                            await fetch(`/api/properties/${p.id}`, { method: 'PUT', body: JSON.stringify({ ...p, visits: newVisits }) });
+                            const newVideos = v.videos.filter((_, j) => j !== idx);
+                            await fetch(`/api/visits/${v.id}`, { 
+                              method: 'PUT', 
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ photos: v.photos, videos: newVideos }) 
+                            });
                             refresh();
                           }} className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-md hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                             <X size={14} />

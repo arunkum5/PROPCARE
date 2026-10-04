@@ -1251,8 +1251,6 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
     <div className="min-h-full flex flex-col" style={{ background: "var(--paper)", color: "var(--ink)" }}>
       <style>{`
         .tw-display { font-family: 'Zilla Slab', serif; } .tw-body { font-family: 'Source Sans 3', sans-serif; } .tw-mono { font-family: 'IBM Plex Mono', monospace; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spin { animation: spin 0.7s linear infinite; }
       `}</style>
@@ -1275,7 +1273,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
           </div>
 
           {/* Desktop: tabs + actions — all inline */}
-          <div className="hidden sm:flex items-center gap-4 flex-1 overflow-x-auto pl-4 hide-scrollbar">
+          <div className="hidden sm:flex items-center gap-4 flex-1 overflow-x-auto pl-4">
             {/* New Customer (or other headerAction) */}
             {headerAction && headerAction}
 

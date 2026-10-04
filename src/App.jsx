@@ -1876,7 +1876,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
             <p className="text-white/80 tw-body text-sm mt-0.5">Share your phone number with a friend. When they join, you get 10% off your next renewal!</p>
           </div>
         </div>
-        <button className="mt-4 sm:mt-0 relative z-10 whitespace-nowrap bg-white text-[var(--blueprint)] px-5 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors">
+        <button className="mt-4 sm:mt-0 relative z-10 whitespace-nowrap bg-white text-[var(--blueprint)] px-5 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 hover:scale-105 hover:shadow-md active:scale-95 transition-all">
           Get My Code
         </button>
       </div>

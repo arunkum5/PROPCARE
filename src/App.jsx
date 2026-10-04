@@ -3235,11 +3235,11 @@ function AddVisitForm({ onAdd, customerId }) {
                     }}
                   />
                   {file ? (
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-sm overflow-hidden flex-shrink-0 bg-gray-100">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="w-24 h-24 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 shadow-sm border border-gray-200">
                         <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="preview" />
                       </div>
-                      <span className="tw-body text-xs font-medium truncate" style={{ color: "var(--moss)" }}>{file.name}</span>
+                      <span className="tw-body text-sm font-medium truncate" style={{ color: "var(--moss)" }}>{file.name}</span>
                     </div>
                   ) : (
                     <span className="tw-body text-xs" style={{ opacity: 0.45 }}>Choose photo…</span>
@@ -3284,11 +3284,11 @@ function AddVisitForm({ onAdd, customerId }) {
                     }}
                   />
                   {file ? (
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-sm overflow-hidden flex-shrink-0 bg-black">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="w-24 h-24 rounded-md overflow-hidden flex-shrink-0 bg-black shadow-sm border border-gray-800">
                         <video src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
                       </div>
-                      <span className="tw-body text-xs font-medium truncate" style={{ color: "var(--moss)" }}>{file.name}</span>
+                      <span className="tw-body text-sm font-medium truncate" style={{ color: "var(--moss)" }}>{file.name}</span>
                     </div>
                   ) : (
                     <span className="tw-body text-xs" style={{ opacity: 0.45 }}>Choose video…</span>

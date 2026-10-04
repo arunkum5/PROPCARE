@@ -1459,6 +1459,7 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
   }, {});
   const months = Object.keys(groupedVisits).sort((a, b) => new Date(b) - new Date(a));
   const [activeMonth, setActiveMonth] = useState(months[0] || "");
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   useEffect(() => {
     if (months.length > 0 && !activeMonth) setActiveMonth(months[0]);
@@ -1652,11 +1653,11 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
                 <p className="tw-body text-sm mb-4" style={{ opacity: 0.78 }}>{v.notes}</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {(v.photos || []).map((url, idx) => (
-                    <a key={idx} href={url} target="_blank" rel="noreferrer" className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border hover:opacity-80 relative group flex items-center justify-center">
+                    <div key={idx} onClick={() => setLightboxImage(url)} className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border hover:opacity-80 relative group flex items-center justify-center cursor-pointer">
                       <img src={url} loading="lazy" className="w-full h-full object-cover" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
                       <div className="hidden text-xs text-gray-500 tw-mono text-center p-2 break-all">{url}</div>
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 text-white"><Camera size={24} /></div>
-                    </a>
+                    </div>
                   ))}
                   {(v.videos || []).map((url, idx) => (
                     <div key={`vid-${idx}`} className="block aspect-square bg-black rounded-lg overflow-hidden border relative group">
@@ -1667,6 +1668,12 @@ function CustomerPropertyDetail({ p, customer, onBack, onChangePlan, onAgree, on
               </div>
             ))}
           </div>
+        </div>
+      )}
+      {lightboxImage && (
+        <div className="fixed inset-0 z-[99999] bg-black bg-opacity-90 flex items-center justify-center p-4 cursor-pointer" onClick={() => setLightboxImage(null)}>
+          <img src={lightboxImage} className="max-w-full max-h-full object-contain rounded-md" alt="Full screen" />
+          <button className="absolute top-4 right-4 text-white p-2 bg-black bg-opacity-50 rounded-full hover:bg-opacity-80"><X size={24}/></button>
         </div>
       )}
       {showEdit && (
@@ -2675,6 +2682,8 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
   const [openProp, setOpenProp] = useState(null);
   const [newCreds, setNewCreds] = useState(null);
   const [search, setSearch] = useState("");
+  const [addingVisitProperty, setAddingVisitProperty] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const [editCust, setEditCust] = useState(null);
 
@@ -2869,7 +2878,7 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
                       {(v.photos || []).map((url, idx) => (
                         <div key={idx} className="block aspect-square bg-gray-100 rounded-lg overflow-hidden border relative group flex items-center justify-center">
-                          <img src={url} loading="lazy" className="w-full h-full object-cover" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+                          <img src={url} onClick={() => setLightboxImage(url)} loading="lazy" className="w-full h-full object-cover cursor-pointer" alt="Property visit" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
                           <div className="hidden text-xs text-gray-500 tw-mono text-center p-2 break-all">{url}</div>
                           <button onClick={async () => {
                             if (!window.confirm("Delete this photo?")) return;
@@ -2907,6 +2916,13 @@ function AdminDashboard({ dbs, refresh, onLogout }) {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {lightboxImage && (
+          <div className="fixed inset-0 z-[99999] bg-black bg-opacity-90 flex items-center justify-center p-4 cursor-pointer" onClick={() => setLightboxImage(null)}>
+            <img src={lightboxImage} className="max-w-full max-h-full object-contain rounded-md" alt="Full screen" />
+            <button className="absolute top-4 right-4 text-white p-2 bg-black bg-opacity-50 rounded-full hover:bg-opacity-80"><X size={24}/></button>
           </div>
         )}
       </Shell>

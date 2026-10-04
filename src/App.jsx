@@ -1275,7 +1275,7 @@ function Shell({ title, subtitle, planInfo, onLogout, onSettings, onRefresh, chi
           </div>
 
           {/* Desktop: tabs + actions — all inline */}
-          <div className="hidden sm:flex items-center gap-4 flex-1 flex-wrap pl-4">
+          <div className="hidden sm:flex items-center gap-4 flex-1 overflow-x-auto pl-4 hide-scrollbar">
             {/* New Customer (or other headerAction) */}
             {headerAction && headerAction}
 

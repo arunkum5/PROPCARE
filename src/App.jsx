@@ -1865,10 +1865,10 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       tabs={tabsConfig}
       activeTab={tab} onTabChange={setTab}
     >
-      <div className="mb-6 bg-gradient-to-r from-[var(--blueprint)] to-indigo-900 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between shadow-lg relative overflow-hidden cursor-pointer hover:shadow-xl transition-all" onClick={() => setTab('rewards')}>
+      <div className="mb-6 bg-gradient-to-r from-[var(--blueprint)] to-indigo-900 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between shadow-lg relative overflow-hidden cursor-pointer hover:shadow-xl transition-all group" onClick={() => setTab('rewards')}>
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
             <Gift size={24} className="text-white animate-bounce" style={{ animationDuration: '2s' }} />
           </div>
           <div>
@@ -1876,9 +1876,9 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
             <p className="text-white/80 tw-body text-sm mt-0.5">Share your phone number with a friend. When they join, you get 10% off your next renewal!</p>
           </div>
         </div>
-        <button className="mt-4 sm:mt-0 relative z-10 whitespace-nowrap bg-white text-[var(--blueprint)] px-5 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 hover:scale-105 hover:shadow-md active:scale-95 transition-all">
+        <div className="mt-4 sm:mt-0 relative z-10 whitespace-nowrap bg-white text-[var(--blueprint)] px-5 py-2 rounded-lg font-bold text-sm shadow-sm group-hover:scale-105 group-hover:shadow-md transition-all">
           Get My Code
-        </button>
+        </div>
       </div>
 
       {tab === "profile" && (

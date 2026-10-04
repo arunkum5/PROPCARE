@@ -1945,11 +1945,7 @@ function CustomerDashboard({ customer, dbs, refresh, onLogout }) {
       {tab === "properties" && (
         <div>
           <div className="relative mb-8 rounded-xl overflow-hidden shadow-sm" style={{ minHeight: "160px", background: "var(--blueprint)" }}>
-            {latestPhoto ? (
-              <img src={latestPhoto} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay" alt="Latest property visit" />
-            ) : (
-              <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[var(--moss)] via-transparent to-transparent" />
-            )}
+            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[var(--moss)] via-transparent to-transparent" />
             <div className="relative p-6 sm:p-8 flex flex-col justify-center h-full">
               <div className="tw-display font-bold text-2xl sm:text-3xl text-white mb-2">
                 Hello, {customer.name.split(" ")[0]}
